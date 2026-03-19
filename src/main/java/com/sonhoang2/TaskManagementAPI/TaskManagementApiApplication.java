@@ -1,4 +1,4 @@
-package com.sonhoang2.Task.Management.API;
+package com.sonhoang2.TaskManagementAPI;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
