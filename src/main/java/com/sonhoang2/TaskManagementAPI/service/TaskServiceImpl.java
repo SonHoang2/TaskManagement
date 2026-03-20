@@ -9,29 +9,27 @@ import com.sonhoang2.TaskManagementAPI.repository.TaskRepository;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
 
-    public TaskServiceImpl(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
-    }
-
     @Override
     public TaskResponse create(TaskCreateRequest request) {
-        Task task = new Task();
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setStatus(request.getStatus());
-        task.setDueDate(request.getDueDate());
+        Task task = Task.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .status(request.getStatus())
+                .dueDate(request.getDueDate())
+                .build();
 
-        Task savedTask = taskRepository.save(task);
-        return toResponse(savedTask);
+        return toResponse(taskRepository.save(task));
     }
 
     @Override
@@ -51,24 +49,24 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse update(Long id, TaskUpdateRequest request) {
         Task task = findTaskByIdOrThrow(id);
+
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
         task.setStatus(request.getStatus());
         task.setDueDate(request.getDueDate());
 
-        Task updatedTask = taskRepository.save(task);
-        return toResponse(updatedTask);
+        return toResponse(taskRepository.save(task));
     }
 
     @Override
     public void delete(Long id) {
-        Task task = findTaskByIdOrThrow(id);
-        taskRepository.delete(task);
+        taskRepository.delete(findTaskByIdOrThrow(id));
     }
 
     private Task findTaskByIdOrThrow(Long id) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Task with id " + id + " not found"));
     }
 
     private TaskResponse toResponse(Task task) {
@@ -83,4 +81,3 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 }
-
