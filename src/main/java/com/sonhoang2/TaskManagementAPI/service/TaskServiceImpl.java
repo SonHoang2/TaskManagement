@@ -82,7 +82,7 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(request.getStatus());
         task.setDueDate(request.getDueDate());
 
-        return toResponse(taskRepository.save(task));
+        return toResponse(task);
     }
 
     @Override
