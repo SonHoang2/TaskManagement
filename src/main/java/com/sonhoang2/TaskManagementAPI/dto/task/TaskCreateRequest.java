@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.dto;
+package com.sonhoang2.TaskManagementAPI.dto.task;
 
 import com.sonhoang2.TaskManagementAPI.entity.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +9,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class TaskUpdateRequest {
+public class TaskCreateRequest {
 
     @NotBlank(message = "title is required")
     @Size(max = 200, message = "title length must be <= 200")
@@ -23,3 +23,4 @@ public class TaskUpdateRequest {
 
     private LocalDate dueDate;
 }
+

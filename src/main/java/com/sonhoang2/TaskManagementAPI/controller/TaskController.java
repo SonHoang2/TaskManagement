@@ -1,14 +1,15 @@
 package com.sonhoang2.TaskManagementAPI.controller;
 
-import com.sonhoang2.TaskManagementAPI.dto.TaskCreateRequest;
-import com.sonhoang2.TaskManagementAPI.dto.TaskResponse;
-import com.sonhoang2.TaskManagementAPI.dto.TaskUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
+import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
+import com.sonhoang2.TaskManagementAPI.dto.task.TaskUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.service.TaskService;
 import jakarta.validation.Valid;
 
 import java.net.URI;
-import java.util.List;
 
+import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +37,8 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<TaskResponse> findAll() {
-        return taskService.findAll();
+    public PageResponse<TaskResponse> findAll(Pageable pageable) {
+        return taskService.findAll(pageable);
     }
 
     @GetMapping("/{id}")
