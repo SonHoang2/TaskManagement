@@ -1,14 +1,16 @@
 package com.sonhoang2.TaskManagementAPI.controller;
 
+import com.sonhoang2.TaskManagementAPI.dto.common.ApiSuccessResponse;
+import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
 import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
 import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
 import com.sonhoang2.TaskManagementAPI.dto.task.TaskUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.service.TaskService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.URI;
 
-import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,31 +26,58 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> create(@Valid @RequestBody TaskCreateRequest request) {
+    public ResponseEntity<ApiSuccessResponse<TaskResponse>> create(
+            @Valid @RequestBody TaskCreateRequest request,
+            HttpServletRequest httpRequest) {
         TaskResponse createdTask = taskService.create(request);
-        return ResponseEntity.created(URI.create("/tasks/" + createdTask.getId())).body(createdTask);
+        return ResponseEntity.created(URI.create("/tasks/" + createdTask.getId()))
+                .body(ApiSuccessResponse.success(
+                        "Created successfully",
+                        createdTask,
+                        httpRequest.getRequestURI()
+                ));
     }
 
     @GetMapping
-    public PageResponse<TaskResponse> findAll(@RequestParam(required = false) String status,
-                                              @RequestParam(required = false) String keyword, Pageable pageable) {
-        return taskService.findAll(status, keyword, pageable);
+    public ApiSuccessResponse<PageResponse<TaskResponse>> findAll(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
+            Pageable pageable,
+            HttpServletRequest httpRequest) {
+        return ApiSuccessResponse.success(
+                "Success",
+                taskService.findAll(status, keyword, pageable),
+                httpRequest.getRequestURI()
+        );
     }
 
     @GetMapping("/{id}")
-    public TaskResponse findById(@PathVariable Long id) {
-        return taskService.findById(id);
+    public ApiSuccessResponse<TaskResponse> findById(@PathVariable Long id, HttpServletRequest httpRequest) {
+        return ApiSuccessResponse.success(
+                "Success",
+                taskService.findById(id),
+                httpRequest.getRequestURI()
+        );
     }
 
     @PutMapping("/{id}")
-    public TaskResponse update(@PathVariable Long id, @Valid @RequestBody TaskUpdateRequest request) {
-        return taskService.update(id, request);
+    public ApiSuccessResponse<TaskResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody TaskUpdateRequest request,
+            HttpServletRequest httpRequest) {
+        return ApiSuccessResponse.success(
+                "Updated successfully",
+                taskService.update(id, request),
+                httpRequest.getRequestURI()
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiSuccessResponse<Void>> delete(@PathVariable Long id, HttpServletRequest httpRequest) {
         taskService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiSuccessResponse.success("Deleted successfully", null, httpRequest.getRequestURI())
+        );
     }
 }
 
