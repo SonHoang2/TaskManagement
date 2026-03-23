@@ -10,7 +10,7 @@ public interface TaskService {
 
     TaskResponse create(TaskCreateRequest request);
 
-    PageResponse<TaskResponse> findAll(Pageable pageable);
+    PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable);
 
     TaskResponse findById(Long id);
 

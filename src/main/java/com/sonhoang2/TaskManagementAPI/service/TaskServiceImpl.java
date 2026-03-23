@@ -1,6 +1,7 @@
 package com.sonhoang2.TaskManagementAPI.service;
 
 import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
+import com.sonhoang2.TaskManagementAPI.entity.TaskStatus;
 import com.sonhoang2.TaskManagementAPI.exception.ResourceNotFoundException;
 import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
 import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
@@ -21,17 +22,49 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
 
+    private PageResponse<TaskResponse> toPageResponse(Page<Task> page) {
+        return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.hasNext(),
+                page.hasPrevious(),
+                page.getNumberOfElements());
+    }
+
     @Override
     public TaskResponse create(TaskCreateRequest request) {
-        Task task = Task.builder().title(request.getTitle()).description(request.getDescription()).status(request.getStatus()).dueDate(request.getDueDate()).build();
+        Task task = Task.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .status(request.getStatus())
+                .dueDate(request.getDueDate())
+                .build();
 
         return toResponse(taskRepository.save(task));
     }
 
-    public PageResponse<TaskResponse> findAll(Pageable pageable) {
-        Page<Task> page = taskRepository.findAll(pageable);
+    @Override
+    public PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable) {
+        Page<Task> page;
 
-        return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages(), page.hasNext(), page.hasPrevious(), page.getNumberOfElements());
+        if (status != null && keyword != null) {
+            page = taskRepository.findByStatusAndTitleContainingIgnoreCase(TaskStatus.valueOf(status),
+                    keyword,
+                    pageable);
+
+        } else if (status != null) {
+            page = taskRepository.findByStatus(TaskStatus.valueOf(status), pageable);
+
+        } else if (keyword != null) {
+            page = taskRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+
+        } else {
+            page = taskRepository.findAll(pageable);
+        }
+
+        return toPageResponse(page);
     }
 
     @Override
@@ -58,10 +91,19 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private Task findTaskByIdOrThrow(Long id) {
-        return taskRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Task with id " + id + " not found"));
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Task with id " + id + " not found"));
     }
 
     private TaskResponse toResponse(Task task) {
-        return TaskResponse.builder().id(task.getId()).title(task.getTitle()).description(task.getDescription()).status(task.getStatus()).dueDate(task.getDueDate()).createdAt(task.getCreatedAt()).updatedAt(task.getUpdatedAt()).build();
+        return TaskResponse.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .status(task.getStatus())
+                .dueDate(task.getDueDate())
+                .createdAt(task.getCreatedAt())
+                .updatedAt(task.getUpdatedAt())
+                .build();
     }
 }
