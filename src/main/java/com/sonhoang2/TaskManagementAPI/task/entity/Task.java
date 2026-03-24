@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.entity;
+package com.sonhoang2.TaskManagementAPI.task.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

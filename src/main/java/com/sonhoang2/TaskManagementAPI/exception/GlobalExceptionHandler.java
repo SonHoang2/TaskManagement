@@ -1,6 +1,6 @@
 package com.sonhoang2.TaskManagementAPI.exception;
 
-import com.sonhoang2.TaskManagementAPI.dto.common.JSendResponse;
+import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;

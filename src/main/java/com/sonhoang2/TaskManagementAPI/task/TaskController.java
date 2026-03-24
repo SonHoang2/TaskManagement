@@ -1,16 +1,15 @@
-package com.sonhoang2.TaskManagementAPI.controller;
+package com.sonhoang2.TaskManagementAPI.task;
 
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskUpdateRequest;
-import com.sonhoang2.TaskManagementAPI.service.TaskService;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskCreateRequest;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
 import jakarta.validation.Valid;
 
 import java.net.URI;
 import java.util.Map;
 
-import com.sonhoang2.TaskManagementAPI.dto.common.JSendResponse;
-import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
+import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
+import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

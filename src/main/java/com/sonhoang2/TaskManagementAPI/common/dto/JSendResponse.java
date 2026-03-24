@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.dto.common;
+package com.sonhoang2.TaskManagementAPI.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

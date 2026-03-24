@@ -1,7 +1,7 @@
-package com.sonhoang2.TaskManagementAPI.repository;
+package com.sonhoang2.TaskManagementAPI.task;
 
-import com.sonhoang2.TaskManagementAPI.entity.Task;
-import com.sonhoang2.TaskManagementAPI.entity.TaskStatus;
+import com.sonhoang2.TaskManagementAPI.task.entity.Task;
+import com.sonhoang2.TaskManagementAPI.task.entity.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

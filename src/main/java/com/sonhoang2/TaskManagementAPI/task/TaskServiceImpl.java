@@ -1,13 +1,12 @@
-package com.sonhoang2.TaskManagementAPI.service;
+package com.sonhoang2.TaskManagementAPI.task;
 
-import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
-import com.sonhoang2.TaskManagementAPI.entity.TaskStatus;
+import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
+import com.sonhoang2.TaskManagementAPI.task.entity.TaskStatus;
 import com.sonhoang2.TaskManagementAPI.exception.ResourceNotFoundException;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskUpdateRequest;
-import com.sonhoang2.TaskManagementAPI.entity.Task;
-import com.sonhoang2.TaskManagementAPI.repository.TaskRepository;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskCreateRequest;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.task.entity.Task;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

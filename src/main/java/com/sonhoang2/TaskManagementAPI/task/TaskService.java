@@ -1,9 +1,9 @@
-package com.sonhoang2.TaskManagementAPI.service;
+package com.sonhoang2.TaskManagementAPI.task;
 
-import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskCreateRequest;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskResponse;
-import com.sonhoang2.TaskManagementAPI.dto.task.TaskUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskCreateRequest;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
+import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
 import org.springframework.data.domain.Pageable;
 
 public interface TaskService {

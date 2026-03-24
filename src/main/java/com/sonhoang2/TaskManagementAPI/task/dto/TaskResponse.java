@@ -1,6 +1,6 @@
-package com.sonhoang2.TaskManagementAPI.dto.task;
+package com.sonhoang2.TaskManagementAPI.task.dto;
 
-import com.sonhoang2.TaskManagementAPI.entity.TaskStatus;
+import com.sonhoang2.TaskManagementAPI.task.entity.TaskStatus;
 import lombok.Builder;
 import lombok.Getter;
 
