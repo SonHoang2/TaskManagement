@@ -1,18 +1,18 @@
 package com.sonhoang2.TaskManagementAPI.task;
 
+import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
+import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskCreateRequest;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
 import jakarta.validation.Valid;
-
-import java.net.URI;
-import java.util.Map;
-
-import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
-import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/tasks")
@@ -41,21 +41,20 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> findById(@PathVariable Long id) {
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.findById(id))));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> update(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody TaskUpdateRequest request) {
         return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.update(id, request))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable Long id) {
+    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
         taskService.delete(id);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }
-

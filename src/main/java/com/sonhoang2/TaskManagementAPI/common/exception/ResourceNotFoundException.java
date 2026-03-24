@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.exception;
+package com.sonhoang2.TaskManagementAPI.common.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
 

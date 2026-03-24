@@ -6,16 +6,17 @@ import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface TaskService {
 
     TaskResponse create(TaskCreateRequest request);
 
     PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable);
 
-    TaskResponse findById(Long id);
+    TaskResponse findById(UUID id);
 
-    TaskResponse update(Long id, TaskUpdateRequest request);
+    TaskResponse update(UUID id, TaskUpdateRequest request);
 
-    void delete(Long id);
+    void delete(UUID id);
 }
-

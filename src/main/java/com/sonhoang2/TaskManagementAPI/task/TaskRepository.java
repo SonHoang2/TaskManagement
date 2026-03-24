@@ -6,7 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
+import java.util.UUID;
+
+public interface TaskRepository extends JpaRepository<Task, UUID> {
     Page<Task> findByStatus(TaskStatus status, Pageable pageable);
 
     Page<Task> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
@@ -17,4 +19,3 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             Pageable pageable
     );
 }
-

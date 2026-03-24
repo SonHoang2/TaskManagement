@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.exception;
+package com.sonhoang2.TaskManagementAPI.common.exception;
 
 import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;

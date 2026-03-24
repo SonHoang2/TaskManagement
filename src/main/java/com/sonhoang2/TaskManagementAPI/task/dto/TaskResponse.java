@@ -1,23 +1,28 @@
 package com.sonhoang2.TaskManagementAPI.task.dto;
 
+import com.sonhoang2.TaskManagementAPI.task.entity.TaskPriority;
 import com.sonhoang2.TaskManagementAPI.task.entity.TaskStatus;
 import lombok.Builder;
 import lombok.Getter;
 
-
 import java.time.Instant;
-import java.time.LocalDate;
+import java.util.UUID;
 
 @Builder
 @Getter
 public class TaskResponse {
 
-    private Long id;
+    private UUID id;
+    private UUID projectId;
     private String title;
     private String description;
     private TaskStatus status;
-    private LocalDate dueDate;
+    private TaskPriority priority;
+    private UUID assigneeId;
+    private UUID reporterId;
+    private Instant dueDate;
+    private Instant startDate;
+    private UUID parentTaskId;
     private Instant createdAt;
     private Instant updatedAt;
 }
-
