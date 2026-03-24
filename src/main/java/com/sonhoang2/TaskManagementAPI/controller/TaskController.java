@@ -7,7 +7,9 @@ import com.sonhoang2.TaskManagementAPI.service.TaskService;
 import jakarta.validation.Valid;
 
 import java.net.URI;
+import java.util.Map;
 
+import com.sonhoang2.TaskManagementAPI.dto.common.JSendResponse;
 import com.sonhoang2.TaskManagementAPI.dto.common.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -24,31 +26,37 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<TaskResponse> create(@Valid @RequestBody TaskCreateRequest request) {
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> create(@Valid @RequestBody TaskCreateRequest request) {
         TaskResponse createdTask = taskService.create(request);
-        return ResponseEntity.created(URI.create("/tasks/" + createdTask.getId())).body(createdTask);
+        return ResponseEntity.created(URI.create("/tasks/" + createdTask.getId()))
+                .body(JSendResponse.success(Map.of("task", createdTask)));
     }
 
     @GetMapping
-    public PageResponse<TaskResponse> findAll(@RequestParam(required = false) String status,
-                                              @RequestParam(required = false) String keyword, Pageable pageable) {
-        return taskService.findAll(status, keyword, pageable);
+    public ResponseEntity<JSendResponse<Map<String, PageResponse<TaskResponse>>>> findAll(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        PageResponse<TaskResponse> pageResponse = taskService.findAll(status, keyword, pageable);
+        return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
-    public TaskResponse findById(@PathVariable Long id) {
-        return taskService.findById(id);
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.findById(id))));
     }
 
     @PutMapping("/{id}")
-    public TaskResponse update(@PathVariable Long id, @Valid @RequestBody TaskUpdateRequest request) {
-        return taskService.update(id, request);
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody TaskUpdateRequest request) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.update(id, request))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable Long id) {
         taskService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(JSendResponse.success(null));
     }
 }
 
