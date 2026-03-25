@@ -22,6 +22,8 @@ import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -35,7 +37,14 @@ public class UserController {
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, UserResponse>>> create(@Valid @RequestBody UserCreateRequest request) {
         UserResponse createdUser = userService.create(request);
-        return ResponseEntity.created(URI.create("/users/" + createdUser.getId()))
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdUser.getId())
+                .toUri();
+
+        return ResponseEntity.created(location)
                 .body(JSendResponse.success(Map.of("user", createdUser)));
     }
 

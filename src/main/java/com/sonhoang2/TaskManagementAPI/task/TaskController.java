@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Map;
@@ -27,7 +28,14 @@ public class TaskController {
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> create(@Valid @RequestBody TaskCreateRequest request) {
         TaskResponse createdTask = taskService.create(request);
-        return ResponseEntity.created(URI.create("/tasks/" + createdTask.getId()))
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdTask.getId())
+                .toUri();
+
+        return ResponseEntity.created(location)
                 .body(JSendResponse.success(Map.of("task", createdTask)));
     }
 
