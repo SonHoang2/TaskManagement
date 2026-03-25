@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,6 +31,22 @@ public class GlobalExceptionHandler {
 
         return buildFailResponse(
                 HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                data
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleBadCredentials(
+            BadCredentialsException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return buildFailResponse(
+                HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),
                 data
         );

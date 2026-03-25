@@ -22,6 +22,26 @@ User endpoints:
 - `PUT /api/v1/users/{id}`
 - `DELETE /api/v1/users/{id}`
 
+Auth endpoints:
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/signup`
+- `POST /api/v1/auth/logout`
+
+## Authentication
+
+- Public endpoints: `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/users`
+- Protected endpoints: all remaining APIs under `/api/v1/**`
+- Send JWT in header: `Authorization: Bearer <accessToken>`
+
+### Sample Login Payload
+
+```json
+{
+  "email": "son@example.com",
+  "password": "secret123"
+}
+```
+
 ### Sample Create Payload
 
 ```json
@@ -46,13 +66,13 @@ User endpoints:
 
 ## Run tests
 
-```bash
-./mvnw test
+```cmd
+mvnw.cmd test
 ```
 
 ## Run app
 
-```bash
-./mvnw spring-boot:run
+```cmd
+mvnw.cmd spring-boot:run
 ```
 
