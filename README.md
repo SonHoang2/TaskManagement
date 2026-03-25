@@ -1,6 +1,6 @@
 # Task Management API
 
-Simple Spring Boot CRUD for tasks.
+Simple Spring Boot CRUD for tasks and users.
 
 ## Endpoints
 
@@ -15,6 +15,13 @@ Task endpoints:
 - `PUT /api/v1/tasks/{id}`
 - `DELETE /api/v1/tasks/{id}`
 
+User endpoints:
+- `POST /api/v1/users`
+- `GET /api/v1/users`
+- `GET /api/v1/users/{id}`
+- `PUT /api/v1/users/{id}`
+- `DELETE /api/v1/users/{id}`
+
 ### Sample Create Payload
 
 ```json
@@ -26,15 +33,26 @@ Task endpoints:
 }
 ```
 
+### Sample Create User Payload
+
+```json
+{
+  "fullName": "Son Hoang",
+  "email": "son@example.com",
+  "password": "secret123",
+  "avatarUrl": "https://cdn.example.com/avatar.png"
+}
+```
+
 ## Run tests
 
-```powershell
-.\mvnw.cmd test
+```bash
+./mvnw test
 ```
 
 ## Run app
 
-```powershell
-.\mvnw.cmd spring-boot:run
+```bash
+./mvnw spring-boot:run
 ```
 

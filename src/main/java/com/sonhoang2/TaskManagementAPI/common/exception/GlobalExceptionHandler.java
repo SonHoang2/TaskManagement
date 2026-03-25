@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -56,6 +57,38 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleResourceConflict(
+            ResourceConflictException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return buildFailResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                data
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ignored,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return buildFailResponse(
+                HttpStatus.CONFLICT,
+                "Data integrity violation",
+                data
+        );
+    }
+
     @ExceptionHandler({IllegalArgumentException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<JSendResponse<Map<String, Object>>> handleInvalidInput(
             Exception ignored,
@@ -64,7 +97,6 @@ public class GlobalExceptionHandler {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timestamp", Instant.now());
         data.put("path", request.getRequestURI());
-        data.put("allowedValues", new String[]{"TODO", "IN_PROGRESS", "DONE"});
 
         return buildFailResponse(
                 HttpStatus.BAD_REQUEST,
