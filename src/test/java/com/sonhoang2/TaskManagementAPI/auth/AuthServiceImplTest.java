@@ -4,7 +4,7 @@ import com.sonhoang2.TaskManagementAPI.auth.dto.LoginRequest;
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginResponse;
 import com.sonhoang2.TaskManagementAPI.common.security.JwtService;
 import com.sonhoang2.TaskManagementAPI.user.UserService;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +53,7 @@ class AuthServiceImplTest {
 
     @Test
     void signupShouldCreateUserAndReturnToken() {
-        UserCreateRequest request = new UserCreateRequest();
+        AdminCreateUserRequest request = new AdminCreateUserRequest();
         request.setFullName("Son Hoang");
         request.setEmail("son@example.com");
         request.setPassword("secret123");

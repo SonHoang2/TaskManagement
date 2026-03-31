@@ -1,12 +1,13 @@
 package com.sonhoang2.TaskManagementAPI.user.dto;
 
+import com.sonhoang2.TaskManagementAPI.user.entity.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class UserCreateRequest {
+public class AdminCreateUserRequest {
 
     @NotBlank(message = "fullName is required")
     @Size(max = 120, message = "fullName length must be <= 120")
@@ -23,5 +24,7 @@ public class UserCreateRequest {
 
     @Size(max = 500, message = "avatarUrl length must be <= 500")
     private String avatarUrl;
+
+    private UserRole role;
 }
 

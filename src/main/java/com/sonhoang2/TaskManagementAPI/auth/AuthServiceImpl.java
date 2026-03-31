@@ -4,7 +4,7 @@ import com.sonhoang2.TaskManagementAPI.auth.dto.LoginRequest;
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginResponse;
 import com.sonhoang2.TaskManagementAPI.common.security.JwtService;
 import com.sonhoang2.TaskManagementAPI.user.UserService;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,7 +36,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse signup(UserCreateRequest request) {
+    public LoginResponse signup(AdminCreateUserRequest request) {
         UserResponse userResponse = userService.create(request);
         String token = jwtService.generateToken(userResponse.getEmail());
         return buildLoginResponse(token);

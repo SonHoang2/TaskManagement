@@ -3,7 +3,7 @@ package com.sonhoang2.TaskManagementAPI.auth;
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginRequest;
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginResponse;
 import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,9 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<JSendResponse<Map<String, LoginResponse>>> signup(@Valid @RequestBody UserCreateRequest request) {
-        System.out.println("hello" +
-                request);
+    public ResponseEntity<JSendResponse<Map<String, LoginResponse>>> signup(@Valid @RequestBody AdminCreateUserRequest request) {
         LoginResponse response = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(JSendResponse.success(Map.of("auth", response)));
     }

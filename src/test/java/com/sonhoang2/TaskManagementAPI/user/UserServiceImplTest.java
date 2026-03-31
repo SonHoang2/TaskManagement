@@ -1,7 +1,7 @@
 package com.sonhoang2.TaskManagementAPI.user;
 
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceConflictException;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class UserServiceImplTest {
 
     @Test
     void createShouldHashPasswordAndNormalizeEmail() {
-        UserCreateRequest request = new UserCreateRequest();
+        AdminCreateUserRequest request = new AdminCreateUserRequest();
         request.setFullName("Son Hoang");
         request.setEmail("  Son@example.com ");
         request.setPassword("secret123");
@@ -62,7 +62,7 @@ class UserServiceImplTest {
 
     @Test
     void createShouldThrowConflictWhenEmailAlreadyExists() {
-        UserCreateRequest request = new UserCreateRequest();
+        AdminCreateUserRequest request = new AdminCreateUserRequest();
         request.setFullName("Son Hoang");
         request.setEmail("son@example.com");
         request.setPassword("secret123");

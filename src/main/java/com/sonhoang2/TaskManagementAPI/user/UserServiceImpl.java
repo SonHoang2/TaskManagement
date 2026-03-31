@@ -3,9 +3,9 @@ package com.sonhoang2.TaskManagementAPI.user;
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceConflictException;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceNotFoundException;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UserResponse create(UserCreateRequest request) {
+    public UserResponse create(AdminCreateUserRequest request) {
         String normalizedEmail = normalizeEmail(request.getEmail());
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ResourceConflictException("Email already exists");
@@ -38,6 +38,7 @@ public class UserServiceImpl implements UserService {
                 .email(normalizedEmail)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .avatarUrl(request.getAvatarUrl())
+                .role(request.getRole())
                 .build();
 
         return toResponse(userRepository.save(user));
@@ -73,7 +74,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse update(UUID id, UserUpdateRequest request) {
+    public UserResponse update(UUID id, AdminUpdateUserRequest request) {
         User user = findUserByIdOrThrow(id);
         String normalizedEmail = normalizeEmail(request.getEmail());
 
@@ -84,6 +85,8 @@ public class UserServiceImpl implements UserService {
         user.setFullName(request.getFullName());
         user.setEmail(normalizedEmail);
         user.setAvatarUrl(request.getAvatarUrl());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole());
 
         return toResponse(user);
     }
@@ -108,6 +111,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

@@ -1,12 +1,6 @@
 package com.sonhoang2.TaskManagementAPI.user.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +13,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "uk_users_email", columnNames = "email"))
+@Table(name = "users")
 @Getter
 @Setter
 @Builder
@@ -41,6 +35,11 @@ public class User {
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    @Builder.Default
+    private UserRole role = UserRole.USER;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

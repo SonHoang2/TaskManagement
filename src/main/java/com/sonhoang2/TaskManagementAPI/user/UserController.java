@@ -2,9 +2,9 @@ package com.sonhoang2.TaskManagementAPI.user;
 
 import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserCreateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
-import com.sonhoang2.TaskManagementAPI.user.dto.UserUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.user.dto.AdminUpdateUserRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<JSendResponse<Map<String, UserResponse>>> create(@Valid @RequestBody UserCreateRequest request) {
+    public ResponseEntity<JSendResponse<Map<String, UserResponse>>> create(@Valid @RequestBody AdminCreateUserRequest request) {
         UserResponse createdUser = userService.create(request);
 
         URI location = ServletUriComponentsBuilder
@@ -64,7 +64,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, UserResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody UserUpdateRequest request) {
+            @Valid @RequestBody AdminUpdateUserRequest request) {
         return ResponseEntity.ok(JSendResponse.success(Map.of("user", userService.update(id, request))));
     }
 
