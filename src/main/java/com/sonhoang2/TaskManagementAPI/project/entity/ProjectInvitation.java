@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,18 +22,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "project_members",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_project_members_project_user", columnNames = {"project_id", "user_id"})
-        }
-)
+@Table(name = "project_invitations")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProjectMember {
+public class ProjectInvitation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -43,23 +37,33 @@ public class ProjectMember {
     @Column(name = "project_id", nullable = false)
     private UUID projectId;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @Column(name = "invited_by_id", nullable = false)
+    private UUID invitedById;
+
+    @Column(name = "invitee_id", nullable = false)
+    private UUID inviteeId;
 
     @ManyToOne
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     private Project project;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private User user;
+    @JoinColumn(name = "invited_by_id", insertable = false, updatable = false)
+    private User invitedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "invitee_id", insertable = false, updatable = false)
+    private User invitee;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private ProjectMemberRole role;
+    @Column(nullable = false, length = 16)
+    private ProjectInvitationStatus status;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private Instant joinedAt;
+    private Instant createdAt;
+
+    @Column
+    private Instant respondedAt;
 }
 

@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -47,6 +48,22 @@ public class GlobalExceptionHandler {
 
         return buildFailResponse(
                 HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                data
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return buildFailResponse(
+                HttpStatus.FORBIDDEN,
                 ex.getMessage(),
                 data
         );
