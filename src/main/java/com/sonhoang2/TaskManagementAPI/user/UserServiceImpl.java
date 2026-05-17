@@ -1,5 +1,7 @@
 package com.sonhoang2.TaskManagementAPI.user;
 
+import com.sonhoang2.TaskManagementAPI.auth.dto.RegisterRequest;
+import com.sonhoang2.TaskManagementAPI.common.dto.BaseUserRequest;
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceConflictException;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceNotFoundException;
@@ -7,6 +9,7 @@ import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
 import com.sonhoang2.TaskManagementAPI.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
+import com.sonhoang2.TaskManagementAPI.user.entity.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,8 +29,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public UserResponse create(AdminCreateUserRequest request) {
+    private User persistUser(BaseUserRequest request, UserRole defaultRole, String avatarUrl) {
         String normalizedEmail = normalizeEmail(request.getEmail());
         if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ResourceConflictException("Email already exists");
@@ -37,11 +39,22 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .email(normalizedEmail)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .avatarUrl(request.getAvatarUrl())
-                .role(request.getRole())
+                .avatarUrl(avatarUrl)
+                .role(defaultRole)
                 .build();
+        return userRepository.save(user);
+    }
 
-        return toResponse(userRepository.save(user));
+    // using for admin
+    public UserResponse create(AdminCreateUserRequest request) {
+        User user = persistUser(request, request.getRole(), request.getAvatarUrl());
+        return toResponse(user);
+    }
+
+    // using for user
+    public UserResponse register(RegisterRequest request) {
+        User user = persistUser(request, UserRole.USER, null);
+        return toResponse(user);
     }
 
     @Override

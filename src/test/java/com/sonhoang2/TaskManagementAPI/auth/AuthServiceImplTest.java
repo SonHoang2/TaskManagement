@@ -2,9 +2,9 @@ package com.sonhoang2.TaskManagementAPI.auth;
 
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginRequest;
 import com.sonhoang2.TaskManagementAPI.auth.dto.LoginResponse;
+import com.sonhoang2.TaskManagementAPI.auth.dto.RegisterRequest;
 import com.sonhoang2.TaskManagementAPI.common.security.JwtService;
 import com.sonhoang2.TaskManagementAPI.user.UserService;
-import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +53,7 @@ class AuthServiceImplTest {
 
     @Test
     void signupShouldCreateUserAndReturnToken() {
-        AdminCreateUserRequest request = new AdminCreateUserRequest();
+        RegisterRequest request = new RegisterRequest();
         request.setFullName("Son Hoang");
         request.setEmail("son@example.com");
         request.setPassword("secret123");
@@ -62,13 +62,13 @@ class AuthServiceImplTest {
                 .email("son@example.com")
                 .build();
 
-        when(userService.create(request)).thenReturn(userResponse);
+        when(userService.register(request)).thenReturn(userResponse);
         when(jwtService.generateToken("son@example.com")).thenReturn("signup-token");
         when(jwtService.getJwtExpirationMs()).thenReturn(86_400_000L);
 
         LoginResponse response = authService.signup(request);
 
-        verify(userService).create(request);
+        verify(userService).register(request);
         assertEquals("signup-token", response.getAccessToken());
         assertEquals("Bearer", response.getTokenType());
     }

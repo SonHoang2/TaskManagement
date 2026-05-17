@@ -1,5 +1,6 @@
 package com.sonhoang2.TaskManagementAPI.user;
 
+import com.sonhoang2.TaskManagementAPI.auth.dto.RegisterRequest;
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.dto.UserResponse;
@@ -19,5 +20,7 @@ public interface UserService {
     UserResponse update(UUID id, AdminUpdateUserRequest request);
 
     void delete(UUID id);
+
+    UserResponse register(RegisterRequest request);
 }
 
