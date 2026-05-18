@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.task.entity;
+package com.sonhoang2.TaskManagementAPI.label.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -25,4 +25,5 @@ public class TaskLabelId implements Serializable {
     @Column(name = "label_id", nullable = false)
     private UUID labelId;
 }
+
 

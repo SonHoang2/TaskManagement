@@ -1,5 +1,6 @@
-package com.sonhoang2.TaskManagementAPI.task.entity;
+package com.sonhoang2.TaskManagementAPI.history.entity;
 
+import com.sonhoang2.TaskManagementAPI.task.entity.Task;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,13 +22,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "task_comments")
+@Table(name = "task_histories")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskComment {
+public class TaskHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,23 +37,31 @@ public class TaskComment {
     @Column(name = "task_id", nullable = false)
     private UUID taskId;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @Column(name = "changed_by", nullable = false)
+    private UUID changedBy;
 
     @ManyToOne
     @JoinColumn(name = "task_id", insertable = false, updatable = false)
     private Task task;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private User user;
+    @JoinColumn(name = "changed_by", insertable = false, updatable = false)
+    private User changedByUser;
+
+    @Column(length = 50)
+    private String field;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "text")
-    private String content;
+    @Column(columnDefinition = "text")
+    private String oldValue;
+
+    @Lob
+    @Column(columnDefinition = "text")
+    private String newValue;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 }
+
 

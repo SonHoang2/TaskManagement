@@ -1,5 +1,6 @@
-package com.sonhoang2.TaskManagementAPI.task.entity;
+package com.sonhoang2.TaskManagementAPI.attachment.entity;
 
+import com.sonhoang2.TaskManagementAPI.task.entity.Task;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -7,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -21,13 +21,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "task_histories")
+@Table(name = "task_attachments")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskHistory {
+public class TaskAttachment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,30 +36,26 @@ public class TaskHistory {
     @Column(name = "task_id", nullable = false)
     private UUID taskId;
 
-    @Column(name = "changed_by", nullable = false)
-    private UUID changedBy;
-
     @ManyToOne
     @JoinColumn(name = "task_id", insertable = false, updatable = false)
     private Task task;
 
+    @Column(nullable = false, length = 500)
+    private String fileUrl;
+
+    @Column(length = 255)
+    private String fileName;
+
+    @Column(name = "uploaded_by")
+    private UUID uploadedBy;
+
     @ManyToOne
-    @JoinColumn(name = "changed_by", insertable = false, updatable = false)
-    private User changedByUser;
-
-    @Column(length = 50)
-    private String field;
-
-    @Lob
-    @Column(columnDefinition = "text")
-    private String oldValue;
-
-    @Lob
-    @Column(columnDefinition = "text")
-    private String newValue;
+    @JoinColumn(name = "uploaded_by", insertable = false, updatable = false)
+    private User uploader;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 }
+
 

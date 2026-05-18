@@ -1,7 +1,6 @@
 package com.sonhoang2.TaskManagementAPI.sprint.entity;
 
 import com.sonhoang2.TaskManagementAPI.project.entity.Project;
-import com.sonhoang2.TaskManagementAPI.task.entity.TaskSprint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -2,6 +2,11 @@ package com.sonhoang2.TaskManagementAPI.task.entity;
 
 import com.sonhoang2.TaskManagementAPI.project.entity.Project;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
+import com.sonhoang2.TaskManagementAPI.attachment.entity.TaskAttachment;
+import com.sonhoang2.TaskManagementAPI.comment.entity.TaskComment;
+import com.sonhoang2.TaskManagementAPI.history.entity.TaskHistory;
+import com.sonhoang2.TaskManagementAPI.label.entity.TaskLabel;
+import com.sonhoang2.TaskManagementAPI.sprint.entity.TaskSprint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

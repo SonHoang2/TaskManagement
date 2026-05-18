@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.task.entity;
+package com.sonhoang2.TaskManagementAPI.sprint.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -25,4 +25,5 @@ public class TaskSprintId implements Serializable {
     @Column(name = "sprint_id", nullable = false)
     private UUID sprintId;
 }
+
 

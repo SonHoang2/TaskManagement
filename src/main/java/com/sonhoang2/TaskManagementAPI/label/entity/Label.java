@@ -1,7 +1,6 @@
 package com.sonhoang2.TaskManagementAPI.label.entity;
 
 import com.sonhoang2.TaskManagementAPI.project.entity.Project;
-import com.sonhoang2.TaskManagementAPI.task.entity.TaskLabel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

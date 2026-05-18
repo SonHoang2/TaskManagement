@@ -1,6 +1,7 @@
-package com.sonhoang2.TaskManagementAPI.task.entity;
+package com.sonhoang2.TaskManagementAPI.label.entity;
 
-import com.sonhoang2.TaskManagementAPI.sprint.entity.Sprint;
+import com.sonhoang2.TaskManagementAPI.label.entity.Label;
+import com.sonhoang2.TaskManagementAPI.task.entity.Task;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,16 +16,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "task_sprints")
+@Table(name = "task_labels")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskSprint {
+public class TaskLabel {
 
     @EmbeddedId
-    private TaskSprintId id;
+    private TaskLabelId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("taskId")
@@ -32,8 +33,9 @@ public class TaskSprint {
     private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("sprintId")
-    @JoinColumn(name = "sprint_id")
-    private Sprint sprint;
+    @MapsId("labelId")
+    @JoinColumn(name = "label_id")
+    private Label label;
 }
+
 
