@@ -58,7 +58,7 @@ public class TaskLabelController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("taskLabel", taskLabelService.findById(taskId, labelId))));
     }
 
-    @PutMapping("/{taskId}/{labelId}")
+    @PatchMapping("/{taskId}/{labelId}")
     public ResponseEntity<JSendResponse<Map<String, TaskLabelResponse>>> update(
             @PathVariable UUID taskId,
             @PathVariable UUID labelId,

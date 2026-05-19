@@ -55,7 +55,7 @@ public class TaskHistoryController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("history", taskHistoryService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskHistoryResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody TaskHistoryUpdateRequest request

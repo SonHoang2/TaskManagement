@@ -11,6 +11,7 @@ import com.sonhoang2.TaskManagementAPI.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import com.sonhoang2.TaskManagementAPI.user.entity.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper;
 
     private User persistUser(BaseUserRequest request, UserRole defaultRole, String avatarUrl) {
         String normalizedEmail = normalizeEmail(request.getEmail());
@@ -95,11 +97,9 @@ public class UserServiceImpl implements UserService {
             throw new ResourceConflictException("Email already exists");
         }
 
-        user.setFullName(request.getFullName());
+        modelMapper.map(request, user);
         user.setEmail(normalizedEmail);
-        user.setAvatarUrl(request.getAvatarUrl());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
 
         return toResponse(user);
     }

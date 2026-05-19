@@ -58,7 +58,7 @@ public class TaskSprintController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("taskSprint", taskSprintService.findById(taskId, sprintId))));
     }
 
-    @PutMapping("/{taskId}/{sprintId}")
+    @PatchMapping("/{taskId}/{sprintId}")
     public ResponseEntity<JSendResponse<Map<String, TaskSprintResponse>>> update(
             @PathVariable UUID taskId,
             @PathVariable UUID sprintId,

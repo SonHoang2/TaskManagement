@@ -53,7 +53,7 @@ public class TaskController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody TaskUpdateRequest request) {

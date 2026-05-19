@@ -7,6 +7,7 @@ import com.sonhoang2.TaskManagementAPI.attachment.dto.TaskAttachmentResponse;
 import com.sonhoang2.TaskManagementAPI.attachment.dto.TaskAttachmentUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.attachment.entity.TaskAttachment;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class TaskAttachmentServiceImpl implements TaskAttachmentService {
 
     private final TaskAttachmentRepository taskAttachmentRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<TaskAttachmentResponse> toPageResponse(Page<TaskAttachment> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -70,10 +72,7 @@ public class TaskAttachmentServiceImpl implements TaskAttachmentService {
     @Override
     public TaskAttachmentResponse update(UUID id, TaskAttachmentUpdateRequest request) {
         TaskAttachment attachment = findAttachmentByIdOrThrow(id);
-        attachment.setTaskId(request.getTaskId());
-        attachment.setFileUrl(request.getFileUrl());
-        attachment.setFileName(request.getFileName());
-        attachment.setUploadedBy(request.getUploadedBy());
+        modelMapper.map(request, attachment);
 
         return toResponse(attachment);
     }

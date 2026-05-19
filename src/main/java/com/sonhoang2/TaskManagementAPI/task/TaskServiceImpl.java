@@ -8,6 +8,7 @@ import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.task.entity.Task;
 import com.sonhoang2.TaskManagementAPI.task.entity.TaskStatus;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<TaskResponse> toPageResponse(Page<Task> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -82,17 +84,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse update(UUID id, TaskUpdateRequest request) {
         Task task = findTaskByIdOrThrow(id);
-
-        task.setProjectId(request.getProjectId());
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setStatus(request.getStatus());
-        task.setPriority(request.getPriority());
-        task.setAssigneeId(request.getAssigneeId());
-        task.setReporterId(request.getReporterId());
-        task.setDueDate(request.getDueDate());
-        task.setStartDate(request.getStartDate());
-        task.setParentTaskId(request.getParentTaskId());
+        modelMapper.map(request, task);
 
         return toResponse(task);
     }

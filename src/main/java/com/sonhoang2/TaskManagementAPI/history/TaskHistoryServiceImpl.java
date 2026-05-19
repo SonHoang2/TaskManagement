@@ -7,6 +7,7 @@ import com.sonhoang2.TaskManagementAPI.history.dto.TaskHistoryResponse;
 import com.sonhoang2.TaskManagementAPI.history.dto.TaskHistoryUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.history.entity.TaskHistory;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class TaskHistoryServiceImpl implements TaskHistoryService {
 
     private final TaskHistoryRepository taskHistoryRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<TaskHistoryResponse> toPageResponse(Page<TaskHistory> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -71,11 +73,7 @@ public class TaskHistoryServiceImpl implements TaskHistoryService {
     @Override
     public TaskHistoryResponse update(UUID id, TaskHistoryUpdateRequest request) {
         TaskHistory history = findHistoryByIdOrThrow(id);
-        history.setTaskId(request.getTaskId());
-        history.setChangedBy(request.getChangedBy());
-        history.setField(request.getField());
-        history.setOldValue(request.getOldValue());
-        history.setNewValue(request.getNewValue());
+        modelMapper.map(request, history);
 
         return toResponse(history);
     }

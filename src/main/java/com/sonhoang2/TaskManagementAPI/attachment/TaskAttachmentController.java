@@ -55,7 +55,7 @@ public class TaskAttachmentController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("attachment", taskAttachmentService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskAttachmentResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody TaskAttachmentUpdateRequest request
