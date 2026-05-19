@@ -79,5 +79,10 @@ public class ProjectController {
     ) {
         return ResponseEntity.ok(JSendResponse.success(Map.of("members", projectService.listMembers(projectId))));
     }
+
+    @GetMapping()
+    public ResponseEntity<JSendResponse<Map<String, List<ProjectResponse>>>> listAllProject() {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("projects", projectService.listAllProject())));
+    }
 }
 

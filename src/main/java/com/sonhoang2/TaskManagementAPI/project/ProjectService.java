@@ -19,5 +19,7 @@ public interface ProjectService {
     ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request);
 
     List<ProjectMemberResponse> listMembers(UUID projectId);
+
+    List<ProjectResponse> listAllProject();
 }
 

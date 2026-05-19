@@ -39,6 +39,14 @@ public class ProjectServiceImpl implements ProjectService {
     private final UserRepository userRepository;
 
     @Override
+    public List<ProjectResponse> listAllProject() {
+        return projectRepository.findAll()
+                .stream()
+                .map(this::toProjectResponse)
+                .toList();
+    }
+
+    @Override
     public ProjectResponse create(CreateProjectRequest request) {
         User currentUser = getCurrentUserOrThrow();
 
@@ -63,8 +71,7 @@ public class ProjectServiceImpl implements ProjectService {
         assertProjectExists(projectId);
         ProjectMember currentMembership = findMembership(projectId, currentUser.getId());
 
-        if (currentMembership.getRole() != ProjectMemberRole.OWNER
-                && currentMembership.getRole() != ProjectMemberRole.ADMIN) {
+        if (currentMembership.getRole() != ProjectMemberRole.OWNER && currentMembership.getRole() != ProjectMemberRole.ADMIN) {
             throw new AccessDeniedException("Only owner or admin can invite members");
         }
 
@@ -75,11 +82,9 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResourceConflictException("User is already a project member");
         }
 
-        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(
-                projectId,
+        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(projectId,
                 inviteeId,
-                ProjectInvitationStatus.PENDING
-        )) {
+                ProjectInvitationStatus.PENDING)) {
             throw new ResourceConflictException("A pending invitation already exists for this user");
         }
 
