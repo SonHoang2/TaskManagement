@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.modelmapper.ModelMapper;
 
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class TaskCommentServiceImpl implements TaskCommentService {
 
     private final TaskCommentRepository taskCommentRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<TaskCommentResponse> toPageResponse(Page<TaskComment> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -69,10 +71,7 @@ public class TaskCommentServiceImpl implements TaskCommentService {
     @Override
     public TaskCommentResponse update(UUID id, TaskCommentUpdateRequest request) {
         TaskComment comment = findCommentByIdOrThrow(id);
-        comment.setTaskId(request.getTaskId());
-        comment.setUserId(request.getUserId());
-        comment.setContent(request.getContent());
-
+        modelMapper.map(request, comment);
         return toResponse(comment);
     }
 
@@ -96,6 +95,3 @@ public class TaskCommentServiceImpl implements TaskCommentService {
                 .build();
     }
 }
-
-
-

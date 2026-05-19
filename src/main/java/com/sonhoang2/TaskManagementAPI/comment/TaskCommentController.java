@@ -55,7 +55,7 @@ public class TaskCommentController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("comment", taskCommentService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskCommentResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody TaskCommentUpdateRequest request
