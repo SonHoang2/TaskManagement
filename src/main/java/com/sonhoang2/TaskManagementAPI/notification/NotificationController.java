@@ -57,7 +57,7 @@ public class NotificationController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("notification", notificationService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, NotificationResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody NotificationUpdateRequest request

@@ -8,6 +8,7 @@ import com.sonhoang2.TaskManagementAPI.notification.dto.NotificationUpdateReques
 import com.sonhoang2.TaskManagementAPI.notification.entity.Notification;
 import com.sonhoang2.TaskManagementAPI.notification.entity.NotificationType;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<NotificationResponse> toPageResponse(Page<Notification> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -47,7 +49,10 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public PageResponse<NotificationResponse> findAll(UUID userId, Boolean isRead, NotificationType type, Pageable pageable) {
+    public PageResponse<NotificationResponse> findAll(UUID userId,
+                                                      Boolean isRead,
+                                                      NotificationType type,
+                                                      Pageable pageable) {
         Page<Notification> page;
 
         if (userId != null && isRead != null && type != null) {
@@ -80,10 +85,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public NotificationResponse update(UUID id, NotificationUpdateRequest request) {
         Notification notification = findNotificationByIdOrThrow(id);
-        notification.setUserId(request.getUserId());
-        notification.setType(request.getType());
-        notification.setContent(request.getContent());
-        notification.setIsRead(request.getIsRead());
+
+        modelMapper.map(request, notification);
 
         return toResponse(notification);
     }

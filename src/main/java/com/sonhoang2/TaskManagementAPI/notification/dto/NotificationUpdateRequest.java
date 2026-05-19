@@ -9,17 +9,11 @@ import java.util.UUID;
 
 @Data
 public class NotificationUpdateRequest {
-
-    @NotNull(message = "userId is required")
     private UUID userId;
-
-    @NotNull(message = "type is required")
     private NotificationType type;
 
     @Size(max = 500, message = "content length must be <= 500")
     private String content;
-
-    @NotNull(message = "isRead is required")
     private Boolean isRead;
 }
 
