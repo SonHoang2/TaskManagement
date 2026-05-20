@@ -8,6 +8,7 @@ import com.sonhoang2.TaskManagementAPI.label.dto.LabelResponse;
 import com.sonhoang2.TaskManagementAPI.label.dto.LabelUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.label.entity.Label;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class LabelServiceImpl implements LabelService {
 
     private final LabelRepository labelRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<LabelResponse> toPageResponse(Page<Label> page) {
         return new PageResponse<>(
@@ -72,9 +74,8 @@ public class LabelServiceImpl implements LabelService {
     @Override
     public LabelResponse update(UUID id, LabelUpdateRequest request) {
         Label existing = findLabelByIdOrThrow(id);
-        existing.setProjectId(request.getProjectId());
-        existing.setName(request.getName());
-        existing.setColor(request.getColor());
+
+        modelMapper.map(request, existing);
         return toResponse(labelRepository.save(existing));
     }
 

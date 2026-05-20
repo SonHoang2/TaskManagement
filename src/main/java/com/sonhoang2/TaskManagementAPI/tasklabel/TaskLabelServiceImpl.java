@@ -6,8 +6,8 @@ import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelCreateRequest;
 import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelResponse;
 import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelUpdateRequest;
 import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabel;
-import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabelId;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,22 +21,27 @@ import java.util.UUID;
 public class TaskLabelServiceImpl implements TaskLabelService {
 
     private final TaskLabelRepository taskLabelRepository;
+    private final ModelMapper modelMapper;
 
     private PageResponse<TaskLabelResponse> toPageResponse(Page<TaskLabel> page) {
-        return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
+        return new PageResponse<>(
+                page.getContent().stream().map(this::toResponse).toList(),
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements(),
                 page.getTotalPages(),
                 page.hasNext(),
                 page.hasPrevious(),
-                page.getNumberOfElements());
+                page.getNumberOfElements()
+        );
     }
 
     @Override
     public TaskLabelResponse create(TaskLabelCreateRequest request) {
-        TaskLabelId id = new TaskLabelId(request.getTaskId(), request.getLabelId());
-        TaskLabel taskLabel = TaskLabel.builder().id(id).build();
+        TaskLabel taskLabel = TaskLabel.builder()
+                .taskId(request.getTaskId())
+                .labelId(request.getLabelId())
+                .build();
         return toResponse(taskLabelRepository.save(taskLabel));
     }
 
@@ -60,41 +65,32 @@ public class TaskLabelServiceImpl implements TaskLabelService {
     @Override
     @Transactional(readOnly = true)
     public TaskLabelResponse findById(UUID taskId, UUID labelId) {
-        return toResponse(findTaskLabelByIdOrThrow(taskId, labelId));
+        return toResponse(findTaskLabelOrThrow(taskId, labelId));
     }
 
     @Override
     public TaskLabelResponse update(UUID taskId, UUID labelId, TaskLabelUpdateRequest request) {
-        TaskLabel existing = findTaskLabelByIdOrThrow(taskId, labelId);
-        TaskLabelId newId = new TaskLabelId(request.getTaskId(), request.getLabelId());
-
-        if (!existing.getId().equals(newId)) {
-            taskLabelRepository.delete(existing);
-            TaskLabel replacement = TaskLabel.builder().id(newId).build();
-            return toResponse(taskLabelRepository.save(replacement));
-        }
-
+        TaskLabel existing = findTaskLabelOrThrow(taskId, labelId);
+        modelMapper.map(request, existing);
         return toResponse(existing);
     }
 
     @Override
     public void delete(UUID taskId, UUID labelId) {
-        taskLabelRepository.delete(findTaskLabelByIdOrThrow(taskId, labelId));
+        taskLabelRepository.delete(findTaskLabelOrThrow(taskId, labelId));
     }
 
-    private TaskLabel findTaskLabelByIdOrThrow(UUID taskId, UUID labelId) {
-        TaskLabelId id = new TaskLabelId(taskId, labelId);
-        return taskLabelRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("TaskLabel with id " + id + " not found"));
+    private TaskLabel findTaskLabelOrThrow(UUID taskId, UUID labelId) {
+        return taskLabelRepository.findByIdTaskIdAndIdLabelId(taskId, labelId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "TaskLabel with taskId " + taskId + " and labelId " + labelId + " not found"
+                ));
     }
 
     private TaskLabelResponse toResponse(TaskLabel taskLabel) {
         return TaskLabelResponse.builder()
-                .taskId(taskLabel.getId().getTaskId())
-                .labelId(taskLabel.getId().getLabelId())
+                .taskId(taskLabel.getTaskId())
+                .labelId(taskLabel.getLabelId())
                 .build();
     }
 }
-
-
-

@@ -2,21 +2,17 @@ package com.sonhoang2.TaskManagementAPI.tasklabel.entity;
 
 import com.sonhoang2.TaskManagementAPI.label.entity.Label;
 import com.sonhoang2.TaskManagementAPI.task.entity.Task;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
-@Table(name = "task_labels")
+@Table(name = "task_labels", uniqueConstraints = {@UniqueConstraint(columnNames = {"task_id", "label_id"})})
 @Getter
 @Setter
 @Builder
@@ -24,17 +20,22 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TaskLabel {
 
-    @EmbeddedId
-    private TaskLabelId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "task_id", nullable = false)
+    private UUID taskId;
+
+    @Column(name = "label_id", nullable = false)
+    private UUID labelId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("taskId")
-    @JoinColumn(name = "task_id")
+    @JoinColumn(name = "task_id", insertable = false, updatable = false)
     private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("labelId")
-    @JoinColumn(name = "label_id")
+    @JoinColumn(name = "label_id", insertable = false, updatable = false)
     private Label label;
 }
 
