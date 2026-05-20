@@ -1,12 +1,12 @@
-package com.sonhoang2.TaskManagementAPI.label;
+package com.sonhoang2.TaskManagementAPI.tasklabel;
 
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceNotFoundException;
-import com.sonhoang2.TaskManagementAPI.label.dto.TaskLabelCreateRequest;
-import com.sonhoang2.TaskManagementAPI.label.dto.TaskLabelResponse;
-import com.sonhoang2.TaskManagementAPI.label.dto.TaskLabelUpdateRequest;
-import com.sonhoang2.TaskManagementAPI.label.entity.TaskLabel;
-import com.sonhoang2.TaskManagementAPI.label.entity.TaskLabelId;
+import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelCreateRequest;
+import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelResponse;
+import com.sonhoang2.TaskManagementAPI.tasklabel.dto.TaskLabelUpdateRequest;
+import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabel;
+import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabelId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

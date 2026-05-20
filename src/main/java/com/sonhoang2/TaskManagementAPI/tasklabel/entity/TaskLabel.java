@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.label.entity;
+package com.sonhoang2.TaskManagementAPI.tasklabel.entity;
 
 import com.sonhoang2.TaskManagementAPI.label.entity.Label;
 import com.sonhoang2.TaskManagementAPI.task.entity.Task;

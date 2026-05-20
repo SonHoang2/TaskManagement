@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.label.entity;
+package com.sonhoang2.TaskManagementAPI.tasklabel.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.label.dto;
+package com.sonhoang2.TaskManagementAPI.tasklabel.dto;
 
 import lombok.Data;
 

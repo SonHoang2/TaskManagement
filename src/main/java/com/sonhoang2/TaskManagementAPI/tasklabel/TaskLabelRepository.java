@@ -1,7 +1,7 @@
-package com.sonhoang2.TaskManagementAPI.label;
+package com.sonhoang2.TaskManagementAPI.tasklabel;
 
-import com.sonhoang2.TaskManagementAPI.label.entity.TaskLabel;
-import com.sonhoang2.TaskManagementAPI.label.entity.TaskLabelId;
+import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabel;
+import com.sonhoang2.TaskManagementAPI.tasklabel.entity.TaskLabelId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

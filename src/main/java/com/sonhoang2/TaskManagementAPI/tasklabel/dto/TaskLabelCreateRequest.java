@@ -1,4 +1,4 @@
-package com.sonhoang2.TaskManagementAPI.label.dto;
+package com.sonhoang2.TaskManagementAPI.tasklabel.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
