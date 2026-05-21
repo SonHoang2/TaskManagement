@@ -2,6 +2,7 @@ package com.sonhoang2.TaskManagementAPI.task;
 
 import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
 import com.sonhoang2.TaskManagementAPI.common.exception.ResourceNotFoundException;
+import com.sonhoang2.TaskManagementAPI.project.ProjectRepository;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskCreateRequest;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskResponse;
 import com.sonhoang2.TaskManagementAPI.task.dto.TaskUpdateRequest;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
     private final ModelMapper modelMapper;
 
     private PageResponse<TaskResponse> toPageResponse(Page<Task> page) {
@@ -37,19 +39,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse create(TaskCreateRequest request) {
-        Task task = Task.builder()
-                .projectId(request.getProjectId())
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .status(request.getStatus())
-                .priority(request.getPriority())
-                .assigneeId(request.getAssigneeId())
-                .reporterId(request.getReporterId())
-                .dueDate(request.getDueDate())
-                .startDate(request.getStartDate())
-                .parentTaskId(request.getParentTaskId())
-                .build();
+        if (!projectRepository.existsById(request.getProjectId())) {
+            throw new ResourceNotFoundException("Project not found: " + request.getProjectId());
+        }
 
+        Task task = modelMapper.map(request, Task.class);
         return toResponse(taskRepository.save(task));
     }
 
