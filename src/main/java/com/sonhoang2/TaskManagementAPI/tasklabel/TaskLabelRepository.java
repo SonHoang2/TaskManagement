@@ -9,14 +9,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TaskLabelRepository extends JpaRepository<TaskLabel, UUID> {
-    Page<TaskLabel> findByIdTaskId(UUID taskId, Pageable pageable);
+    Page<TaskLabel> findByTaskId(UUID taskId, Pageable pageable);
 
-    Page<TaskLabel> findByIdLabelId(UUID labelId, Pageable pageable);
+    Page<TaskLabel> findByLabelId(UUID labelId, Pageable pageable);
 
-    Page<TaskLabel> findByIdTaskIdAndIdLabelId(UUID taskId, UUID labelId, Pageable pageable);
+    Page<TaskLabel> findByTaskIdAndLabelId(UUID taskId, UUID labelId, Pageable pageable);
 
-    Optional<TaskLabel> findByIdTaskIdAndIdLabelId(UUID taskId, UUID labelId);
+    Optional<TaskLabel> findByTaskIdAndLabelId(UUID taskId, UUID labelId);
 }
-
-
-

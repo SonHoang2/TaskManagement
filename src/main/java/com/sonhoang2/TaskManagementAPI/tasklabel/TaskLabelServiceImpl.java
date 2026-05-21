@@ -50,11 +50,11 @@ public class TaskLabelServiceImpl implements TaskLabelService {
         Page<TaskLabel> page;
 
         if (taskId != null && labelId != null) {
-            page = taskLabelRepository.findByIdTaskIdAndIdLabelId(taskId, labelId, pageable);
+            page = taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId, pageable);
         } else if (taskId != null) {
-            page = taskLabelRepository.findByIdTaskId(taskId, pageable);
+            page = taskLabelRepository.findByTaskId(taskId, pageable);
         } else if (labelId != null) {
-            page = taskLabelRepository.findByIdLabelId(labelId, pageable);
+            page = taskLabelRepository.findByLabelId(labelId, pageable);
         } else {
             page = taskLabelRepository.findAll(pageable);
         }
@@ -81,7 +81,7 @@ public class TaskLabelServiceImpl implements TaskLabelService {
     }
 
     private TaskLabel findTaskLabelOrThrow(UUID taskId, UUID labelId) {
-        return taskLabelRepository.findByIdTaskIdAndIdLabelId(taskId, labelId)
+        return taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "TaskLabel with taskId " + taskId + " and labelId " + labelId + " not found"
                 ));
