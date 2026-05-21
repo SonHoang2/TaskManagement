@@ -1,78 +1,34 @@
 # Task Management API
 
-Simple Spring Boot CRUD for tasks and users.
+A Spring Boot REST API for managing projects, tasks, users, collaboration, and task-related activity.
 
-## Endpoints
+## Technologies
 
-Base URL uses config from `application.properties`:
-- Context path: `/api/v1`
-- Port: `5000`
+- Java 21
+- Spring Boot 4
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- JWT authentication
+- PostgreSQL
+- Maven
+- Lombok
+- ModelMapper
+- Bean Validation
+- JUnit and Mockito
 
-Task endpoints:
-- `POST /api/v1/tasks`
-- `GET /api/v1/tasks`
-- `GET /api/v1/tasks/{id}`
-- `PUT /api/v1/tasks/{id}`
-- `DELETE /api/v1/tasks/{id}`
+## Key Features
 
-User endpoints:
-- `POST /api/v1/users`
-- `GET /api/v1/users`
-- `GET /api/v1/users/{id}`
-- `PUT /api/v1/users/{id}`
-- `DELETE /api/v1/users/{id}`
-
-Auth endpoints:
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/signup`
-- `POST /api/v1/auth/logout`
-
-## Authentication
-
-- Public endpoints: `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /api/v1/users`
-- Protected endpoints: all remaining APIs under `/api/v1/**`
-- Send JWT in header: `Authorization: Bearer <accessToken>`
-
-### Sample Login Payload
-
-```json
-{
-  "email": "son@example.com",
-  "password": "secret123"
-}
-```
-
-### Sample Create Payload
-
-```json
-{
-  "title": "Implement auth",
-  "description": "Add JWT auth flow",
-  "status": "TODO",
-  "dueDate": "2026-03-31"
-}
-```
-
-### Sample Create User Payload
-
-```json
-{
-  "fullName": "Son Hoang",
-  "email": "son@example.com",
-  "password": "secret123",
-  "avatarUrl": "https://cdn.example.com/avatar.png"
-}
-```
-
-## Run tests
-
-```cmd
-mvnw.cmd test
-```
-
-## Run app
-
-```cmd
-mvnw.cmd spring-boot:run
-```
-
+- Built RESTful APIs for task management with CRUD operations for users, projects, tasks, labels, comments, attachments, task history, notifications, task-label mapping, and task-sprint mapping.
+- Implemented JWT-based authentication with signup, login, logout endpoint, stateless security, password hashing with BCrypt, and protected API routes.
+- Added user management with pagination, keyword search, email normalization, duplicate email prevention, and role support for `USER`, `ADMIN`, and `SUPER_ADMIN`.
+- Implemented project collaboration features including project creation, automatic owner membership, project members, invitations, invitation acceptance/rejection, and member access checks.
+- Added task management features with status, priority, assignee, reporter, due date, start date, parent task, and subtask support.
+- Added filtering and pagination for major resources, including tasks, users, labels, comments, attachments, histories, and notifications.
+- Implemented label management and task-label assignment with duplicate relation prevention through database constraints.
+- Added task comments, attachment metadata, and task history tracking for collaboration and auditing.
+- Added notification management with read/unread state and notification types such as task assigned, comment, task updated, and system notification.
+- Designed reusable API response and pagination DTOs for consistent response format.
+- Added centralized exception handling for validation errors, not found, unauthorized, forbidden, conflict, and internal server errors.
+- Used UUID identifiers and automatic timestamp fields for core entities.
+- Added unit tests for authentication, user service, and project service logic.
