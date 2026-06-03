@@ -1,6 +1,7 @@
 ## Microservice Migration
 
-Plan này dựa trên sơ đồ `microservice_architecture.svg`. Mục tiêu là tách Spring Boot monolith hiện tại thành nhiều service độc lập, mỗi service sở hữu database riêng và giao tiếp qua API Gateway, HTTP nội bộ và message broker.
+Plan này dựa trên sơ đồ `microservice_architecture.svg`. Mục tiêu là tách Spring Boot monolith hiện tại thành nhiều
+service độc lập, mỗi service sở hữu database riêng và giao tiếp qua API Gateway, HTTP nội bộ và message broker.
 
 ### 1. Hiện trạng project
 
@@ -17,7 +18,9 @@ Project hiện tại đang là một Spring Boot monolith gồm các module chí
 - `sprint`: sprint và quan hệ task-sprint.
 - `notification`: thông báo.
 
-Trong monolith, nhiều entity đang liên kết trực tiếp bằng JPA relation, ví dụ `Task -> Project`, `Task -> User`, `Project -> User`, `Sprint -> Project`. Khi migrate sang microservice, các liên kết giữa service phải được thay bằng UUID và API/event.
+Trong monolith, nhiều entity đang liên kết trực tiếp bằng JPA relation, ví dụ `Task -> Project`, `Task -> User`,
+`Project -> User`, `Sprint -> Project`. Khi migrate sang microservice, các liên kết giữa service phải được thay bằng
+UUID và API/event.
 
 ### 2. Kiến trúc đích
 
@@ -357,19 +360,21 @@ TaskRemovedFromSprint
 
 Sau khi các service chạy được riêng, thêm hạ tầng dùng chung:
 
-- Service Discovery: Eureka hoặc Consul.
-- Centralized Config: Spring Cloud Config.
-- Distributed Tracing: Zipkin hoặc OpenTelemetry.
-- Centralized Logging: ELK hoặc Loki.
-- Metrics: Prometheus và Grafana.
+- Service Discovery & Load Balancing: Kubernetes Service + DNS (built-in)
+- Centralized Config: ConfigMap + Secret
+- Distributed Tracing: OpenTelemetry (+ Jaeger/Tempo)
+- Centralized Logging: Loki hoặc ELK
+- Metrics: Prometheus + Grafana
+- (Optional) Service Mesh: Istio
 
 Thứ tự nên làm:
 
-1. Docker Compose.
-2. Env var cho service URL.
-3. Service discovery.
-4. Central config.
-5. Tracing/logging/metrics.
+1. Containerize (Docker)
+2. Deploy lên Kubernetes
+3. Service (discovery + load balancing built-in)
+4. ConfigMap / Secret
+5. Observability (Prometheus, Grafana, tracing…)
+6. (Optional) Service Mesh (Istio)
 
 ### 8. Giao tiếp giữa service
 
@@ -418,8 +423,8 @@ Hướng xử lý:
 - Relation nội bộ cùng service có thể giữ lại.
 - Relation sang service khác phải đổi thành UUID.
 - DTO response nếu cần hiển thị tên user/project thì có 2 cách:
-  - Gọi service khác để lấy thông tin.
-  - Dùng read model/cache nếu cần performance cao.
+    - Gọi service khác để lấy thông tin.
+    - Dùng read model/cache nếu cần performance cao.
 
 ### 10. Testing sau migration
 
