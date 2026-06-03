@@ -1,7 +1,8 @@
 package com.sonhoang2.userservice.common.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.userservice.common.dto.JSendResponse;
+import org.jspecify.annotations.NonNull;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,7 +28,7 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(
             HttpServletRequest request,
             HttpServletResponse response,
-            AccessDeniedException accessDeniedException
+            @NonNull AccessDeniedException accessDeniedException
     ) throws IOException, ServletException {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timestamp", Instant.now());
