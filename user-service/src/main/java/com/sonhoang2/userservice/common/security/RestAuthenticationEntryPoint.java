@@ -1,7 +1,8 @@
 package com.sonhoang2.userservice.common.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.userservice.common.dto.JSendResponse;
+import org.jspecify.annotations.NonNull;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,21 +25,17 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException authException
-    ) throws IOException, ServletException {
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         @NonNull AuthenticationException authException) throws IOException, ServletException {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timestamp", Instant.now());
         data.put("path", request.getRequestURI());
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(
-                response.getOutputStream(),
-                JSendResponse.error("Unauthorized", HttpStatus.UNAUTHORIZED.value(), data)
-        );
+        objectMapper.writeValue(response.getOutputStream(),
+                JSendResponse.error("Unauthorized", HttpStatus.UNAUTHORIZED.value(), data));
     }
 }
 
