@@ -1,14 +1,14 @@
 package com.sonhoang2.userservice.common.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.userservice.common.dto.JSendResponse;
-import org.jspecify.annotations.NonNull;
-import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         @NonNull AuthenticationException authException) throws IOException, ServletException {
+                         @NonNull AuthenticationException authException) throws IOException {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timestamp", Instant.now());
         data.put("path", request.getRequestURI());
