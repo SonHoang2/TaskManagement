@@ -1,7 +1,7 @@
 package com.sonhoang2.project_service.project;
 
-import com.sonhoang2.TaskManagementAPI.project.entity.ProjectInvitation;
-import com.sonhoang2.TaskManagementAPI.project.entity.ProjectInvitationStatus;
+import com.sonhoang2.project_service.project.entity.ProjectInvitation;
+import com.sonhoang2.project_service.project.entity.ProjectInvitationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

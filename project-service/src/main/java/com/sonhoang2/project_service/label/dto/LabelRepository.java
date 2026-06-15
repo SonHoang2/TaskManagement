@@ -1,6 +1,6 @@
 package com.sonhoang2.project_service.label.dto;
 
-import com.sonhoang2.TaskManagementAPI.label.entity.Label;
+import com.sonhoang2.project_service.label.entity.Label;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

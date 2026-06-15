@@ -1,12 +1,12 @@
 package com.sonhoang2.project_service.label;
 
-import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
-import com.sonhoang2.TaskManagementAPI.common.exception.ResourceNotFoundException;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelCreateRequest;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelRepository;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelResponse;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelUpdateRequest;
-import com.sonhoang2.TaskManagementAPI.label.entity.Label;
+import com.sonhoang2.project_service.common.dto.PageResponse;
+import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.project_service.label.dto.LabelCreateRequest;
+import com.sonhoang2.project_service.label.dto.LabelRepository;
+import com.sonhoang2.project_service.label.dto.LabelResponse;
+import com.sonhoang2.project_service.label.dto.LabelUpdateRequest;
+import com.sonhoang2.project_service.label.entity.Label;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -86,7 +86,9 @@ public class LabelServiceImpl implements LabelService {
 
     private Label findLabelByIdOrThrow(UUID id) {
         return labelRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Label with id " + id + " not found"));
+                .orElseThrow(() -> {
+                    return new ResourceNotFoundException("Label with id " + id + " not found");
+                });
     }
 
     private LabelResponse toResponse(Label label) {

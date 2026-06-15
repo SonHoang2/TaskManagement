@@ -1,6 +1,6 @@
 package com.sonhoang2.project_service.project.dto;
 
-import com.sonhoang2.TaskManagementAPI.project.entity.ProjectInvitationStatus;
+import com.sonhoang2.project_service.project.entity.ProjectInvitationStatus;
 import lombok.Builder;
 import lombok.Data;
 

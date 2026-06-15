@@ -1,6 +1,6 @@
 package com.sonhoang2.project_service.project.dto;
 
-import com.sonhoang2.TaskManagementAPI.project.entity.ProjectMemberRole;
+import com.sonhoang2.project_service.project.entity.ProjectMemberRole;
 import lombok.Builder;
 import lombok.Data;
 

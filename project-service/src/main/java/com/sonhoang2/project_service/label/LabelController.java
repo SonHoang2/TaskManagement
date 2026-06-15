@@ -1,10 +1,12 @@
 package com.sonhoang2.project_service.label;
 
-import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
-import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelCreateRequest;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelResponse;
-import com.sonhoang2.TaskManagementAPI.label.dto.LabelUpdateRequest;
+
+
+import com.sonhoang2.project_service.common.dto.JSendResponse;
+import com.sonhoang2.project_service.common.dto.PageResponse;
+import com.sonhoang2.project_service.label.dto.LabelCreateRequest;
+import com.sonhoang2.project_service.label.dto.LabelResponse;
+import com.sonhoang2.project_service.label.dto.LabelUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;

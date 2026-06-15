@@ -1,6 +1,5 @@
 package com.sonhoang2.project_service.project.entity;
 
-import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -29,13 +29,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectInvitation {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "project_id", nullable = false)
-    private UUID projectId;
+    @ManyToOne
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
     @Column(name = "invited_by_id", nullable = false)
     private UUID invitedById;
@@ -43,27 +43,15 @@ public class ProjectInvitation {
     @Column(name = "invitee_id", nullable = false)
     private UUID inviteeId;
 
-    @ManyToOne
-    @JoinColumn(name = "project_id", insertable = false, updatable = false)
-    private Project project;
-
-    @ManyToOne
-    @JoinColumn(name = "invited_by_id", insertable = false, updatable = false)
-    private User invitedBy;
-
-    @ManyToOne
-    @JoinColumn(name = "invitee_id", insertable = false, updatable = false)
-    private User invitee;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(nullable = false, length = 32)
     private ProjectInvitationStatus status;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column
-    private Instant respondedAt;
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }
-
