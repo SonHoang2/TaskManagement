@@ -47,6 +47,9 @@ public class ProjectInvitation {
     @Column(nullable = false, length = 32)
     private ProjectInvitationStatus status;
 
+    @Column(name = "responded_at")
+    private Instant respondedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
