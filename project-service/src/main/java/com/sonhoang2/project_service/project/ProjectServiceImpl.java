@@ -2,7 +2,6 @@ package com.sonhoang2.project_service.project;
 
 import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
-import com.sonhoang2.project_service.common.utils.SecurityUtils;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
@@ -50,29 +49,31 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectResponse create(CreateProjectRequest request) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
-
+    public ProjectResponse create(CreateProjectRequest request, UUID userId) {
+        // Use the passed userId for the owner
         Project project = projectRepository.save(Project.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .ownerId(currentUserId)
+                .ownerId(userId)
                 .build());
 
-        projectMemberRepository.save(ProjectMember.builder().project(project)
-                .userId(currentUserId).role(ProjectMemberRole.OWNER).build());
+        projectMemberRepository.save(ProjectMember.builder()
+                .project(project)
+                .userId(userId)
+                .role(ProjectMemberRole.OWNER)
+                .build());
 
         return toProjectResponse(project);
     }
 
     @Override
-    public ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
-
+    public ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project with id " + projectId + " not found"));
 
-        ProjectMember currentMembership = projectMemberRepository.findByProjectIdAndUserId(projectId, currentUserId)
+        // Check current user's membership and role using the passed userId
+        ProjectMember currentMembership = projectMemberRepository
+                .findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new AccessDeniedException("You are not a member of this project"));
 
         if (currentMembership.getRole() != ProjectMemberRole.OWNER && currentMembership.getRole() != ProjectMemberRole.ADMIN) {
@@ -94,7 +95,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         ProjectInvitation invitation = projectInvitationRepository.save(ProjectInvitation.builder()
                 .project(project)
-                .invitedById(currentUserId)
+                .invitedById(userId)          // the one who invites (current user)
                 .inviteeId(inviteeId)
                 .status(ProjectInvitationStatus.PENDING)
                 .build());
@@ -103,11 +104,12 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
+    public ProjectInvitationResponse decideInvitation(UUID invitationId,
+                                                      InvitationDecisionRequest request,
+                                                      UUID userId) {
         ProjectInvitation invitation = findInvitationByIdOrThrow(invitationId);
 
-        if (!invitation.getInviteeId().equals(currentUserId)) {
+        if (!invitation.getInviteeId().equals(userId)) {
             throw new AccessDeniedException("Only the invited user can respond to this invitation");
         }
 
@@ -116,13 +118,13 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         if (request.getDecision() == InvitationDecision.ACCEPT) {
-            if (projectMemberRepository.existsByProjectIdAndUserId(invitation.getProject().getId(), currentUserId)) {
+            if (projectMemberRepository.existsByProjectIdAndUserId(invitation.getProject().getId(), userId)) {
                 throw new ResourceConflictException("User is already a project member");
             }
 
             projectMemberRepository.save(ProjectMember.builder()
                     .project(invitation.getProject())
-                    .userId(currentUserId)
+                    .userId(userId)
                     .role(ProjectMemberRole.MEMBER)
                     .build());
 
@@ -137,10 +139,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectMemberResponse> listMembers(UUID projectId) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
-
-        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, currentUserId)) {
+    public List<ProjectMemberResponse> listMembers(UUID projectId, UUID userId) {
+        // Verify that the requesting user is a member
+        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
             throw new AccessDeniedException("You are not a member of this project");
         }
 
@@ -150,12 +151,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
-
-    private ProjectMember findMembership(UUID projectId, UUID userId) {
-        return projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
-                .orElseThrow(() -> new AccessDeniedException("You are not a member of this project"));
-    }
-
+    // Helper methods (unchanged)
     private ProjectInvitation findInvitationByIdOrThrow(UUID invitationId) {
         return projectInvitationRepository.findById(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation with id " + invitationId + " not found"));
@@ -192,5 +188,3 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
     }
 }
-
-

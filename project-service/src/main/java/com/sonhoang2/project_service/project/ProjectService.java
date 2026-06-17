@@ -11,15 +11,13 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProjectService {
-
-    ProjectResponse create(CreateProjectRequest request);
-
-    ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request);
-
-    ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request);
-
-    List<ProjectMemberResponse> listMembers(UUID projectId);
-
     List<ProjectResponse> listAllProject();
-}
 
+    ProjectResponse create(CreateProjectRequest request, UUID userId);          // added userId
+
+    ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request, UUID userId);
+
+    ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request, UUID userId);
+
+    List<ProjectMemberResponse> listMembers(UUID projectId, UUID userId);       // added userId
+}

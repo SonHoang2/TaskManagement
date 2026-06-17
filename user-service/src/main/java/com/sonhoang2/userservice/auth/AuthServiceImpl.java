@@ -13,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -31,28 +33,30 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String token = jwtService.generateToken(request.getEmail());
-        return buildLoginResponse(token);
+        // Get user to retrieve userId
+        UserResponse user = userService.findByEmail(request.getEmail());
+        String token = jwtService.generateToken(user.getEmail(), user.getId()); // pass userId
+        return buildLoginResponse(token, user.getId());
     }
 
     @Override
     public LoginResponse signup(RegisterRequest request) {
         UserResponse userResponse = userService.register(request);
-        String token = jwtService.generateToken(userResponse.getEmail());
-        return buildLoginResponse(token);
+        String token = jwtService.generateToken(userResponse.getEmail(), userResponse.getId());
+        return buildLoginResponse(token, userResponse.getId());
     }
 
     @Override
     public void logout() {
-        // Stateless JWT logout is handled on client side by discarding the token.
+        // Stateless
     }
 
-    private LoginResponse buildLoginResponse(String token) {
+    private LoginResponse buildLoginResponse(String token, UUID userId) {
         return LoginResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresInMs(jwtService.getJwtExpirationMs())
+                .userId(userId)   // include userId in response
                 .build();
     }
 }
-

@@ -1,13 +1,15 @@
 package com.sonhoang2.userservice.auth.dto;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+import java.util.UUID;
+
+@Data
 @Builder
 public class LoginResponse {
-    String accessToken;
-    String tokenType;
-    long expiresInMs;
+    private String accessToken;
+    private String tokenType;
+    private Long expiresInMs;
+    private UUID userId;
 }
-

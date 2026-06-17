@@ -22,5 +22,7 @@ public interface UserService {
     void delete(UUID id);
 
     UserResponse register(RegisterRequest request);
+
+    UserResponse findByEmail(String email);
 }
 
