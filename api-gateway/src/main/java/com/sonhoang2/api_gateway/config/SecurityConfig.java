@@ -20,7 +20,8 @@ public class SecurityConfig {
                         .pathMatchers("/auth/login", "/public/**").permitAll()
                         .anyExchange().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt());
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
+                }));
         return http.build();
     }
 }
