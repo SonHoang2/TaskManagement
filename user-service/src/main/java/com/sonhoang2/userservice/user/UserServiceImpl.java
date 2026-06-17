@@ -135,5 +135,14 @@ public class UserServiceImpl implements UserService {
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse findByEmail(String email) {
+        String normalizedEmail = normalizeEmail(email);
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        return toResponse(user);
+    }
 }
 
