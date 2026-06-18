@@ -1,10 +1,7 @@
 package com.sonhoang2.userservice.common.config;
 
-import com.sonhoang2.userservice.common.security.RestAccessDeniedHandler;
-import com.sonhoang2.userservice.common.security.RestAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,17 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    private final RestAuthenticationEntryPoint authenticationEntryPoint;
-    private final RestAccessDeniedHandler accessDeniedHandler;
 
-    public SecurityConfig(
-            UserDetailsService userDetailsService,
-            RestAuthenticationEntryPoint authenticationEntryPoint,
-            RestAccessDeniedHandler accessDeniedHandler
-    ) {
+    public SecurityConfig(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-        this.authenticationEntryPoint = authenticationEntryPoint;
-        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -40,15 +29,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers("/auth/signup").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .authenticationProvider(authenticationProvider())
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
+                        .anyRequest().permitAll()
                 );
 
         return http.build();
@@ -72,4 +53,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
