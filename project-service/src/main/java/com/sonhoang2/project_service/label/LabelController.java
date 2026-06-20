@@ -1,7 +1,5 @@
 package com.sonhoang2.project_service.label;
 
-
-
 import com.sonhoang2.project_service.common.dto.JSendResponse;
 import com.sonhoang2.project_service.common.dto.PageResponse;
 import com.sonhoang2.project_service.label.dto.LabelCreateRequest;
@@ -59,7 +57,7 @@ public class LabelController {
         return ResponseEntity.ok(JSendResponse.success(Map.of("label", labelService.findById(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, LabelResponse>>> update(
             @PathVariable UUID id,
             @Valid @RequestBody LabelUpdateRequest request
