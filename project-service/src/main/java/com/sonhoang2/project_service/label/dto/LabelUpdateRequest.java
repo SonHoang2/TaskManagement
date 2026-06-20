@@ -18,10 +18,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LabelUpdateRequest {
 
-    @NotNull(message = "Project ID is required")
     private UUID projectId;
 
-    @NotBlank(message = "Name is required")
     @Size(max = 50, message = "Name must not exceed 50 characters")
     private String name;
 
