@@ -32,3 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 /src/main/resources/application-local.properties
+/api-gateway/src/main/resources/application-local.properties
+/project-service/src/main/resources/application-local.properties
+/user-service/src/main/resources/application-local.properties
