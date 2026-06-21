@@ -15,7 +15,8 @@ public class JwtToHeaderGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        return exchange.getPrincipal().cast(JwtAuthenticationToken.class)
+        String path = exchange.getRequest().getURI().getPath();
+         return exchange.getPrincipal().cast(JwtAuthenticationToken.class)
                 .flatMap(authentication -> {
                     Jwt jwt = authentication.getToken();
                     String userId = jwt.getClaimAsString("userId");
