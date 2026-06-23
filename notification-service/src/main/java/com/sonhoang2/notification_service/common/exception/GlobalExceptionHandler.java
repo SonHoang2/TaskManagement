@@ -1,6 +1,6 @@
 package com.sonhoang2.notification_service.common.exception;
 
-import com.sonhoang2.project_service.common.dto.JSendResponse;
+import com.sonhoang2.notification_service.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;

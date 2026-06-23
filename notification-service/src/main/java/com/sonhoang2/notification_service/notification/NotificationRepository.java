@@ -1,7 +1,7 @@
 package com.sonhoang2.notification_service.notification;
 
-import com.sonhoang2.TaskManagementAPI.notification.entity.Notification;
-import com.sonhoang2.TaskManagementAPI.notification.entity.NotificationType;
+import com.sonhoang2.notification_service.notification.entity.Notification;
+import com.sonhoang2.notification_service.notification.entity.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

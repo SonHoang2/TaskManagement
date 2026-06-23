@@ -1,7 +1,7 @@
 package com.sonhoang2.notification_service.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sonhoang2.project_service.common.dto.JSendResponse;
+import com.sonhoang2.notification_service.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

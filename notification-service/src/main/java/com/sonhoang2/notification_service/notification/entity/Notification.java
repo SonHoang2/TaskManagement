@@ -1,6 +1,5 @@
 package com.sonhoang2.notification_service.notification.entity;
 
-import com.sonhoang2.TaskManagementAPI.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,8 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,23 +34,24 @@ public class Notification {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private User user;
-
     @Enumerated(EnumType.STRING)
-    @Column(length = 50)
+    @Column(length = 50, nullable = false)
     private NotificationType type;
 
     @Column(length = 500)
     private String content;
 
+    @Column(name = "entity_id")
+    private UUID entityId;
+
+    @Column(name = "entity_type", length = 50)
+    private String entityType;
+
     @Builder.Default
-    @Column(nullable = false)
+    @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 }
-

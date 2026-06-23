@@ -1,11 +1,11 @@
 package com.sonhoang2.notification_service.notification;
 
-import com.sonhoang2.TaskManagementAPI.common.dto.JSendResponse;
-import com.sonhoang2.TaskManagementAPI.common.dto.PageResponse;
-import com.sonhoang2.TaskManagementAPI.notification.dto.NotificationCreateRequest;
-import com.sonhoang2.TaskManagementAPI.notification.dto.NotificationResponse;
-import com.sonhoang2.TaskManagementAPI.notification.dto.NotificationUpdateRequest;
-import com.sonhoang2.TaskManagementAPI.notification.entity.NotificationType;
+import com.sonhoang2.notification_service.common.dto.JSendResponse;
+import com.sonhoang2.notification_service.common.dto.PageResponse;
+import com.sonhoang2.notification_service.notification.dto.NotificationCreateRequest;
+import com.sonhoang2.notification_service.notification.dto.NotificationResponse;
+import com.sonhoang2.notification_service.notification.dto.NotificationUpdateRequest;
+import com.sonhoang2.notification_service.notification.entity.NotificationType;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
