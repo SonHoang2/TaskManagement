@@ -1,6 +1,6 @@
 package com.sonhoang2.notification_service.common.dto;
 
-import com.sonhoang2.project_service.common.enums.UserRole;
+import com.sonhoang2.notification_service.common.enums.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 
