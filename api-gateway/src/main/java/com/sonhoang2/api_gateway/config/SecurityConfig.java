@@ -1,5 +1,6 @@
 package com.sonhoang2.api_gateway.config;
 
+import com.sonhoang2.api_gateway.security.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,16 +12,21 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+    public SecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint) {
+        this.authenticationEntryPoint = authenticationEntryPoint;
+    }
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        http
-                .csrf(csrf -> csrf.disable())
-                .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(HttpMethod.POST, "/user-service/auth/**").permitAll()
-                        .anyExchange().authenticated()
-                )
+        http.csrf(csrf -> csrf.disable())
+                .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/auth/**")
+                        .permitAll()
+                        .anyExchange()
+                        .authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
-                }));
+                }).authenticationEntryPoint(authenticationEntryPoint));
         return http.build();
     }
 }
