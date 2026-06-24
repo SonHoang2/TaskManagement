@@ -21,11 +21,11 @@ public class JwtDecoderConfig {
     public ReactiveJwtDecoder jwtDecoder() {
         SecretKeySpec secretKeySpec = new SecretKeySpec(
                 secret.getBytes(StandardCharsets.UTF_8),
-                "HMACSHA512"
+                "HMACSHA256"
         );
 
         return NimbusReactiveJwtDecoder.withSecretKey(secretKeySpec)
-                .macAlgorithm(MacAlgorithm.HS512)
+                .macAlgorithm(MacAlgorithm.HS256)
                 .build();
     }
 }
