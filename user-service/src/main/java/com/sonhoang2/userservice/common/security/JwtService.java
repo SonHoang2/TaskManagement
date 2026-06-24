@@ -37,7 +37,7 @@ public class JwtService {
                 .claim("userId", userId.toString())   // add userId claim
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
-                .signWith(signingKey)
+                .signWith(signingKey, Jwts.SIG.HS512)
                 .compact();
     }
 
