@@ -34,10 +34,10 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(email)
-                .claim("userId", userId.toString())   // add userId claim
+                .claim("userId", userId != null ? userId.toString() : null)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
-                .signWith(signingKey,  Jwts.SIG.HS256)
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 
