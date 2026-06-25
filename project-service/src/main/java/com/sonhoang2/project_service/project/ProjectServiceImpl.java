@@ -134,6 +134,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         invitation.setRespondedAt(Instant.now());
+
+        projectInvitationRepository.save(invitation);
+
         return toInvitationResponse(invitation);
     }
 
