@@ -91,7 +91,7 @@ class TaskCommentServiceImplTest {
         PageResponse<TaskCommentResponse> result = taskCommentService.findAll(null, null, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskCommentRepository).findAll(pageable);
     }
 
@@ -104,7 +104,7 @@ class TaskCommentServiceImplTest {
         PageResponse<TaskCommentResponse> result = taskCommentService.findAll(taskId, null, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskCommentRepository).findByTaskId(taskId, pageable);
     }
 
@@ -117,7 +117,7 @@ class TaskCommentServiceImplTest {
         PageResponse<TaskCommentResponse> result = taskCommentService.findAll(null, userId, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskCommentRepository).findByUserId(userId, pageable);
     }
 
@@ -130,7 +130,7 @@ class TaskCommentServiceImplTest {
         PageResponse<TaskCommentResponse> result = taskCommentService.findAll(taskId, userId, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskCommentRepository).findByTaskIdAndUserId(taskId, userId, pageable);
     }
 
@@ -157,7 +157,7 @@ class TaskCommentServiceImplTest {
     @Test
     void update_ShouldReturnUpdatedCommentResponse_WhenCommentExists() {
         when(taskCommentRepository.findById(commentId)).thenReturn(Optional.of(comment));
-        when(modelMapper.map(updateRequest, comment)).thenReturn(comment);
+        doNothing().when(modelMapper).map(updateRequest, comment);
 
         TaskCommentResponse result = taskCommentService.update(commentId, updateRequest);
 

@@ -1,6 +1,8 @@
 package com.sonhoang2.task_service.task;
 
+import com.sonhoang2.task_service.common.dto.JSendResponse;
 import com.sonhoang2.task_service.common.dto.PageResponse;
+import com.sonhoang2.task_service.common.dto.ProjectResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.task_service.feign.ProjectServiceClient;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
@@ -87,7 +89,11 @@ class TaskServiceImplTest {
 
     @Test
     void create_ShouldReturnTaskResponse_WhenProjectExists() {
-        when(projectServiceClient.findById(projectId)).thenReturn(mockJSendResponse());
+        // Tạo mock response sử dụng static method success()
+        Map<String, ProjectResponse> data = Map.of("project", new ProjectResponse());
+        JSendResponse<Map<String, ProjectResponse>> mockResponse = JSendResponse.success(data);
+
+        when(projectServiceClient.findById(projectId)).thenReturn(mockResponse);
         when(modelMapper.map(createRequest, Task.class)).thenReturn(task);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
@@ -226,7 +232,4 @@ class TaskServiceImplTest {
         verify(taskRepository, never()).delete(any(Task.class));
     }
 
-    private com.sonhoang2.task_service.common.dto.JSendResponse<Map<String, com.sonhoang2.task_service.common.dto.ProjectResponse>> mockJSendResponse() {
-        return new com.sonhoang2.task_service.common.dto.JSendResponse<>();
-    }
 }
