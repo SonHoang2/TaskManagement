@@ -1,6 +1,7 @@
 package com.sonhoang2.task_service.attachment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sonhoang2.task_service.common.config.SecurityConfig;
 import com.sonhoang2.task_service.common.dto.JSendResponse;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentCreateRequest;
@@ -9,8 +10,9 @@ import com.sonhoang2.task_service.attachment.dto.TaskAttachmentUpdateRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -22,9 +24,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TaskAttachmentController.class)
+@Import(SecurityConfig.class)
 class TaskAttachmentControllerTest {
 
     @Autowired
@@ -33,7 +37,7 @@ class TaskAttachmentControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private TaskAttachmentService taskAttachmentService;
 
     private UUID attachmentId = UUID.randomUUID();
@@ -95,7 +99,7 @@ class TaskAttachmentControllerTest {
         mockMvc.perform(get("/task-attachments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.page.data[0].id").value(attachmentId.toString()));
+                .andExpect(jsonPath("$.data.page.content[0].id").value(attachmentId.toString()));
     }
 
     @Test
@@ -163,7 +167,8 @@ class TaskAttachmentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskAttachmentService.update(eq(attachmentId), any(TaskAttachmentUpdateRequest.class))).thenReturn(response);
+        when(taskAttachmentService.update(eq(attachmentId),
+                any(TaskAttachmentUpdateRequest.class))).thenReturn(response);
 
         mockMvc.perform(patch("/task-attachments/{id}", attachmentId)
                         .contentType(MediaType.APPLICATION_JSON)

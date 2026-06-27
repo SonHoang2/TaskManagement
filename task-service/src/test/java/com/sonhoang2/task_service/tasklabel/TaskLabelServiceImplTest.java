@@ -84,7 +84,7 @@ class TaskLabelServiceImplTest {
         PageResponse<TaskLabelResponse> result = taskLabelService.findAll(null, null, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskLabelRepository).findAll(pageable);
     }
 
@@ -97,7 +97,7 @@ class TaskLabelServiceImplTest {
         PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, null, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskLabelRepository).findByTaskId(taskId, pageable);
     }
 
@@ -110,7 +110,7 @@ class TaskLabelServiceImplTest {
         PageResponse<TaskLabelResponse> result = taskLabelService.findAll(null, labelId, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskLabelRepository).findByLabelId(labelId, pageable);
     }
 
@@ -123,7 +123,7 @@ class TaskLabelServiceImplTest {
         PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, labelId, pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getData().size());
+        assertEquals(1, result.content().size());
         verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId, pageable);
     }
 
@@ -151,7 +151,7 @@ class TaskLabelServiceImplTest {
     @Test
     void update_ShouldReturnUpdatedTaskLabelResponse_WhenTaskLabelExists() {
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.of(taskLabel));
-        when(modelMapper.map(updateRequest, taskLabel)).thenReturn(taskLabel);
+        doNothing().when(modelMapper).map(updateRequest, taskLabel);
 
         TaskLabelResponse result = taskLabelService.update(taskId, labelId, updateRequest);
 
