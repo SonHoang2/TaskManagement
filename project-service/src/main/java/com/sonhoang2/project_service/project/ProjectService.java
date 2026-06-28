@@ -20,4 +20,8 @@ public interface ProjectService {
     ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request, UUID userId);
 
     List<ProjectMemberResponse> listMembers(UUID projectId, UUID userId);       // added userId
+
+    List<ProjectInvitationResponse> listInvitations(UUID projectId, UUID userId);
+
+    List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId);
 }
