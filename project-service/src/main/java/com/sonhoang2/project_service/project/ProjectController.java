@@ -63,7 +63,6 @@ public class ProjectController {
             @PathVariable UUID invitationId,
             @Valid @RequestBody InvitationDecisionRequest request,
             @RequestHeader("X-User-Id") UUID userId) {                     // added header
-
         ProjectInvitationResponse invitation = projectService.decideInvitation(invitationId, request, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("invitation", invitation)));
     }
@@ -75,6 +74,25 @@ public class ProjectController {
 
         return ResponseEntity.ok(JSendResponse.success(
                 Map.of("members", projectService.listMembers(projectId, userId)) // pass userId
+        ));
+    }
+
+    @GetMapping("/{projectId}/invitations")
+    public ResponseEntity<JSendResponse<Map<String, List<ProjectInvitationResponse>>>> listInvitations(
+            @PathVariable UUID projectId,
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("invitations", projectService.listInvitations(projectId, userId))
+        ));
+    }
+
+    @GetMapping("/invitations/me")
+    public ResponseEntity<JSendResponse<Map<String, List<ProjectInvitationResponse>>>> listMyInvitations(
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("invitations", projectService.listInvitationsByInvitee(userId))
         ));
     }
 

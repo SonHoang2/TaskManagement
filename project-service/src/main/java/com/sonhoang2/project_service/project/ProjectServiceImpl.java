@@ -154,6 +154,29 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectInvitationResponse> listInvitations(UUID projectId, UUID userId) {
+        // Verify that the requesting user is a member
+        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new AccessDeniedException("You are not a member of this project");
+        }
+
+        return projectInvitationRepository.findByProjectId(projectId)
+                .stream()
+                .map(this::toInvitationResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId) {
+        return projectInvitationRepository.findByInviteeId(userId)
+                .stream()
+                .map(this::toInvitationResponse)
+                .toList();
+    }
+
     // Helper methods (unchanged)
     private ProjectInvitation findInvitationByIdOrThrow(UUID invitationId) {
         return projectInvitationRepository.findById(invitationId)
