@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "cd5537d2-1ed1-4efa-9dd3-a390c56e0f50",
+    "name": "sprint service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Sprint",
+      "item": [
+        {
+          "name": "find all",
+          "id": "aa955f77-7946-4e00-9f35-038ef76ea9da",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/task-sprints",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "task-sprints"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find by id",
+          "id": "e1333f53-1590-4afa-adfc-197c7f0d4014",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "task-sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1d9260c7-492f-49f2-a9e1-4cc9884762b2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find by id",
+          "id": "82b40f30-35b1-40e2-8dd5-eff41051171f",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "task-sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1d9260c7-492f-49f2-a9e1-4cc9884762b2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update by id",
+          "id": "028de90d-fbbd-4f78-b477-9da3238cc269",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN 123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "task-sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "d4f75714-d7cc-44ff-8d98-cbb8c17917f2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create",
+          "id": "45b44eaa-481c-46c7-8845-dc33bb3d9eaa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": \"e22aaf85-5cc6-4b9f-9d2a-94a3da25a670\",\n  \"changedBy\": \"2dff47a9-57b3-42b8-baaa-35832889660e\",\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN\",\n  \"newValue\": \"IN_PROGRESS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/sprint-service/task-sprints",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "task-sprints"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "77074bb2-a5e9-4b96-85d0-fb893b9e58c7"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "7f94b59c-0344-464b-9083-fe7ddd93fbe6",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "5ea5fd41-264a-41b3-86fe-403f51aec21e",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

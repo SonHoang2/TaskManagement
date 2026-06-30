@@ -1,0 +1,153 @@
+{
+  "info": {
+    "_postman_id": "0e5934d0-9e11-4d19-9cf6-c57e7015add4",
+    "name": "notifications service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "create notification",
+      "id": "701413f9-6761-489c-8955-4da605bc076c",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"2dff47a9-57b3-42b8-baaa-35832889660e\",\n  \"type\": \"SYSTEM\",\n  \"content\": \"This is a sample notification content.\",\n  \"isRead\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/notification-service/notifications",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "notification-service",
+            "notifications"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "update notification by id",
+      "id": "444d5e3a-edcd-4ba3-a57a-63a41280673a",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n//   \"content\": \"This is a sample notification content.\",\n  \"isRead\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/notification-service/notifications/:id",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "notification-service",
+            "notifications",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "44a17039-1a75-4739-aaa5-347be63ae87a"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "find notification by id",
+      "id": "dfe5221a-f911-40bb-8326-6f1a8f866d61",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/notification-service/notifications/:id",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "notification-service",
+            "notifications",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "1aa2abb4-cd6b-4e30-899b-367a48c61577"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "find all notifications",
+      "id": "2b9eb822-8d9b-4410-a001-7dfc9f4aad8b",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{url}}/notification-service/notifications",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "notification-service",
+            "notifications"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "3271e712-ca73-4d2b-bdd0-9fa25a9a647f",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "e151caf4-32d0-4a1e-ad28-65a7f700dbe8",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

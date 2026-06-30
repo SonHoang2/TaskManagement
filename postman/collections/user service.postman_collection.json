@@ -1,0 +1,410 @@
+{
+  "info": {
+    "_postman_id": "db2fd276-0fc2-4482-bdf8-8403f8cee645",
+    "name": "user service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "get all user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "ea0c9c99-dad9-41af-afe4-dbf3f770fd1b",
+                "exec": [
+                  "// 1. Phân tích cú pháp chuỗi JSON phản hồi từ server\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// Lấy userId hiện tại từ biến môi trường để so sánh\r",
+                  "const currentUserId = pm.environment.get(\"userId\");\r",
+                  "\r",
+                  "// 2. Lấy danh sách user từ mảng content\r",
+                  "const usersList = responseData?.data?.page?.content || [];\r",
+                  "\r",
+                  "// Tìm user đầu tiên trong mảng có id khác với currentUserId\r",
+                  "const firstDifferentUser = usersList.find(user => user.id !== currentUserId);\r",
+                  "\r",
+                  "if (firstDifferentUser) {\r",
+                  "    const firstUserId = firstDifferentUser.id;\r",
+                  "\r",
+                  "    // 3. Lưu vào biến môi trường (Environment Variable) tên là 'invitedUserId'\r",
+                  "    pm.environment.set(\"invitedUserId\", firstUserId);\r",
+                  "\r",
+                  "    // In ra console để kiểm tra xem đã lấy đúng chưa\r",
+                  "    console.log(\"Đã lưu invitedUserId mới (khác với userId hiện tại):\", firstUserId);\r",
+                  "} else {\r",
+                  "    console.warn(\"Không tìm thấy user nào có ID khác với userId hiện tại hoặc danh sách trống.\");\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "1957783c-2970-402d-8ce3-8589b9addb34",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/user-service/users",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "id,asc",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS",
+                  "disabled": true
+                },
+                {
+                  "key": "keyword",
+                  "value": "keyword",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get user",
+          "id": "63620a0a-c6e9-4a52-8acf-c140cbdc1a4e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"email\": \"sonhoang2@gmail.com\",\n  \"password\": \"123456789\",\n  \"avatarUrl\": \"https://example.com/images/avatar-son.jpg\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{url}}/user-service/users/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update user",
+          "id": "aacbd67a-5e22-4fb4-8eb5-77c9e316fe10",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"email\": \"sonhoang2@gmail.com\",\n  \"password\": \"123456789\",\n  \"avatarUrl\": \"https://example.com/images/avatar-son.jpg\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/user-service/users/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create user",
+          "id": "0703777b-1603-4606-9da8-f662b4ead029",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"email\": \"sonhoang3@gmail.com\",\n  \"password\": \"12345678\",\n  \"avatarUrl\": \"https://example.com/images/avatar-son.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/user-service/users",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "307c55f3-983e-4a44-8f06-a9024c10fd16",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{accessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "24df8ca4-8921-41b3-a816-a7288bdae0b5",
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "17e9caa0-9255-4c66-9df5-e166bfbb16ed",
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6d57e5be-3b04-442d-b06c-8132116e6f38",
+                "exec": [
+                  "// parse response JSON",
+                  "const res = pm.response.json();",
+                  "",
+                  "// lấy các thông tin từ response",
+                  "const token = res?.data?.auth?.accessToken;",
+                  "const userId = res?.data?.auth?.userId;",
+                  "",
+                  "if (token) {",
+                  "    // lưu vào environment variable",
+                  "    pm.environment.set(\"accessToken\", token);",
+                  "",
+                  "    // optional: lưu luôn token type nếu cần",
+                  "    const tokenType = res?.data?.auth?.tokenType || \"Bearer\";",
+                  "    pm.environment.set(\"tokenType\", tokenType);",
+                  "",
+                  "    // lưu userId vào environment variable",
+                  "    if (userId) {",
+                  "        pm.environment.set(\"userId\", userId);",
+                  "        console.log(\"User ID saved:\", userId);",
+                  "    } else {",
+                  "        console.warn(\"Không tìm thấy userId trong auth object\");",
+                  "    }",
+                  "",
+                  "    console.log(\"Token saved:\", token);",
+                  "} else {",
+                  "    console.error(\"Không tìm thấy accessToken trong response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "6bd69938-e388-4122-967e-b629a8d120aa",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"son@example.com\",\r\n  \"password\": \"secret123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/user-service/auth/login",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "auth",
+                "login"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "id,asc",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS",
+                  "disabled": true
+                },
+                {
+                  "key": "keyword",
+                  "value": "keyword",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sign up",
+          "id": "4e6d3093-5289-46da-adbb-7a78baf3a0e2",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"secret123\",\n    \"fullName\": \"Son Hoang\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/user-service/auth/signup",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "user-service",
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "logout",
+          "id": "337f0196-269f-41c4-84f7-41e95d51db7a",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/auth/logout",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "ebdb4d01-4d34-4302-bf85-baf213f5b9d3",
+      "auth": {
+        "type": "noauth"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "f5698f69-da57-43ec-8cc0-4cbc14410534",
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "2b37da5f-733a-40ad-935a-f28d07856d9a",
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
