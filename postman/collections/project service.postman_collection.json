@@ -1,0 +1,433 @@
+{
+  "info": {
+    "_postman_id": "e08fe988-c812-4ab8-8195-eb3f56160352",
+    "name": "project service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Label",
+      "item": [
+        {
+          "name": "delete by id",
+          "id": "d9a3d7e5-a830-4e23-ae6c-5c7ac13c7f4e",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/labels/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "labels",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1d9260c7-492f-49f2-a9e1-4cc9884762b2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find all",
+          "id": "c0efeb50-87f4-4d01-ae10-5988dcab6f82",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/labels",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "labels"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find by id",
+          "id": "09decc9c-58a3-49c9-a595-2301bb9edec4",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/labels/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "labels",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "500a04ad-59ec-45a1-8bfd-db5910e0292f"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update by id",
+          "id": "644b8799-bd83-4ba1-be46-e3cc3d6a3293",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Bug\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/project-service/labels/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "labels",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "500a04ad-59ec-45a1-8bfd-db5910e0292f"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create",
+          "id": "23f3ef33-5959-4fd4-ae63-5a8179d4c920",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"projectId\": \"a8e2ad07-0c2e-45bb-921f-77ac28ddf25a\",\n    \"name\": \"Bug\",\n    \"color\": \"red\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/project-service/labels",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "labels"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "63e82e1f-662c-4880-8e52-2a2e5e7ab71b"
+    },
+    {
+      "name": "Project",
+      "item": [
+        {
+          "name": "Get Projects Member",
+          "id": "4998936c-4074-4ede-9d84-d153adf73327",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects/:id/members",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                ":id",
+                "members"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Projects",
+          "id": "f2c415c3-98af-4250-977f-ffb868643fdc",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "49819ea0-54ed-4eaf-a2e1-19c001710ef4",
+                "exec": [
+                  "// 1. Phân tích cú pháp chuỗi JSON trả về từ API\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Trích xuất projectId từ cấu trúc data.project.id\r",
+                  "const projectId = responseData.data.project.id;\r",
+                  "\r",
+                  "// 3. Lưu vào biến môi trường (Khuyên dùng)\r",
+                  "pm.environment.set(\"projectId\", projectId);\r",
+                  "\r",
+                  "// In ra console để bạn dễ dàng kiểm tra/debug nếu cần\r",
+                  "console.log(\"Đã lưu projectId thành công:\", projectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "d67ecb0a-e424-4213-af7a-470ceea3925c",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Sample Project\",\n  \"description\": \"This is a sample project description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/project-service/projects",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invite Member",
+          "id": "10ee90da-09a9-4af0-a7ec-e7bc0a7f9f4a",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\" : \"{{invitedUserId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/project-service/projects/:id/invites",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                ":id",
+                "invites"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Decide Invitation",
+          "id": "d152f131-3325-4813-a75c-94a94fe8fa3b",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"decision\" : \"ACCEPT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/project-service/projects/invites/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                "invites",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{invitationId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get project invited list",
+          "id": "61bc266a-8710-4713-a43d-5f2866b48a0d",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects/:id/invitations",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                ":id",
+                "invitations"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{projectId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get project my invited list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "19e66dd9-3cf0-4529-b979-135933747826",
+                "exec": [
+                  "// 1. Phân tích cú pháp chuỗi JSON trả về từ API\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Trích xuất invitationId từ cấu trúc data.project.id\r",
+                  "const invitationId = responseData.data.invitations[0].id;\r",
+                  "\r",
+                  "// 3. Lưu vào biến môi trường (Khuyên dùng)\r",
+                  "pm.environment.set(\"invitationId\", invitationId);\r",
+                  "\r",
+                  "// In ra console để bạn dễ dàng kiểm tra/debug nếu cần\r",
+                  "console.log(\"Đã lưu invitationId thành công:\", invitationId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "26c4248b-83de-47c7-9e37-cd57962fc783",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects/invitations/me",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                "invitations",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "44171fe4-aff3-4011-9b20-908bc42f1c36"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "8d9720bc-5398-4525-bfb7-b8027f2b1a89",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "78a4c531-54d2-451a-891a-6b893d9331c8",
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
