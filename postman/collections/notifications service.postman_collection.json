@@ -41,7 +41,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n//   \"content\": \"This is a sample notification content.\",\n  \"isRead\": true\n}",
+          "raw": "{\n  \"isRead\": true\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -61,7 +61,9 @@
           "variable": [
             {
               "key": "id",
-              "value": "44a17039-1a75-4739-aaa5-347be63ae87a"
+              "value": "{{notificationId}}",
+              "type": "text",
+              "enabled": true
             }
           ]
         }
@@ -87,7 +89,7 @@
           "variable": [
             {
               "key": "id",
-              "value": "1aa2abb4-cd6b-4e30-899b-367a48c61577"
+              "value": "{{notificationId}}"
             }
           ]
         }
@@ -96,6 +98,42 @@
     },
     {
       "name": "find all notifications",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "ed2709b7-576a-4271-b89d-0b9cb2760d94",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "352854e7-e2e9-44d2-a077-128fac3e8d31",
+            "exec": [
+              "// 1. Phân tích cú pháp phản hồi JSON từ API\r",
+              "const responseData = pm.response.json();\r",
+              "\r",
+              "// 2. Trích xuất id của phần tử đầu tiên trong mảng content\r",
+              "const firstNotificationId = responseData.data.page.content[0].id;\r",
+              "\r",
+              "// 3. Lưu giá trị vào biến Environment (Biến môi trường)\r",
+              "pm.environment.set(\"notificationId\", firstNotificationId);\r",
+              "\r",
+              "// (Tùy chọn) In ra console để kiểm tra xem đã lấy đúng chưa\r",
+              "console.log(\"Đã lưu notificationId: \" + firstNotificationId);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "id": "2b9eb822-8d9b-4410-a001-7dfc9f4aad8b",
       "request": {
         "method": "GET",
@@ -123,31 +161,5 @@
         "type": "string"
       }
     ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "id": "3271e712-ca73-4d2b-bdd0-9fa25a9a647f",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "id": "e151caf4-32d0-4a1e-ad28-65a7f700dbe8",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ]
+  }
 }
