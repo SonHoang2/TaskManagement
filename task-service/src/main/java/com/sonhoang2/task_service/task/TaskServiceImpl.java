@@ -2,6 +2,8 @@ package com.sonhoang2.task_service.task;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.events.EventPublisher;
+import com.sonhoang2.task_service.events.TaskAssignedEvent;
 import com.sonhoang2.task_service.feign.ProjectServiceClient;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
@@ -26,6 +28,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectServiceClient projectServiceClient;
     private final ModelMapper modelMapper;
+    private final EventPublisher eventPublisher;
 
     private PageResponse<TaskResponse> toPageResponse(Page<Task> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -39,9 +42,10 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public TaskResponse create(TaskCreateRequest request) {
+    public TaskResponse create(TaskCreateRequest request, UUID userId) {
+        System.out.print("Creating task with projectId: " + request.getProjectId() + "\n" + "userId " + userId);
         try {
-            projectServiceClient.findById(request.getProjectId());
+            projectServiceClient.findById(request.getProjectId(), userId);
         } catch (FeignException.NotFound e) {
             throw new ResourceNotFoundException("Project not found: " + request.getProjectId());
         }
@@ -78,7 +82,23 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse update(UUID id, TaskUpdateRequest request) {
         Task task = findTaskByIdOrThrow(id);
+        UUID oldAssigneeId = task.getAssigneeId();
         modelMapper.map(request, task);
+
+
+        // Publish TaskAssignedEvent if assigneeId changed
+        if (request.getAssigneeId() != null && !request.getAssigneeId().equals(oldAssigneeId)) {
+            TaskAssignedEvent event = TaskAssignedEvent.builder()
+                    .taskId(task.getId())
+                    .projectId(task.getProjectId())
+                    .taskTitle(task.getTitle())
+                    .assigneeId(task.getAssigneeId())
+                    .reporterId(task.getReporterId())
+                    .eventType("TASK_ASSIGNED")
+                    .build();
+            eventPublisher.publishTaskAssignedEvent(event);
+        }
+
         return toResponse(task);
     }
 

@@ -25,20 +25,36 @@
                   "// 2. Lấy danh sách user từ mảng content\r",
                   "const usersList = responseData?.data?.page?.content || [];\r",
                   "\r",
-                  "// Tìm user đầu tiên trong mảng có id khác với currentUserId\r",
-                  "const firstDifferentUser = usersList.find(user => user.id !== currentUserId);\r",
+                  "// Lọc ra TẤT CẢ các user có id khác với currentUserId\r",
+                  "const filteredUsers = usersList.filter(user => user.id !== currentUserId);\r",
                   "\r",
-                  "if (firstDifferentUser) {\r",
-                  "    const firstUserId = firstDifferentUser.id;\r",
+                  "if (filteredUsers.length > 0) {\r",
+                  "    // Chọn một chỉ mục (index) ngẫu nhiên trong mảng đã lọc\r",
+                  "    const randomIndex = Math.floor(Math.random() * filteredUsers.length);\r",
+                  "    const randomUser = filteredUsers[randomIndex];\r",
+                  "    \r",
+                  "    const invitedUserId = randomUser.id;\r",
                   "\r",
                   "    // 3. Lưu vào biến môi trường (Environment Variable) tên là 'invitedUserId'\r",
-                  "    pm.environment.set(\"invitedUserId\", firstUserId);\r",
+                  "    pm.environment.set(\"invitedUserId\", invitedUserId);\r",
                   "\r",
-                  "    // In ra console để kiểm tra xem đã lấy đúng chưa\r",
-                  "    console.log(\"Đã lưu invitedUserId mới (khác với userId hiện tại):\", firstUserId);\r",
+                  "    // In ra console để kiểm tra\r",
+                  "    console.log(`Đã lưu ngẫu nhiên invitedUserId (khác với userId hiện tại): ${invitedUserId} (Chọn từ ${filteredUsers.length} users phù hợp)`);\r",
                   "} else {\r",
                   "    console.warn(\"Không tìm thấy user nào có ID khác với userId hiện tại hoặc danh sách trống.\");\r",
                   "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "dc0f2943-c837-4799-b124-410c9b60bbce",
+                "exec": [
+                  ""
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -192,33 +208,7 @@
             "type": "string"
           }
         ]
-      },
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "id": "24df8ca4-8921-41b3-a816-a7288bdae0b5",
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "id": "17e9caa0-9255-4c66-9df5-e166bfbb16ed",
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        }
-      ]
+      }
     },
     {
       "name": "Auth",
@@ -378,33 +368,7 @@
       "id": "ebdb4d01-4d34-4302-bf85-baf213f5b9d3",
       "auth": {
         "type": "noauth"
-      },
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "id": "f5698f69-da57-43ec-8cc0-4cbc14410534",
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "id": "2b37da5f-733a-40ad-935a-f28d07856d9a",
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {},
-            "exec": [
-              ""
-            ]
-          }
-        }
-      ]
+      }
     }
   ]
 }

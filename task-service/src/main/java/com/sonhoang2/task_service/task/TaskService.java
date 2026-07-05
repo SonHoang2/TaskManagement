@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface TaskService {
 
-    TaskResponse create(TaskCreateRequest request);
+    TaskResponse create(TaskCreateRequest request, UUID userId);
 
     PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable);
 

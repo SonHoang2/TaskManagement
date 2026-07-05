@@ -26,8 +26,9 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> create(@Valid @RequestBody TaskCreateRequest request) {
-        TaskResponse createdTask = taskService.create(request);
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> create(@Valid @RequestBody TaskCreateRequest request,
+                                                                           @RequestHeader("X-User-Id") UUID userId) {
+        TaskResponse createdTask = taskService.create(request, userId);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
