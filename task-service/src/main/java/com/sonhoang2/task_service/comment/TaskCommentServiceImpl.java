@@ -2,10 +2,13 @@ package com.sonhoang2.task_service.comment;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.events.EventPublisher;
+import com.sonhoang2.task_service.events.TaskCommentCreatedEvent;
 import com.sonhoang2.task_service.comment.dto.TaskCommentCreateRequest;
 import com.sonhoang2.task_service.comment.dto.TaskCommentResponse;
 import com.sonhoang2.task_service.comment.dto.TaskCommentUpdateRequest;
 import com.sonhoang2.task_service.comment.entity.TaskComment;
+import com.sonhoang2.task_service.task.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,8 @@ public class TaskCommentServiceImpl implements TaskCommentService {
 
     private final TaskCommentRepository taskCommentRepository;
     private final ModelMapper modelMapper;
+    private final EventPublisher eventPublisher;
+    private final TaskRepository taskRepository;
 
     private PageResponse<TaskCommentResponse> toPageResponse(Page<TaskComment> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -42,7 +47,24 @@ public class TaskCommentServiceImpl implements TaskCommentService {
                 .content(request.getContent())
                 .build();
 
-        return toResponse(taskCommentRepository.save(comment));
+        TaskComment savedComment = taskCommentRepository.save(comment);
+        
+        // Publish TaskCommentCreatedEvent
+        var task = taskRepository.findById(request.getTaskId());
+        if (task.isPresent()) {
+            TaskCommentCreatedEvent event = TaskCommentCreatedEvent.builder()
+                    .commentId(savedComment.getId())
+                    .taskId(savedComment.getTaskId())
+                    .projectId(task.get().getProjectId())
+                    .taskTitle(task.get().getTitle())
+                    .userId(savedComment.getUserId())
+                    .content(savedComment.getContent())
+                    .eventType("TASK_COMMENT_CREATED")
+                    .build();
+            eventPublisher.publishTaskCommentCreatedEvent(event);
+        }
+
+        return toResponse(savedComment);
     }
 
     @Override

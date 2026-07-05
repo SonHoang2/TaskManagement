@@ -164,11 +164,12 @@
               }
             },
             "url": {
-              "raw": "{{url}}/task-histories",
+              "raw": "{{url}}/task-service/task-histories",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-histories"
               ]
             }
@@ -191,11 +192,12 @@
               }
             },
             "url": {
-              "raw": "{{url}}/task-histories/:id",
+              "raw": "{{url}}/task-service/task-histories/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-histories",
                 ":id"
               ],
@@ -216,11 +218,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-histories/:id",
+              "raw": "{{url}}/task-service/task-histories/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-histories",
                 ":id"
               ],
@@ -241,11 +244,12 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-histories/:id",
+              "raw": "{{url}}/task-service/task-histories/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-histories",
                 ":id"
               ],
@@ -266,11 +270,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-histories",
+              "raw": "{{url}}/task-service/task-histories",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-histories"
               ]
             }
@@ -285,6 +290,42 @@
       "item": [
         {
           "name": "get all task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f619a62a-3344-425f-99dc-9e8c62702d61",
+                "exec": [
+                  "// 1. Phân tích cú pháp chuỗi JSON phản hồi từ API\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Trích xuất id từ phần tử đầu tiên trong mảng content\r",
+                  "const firstTaskId = responseData.data.page.content[0].id;\r",
+                  "\r",
+                  "// 3. Lưu giá trị id vào biến môi trường (Environment Variable) tên là 'taskId'\r",
+                  "pm.environment.set(\"taskId\", firstTaskId);\r",
+                  "\r",
+                  "// In ra console để kiểm tra (Xem tại mục Postman Console - Ctrl+Alt+C)\r",
+                  "console.log(\"Đã lưu taskId thành công:\", firstTaskId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "e76a3937-1919-40df-9226-9163425a95e8",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "id": "859c3ad6-dcbc-455c-b139-05636118617a",
           "request": {
             "auth": {
@@ -299,30 +340,48 @@
             },
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{url}}/tasks?size=10&sort=id,asc&status=IN_PROGRESS&keyword=keyword",
+              "raw": "{{url}}/task-service/tasks",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "tasks"
               ],
               "query": [
                 {
                   "key": "size",
-                  "value": "10"
+                  "value": "10",
+                  "uuid": "9336c2db-86f8-4df3-9a29-a7f61c7ef9e1",
+                  "disabled": true
                 },
                 {
                   "key": "sort",
-                  "value": "id,asc"
+                  "value": "id,asc",
+                  "uuid": "9c53557a-a749-45a2-95ba-ac439aeaac89",
+                  "disabled": true
                 },
                 {
                   "key": "status",
-                  "value": "IN_PROGRESS"
+                  "value": "IN_PROGRESS",
+                  "uuid": "97a9b068-196b-4867-8564-7ac4088d9b17",
+                  "disabled": true
                 },
                 {
                   "key": "keyword",
-                  "value": "keyword"
+                  "value": "keyword",
+                  "uuid": "a2e203a4-14cb-4cc3-9fe1-193fa085c6ab",
+                  "disabled": true
                 }
               ]
             }
@@ -337,7 +396,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Hoàn thành báo cáo tuần\",\n  \"description\": \"Viết và nộp báo cáo tuần cho dự án Task Management API\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": \"72d2937f-dc55-479b-b9b6-3c4addf8d217\"\n}",
+              "raw": "{\n  \"title\": \"Hoàn thành báo cáo tuần\",\n  \"description\": \"Viết và nộp báo cáo tuần cho dự án Task Management API\",\n  \"status\": \"IN_PROGRESS\",\n  \"projectId\": \"{{projectId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -345,11 +404,12 @@
               }
             },
             "url": {
-              "raw": "{{url}}/tasks",
+              "raw": "{{url}}/task-service/tasks",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "tasks"
               ]
             }
@@ -360,11 +420,11 @@
           "name": "update task",
           "id": "56e90cf6-d08a-42d8-b200-f272508d1a38",
           "request": {
-            "method": "PUT",
+            "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Hoàn thành báo cáo tuần 1\",\n  \"description\": \"Viết và nộp báo cáo tuần cho dự án Task Management API\",\n  \"status\": \"DONE\",\n  \"dueDate\": \"2026-03-25\"\n}",
+              "raw": "{\n    \"assigneeId\": \"{{invitedUserId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -372,13 +432,21 @@
               }
             },
             "url": {
-              "raw": "{{url}}/tasks/1",
+              "raw": "{{url}}/task-service/tasks/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "tasks",
-                "1"
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{taskId}}",
+                  "uuid": "c9a1f955-1a1e-487a-8548-db5595011aef"
+                }
               ]
             }
           },
@@ -406,11 +474,12 @@
               }
             },
             "url": {
-              "raw": "{{url}}/task-comments",
+              "raw": "{{url}}/task-service/task-comments",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-comments"
               ]
             }
@@ -433,11 +502,12 @@
               }
             },
             "url": {
-              "raw": "{{url}}/task-comments/:id",
+              "raw": "{{url}}/task-service/task-comments/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-comments",
                 ":id"
               ],
@@ -458,11 +528,12 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-comments/:id",
+              "raw": "{{url}}/task-service/task-comments/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-comments",
                 ":id"
               ],
@@ -483,11 +554,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-comments/:id",
+              "raw": "{{url}}/task-service/task-comments/:id",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-comments",
                 ":id"
               ],
@@ -508,11 +580,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/task-comments",
+              "raw": "{{url}}/task-service/task-comments",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "task-service",
                 "task-comments"
               ]
             }
@@ -532,31 +605,5 @@
         "type": "string"
       }
     ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "id": "c65c6190-fd31-41a6-91a6-ffa85512d390",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "id": "ed7fcc86-dd0d-4cee-842f-f2365966406a",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ]
+  }
 }

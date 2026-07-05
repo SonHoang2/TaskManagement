@@ -177,6 +177,39 @@
         },
         {
           "name": "Get All Projects",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "51a1c63b-c19b-44fd-a8ef-3a3ae9ab3870",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "4c5ede04-d535-4987-9579-0b261a9d7b1c",
+                "exec": [
+                  "// 1. Parse dữ liệu JSON từ response trả về\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Truy cập vào phần tử đầu tiên trong mảng \"projects\" và lấy \"id\"\r",
+                  "const firstProjectId = responseData.data.projects[0].id;\r",
+                  "\r",
+                  "// 3. Lưu project id vào biến môi trường (Environment Variable) của Postman\r",
+                  "pm.environment.set(\"projectId\", firstProjectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "id": "f2c415c3-98af-4250-977f-ffb868643fdc",
           "request": {
             "method": "GET",
@@ -403,31 +436,5 @@
         "type": "string"
       }
     ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "id": "8d9720bc-5398-4525-bfb7-b8027f2b1a89",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "id": "78a4c531-54d2-451a-891a-6b893d9331c8",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ]
+  }
 }

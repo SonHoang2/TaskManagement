@@ -67,6 +67,20 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ProjectResponse getProjectById(UUID id, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project with id " + id + " not found"));
+
+        // Verify that the requesting user is a member
+        if (!projectMemberRepository.existsByProjectIdAndUserId(id, userId)) {
+            throw new AccessDeniedException("You are not a member of this project");
+        }
+
+        return toProjectResponse(project);
+    }
+
+    @Override
     public ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project with id " + projectId + " not found"));

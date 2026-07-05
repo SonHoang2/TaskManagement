@@ -101,4 +101,14 @@ public class ProjectController {
         // Optionally, you can add userId here if needed, but it's not required for public listing
         return ResponseEntity.ok(JSendResponse.success(Map.of("projects", projectService.listAllProject())));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<JSendResponse<Map<String, ProjectResponse>>> getProjectById(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("project", projectService.getProjectById(id, userId))
+        ));
+    }
 }

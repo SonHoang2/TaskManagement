@@ -15,6 +15,8 @@ public interface ProjectService {
 
     ProjectResponse create(CreateProjectRequest request, UUID userId);          // added userId
 
+    ProjectResponse getProjectById(UUID id, UUID userId);
+
     ProjectInvitationResponse inviteMember(UUID projectId, InviteMemberRequest request, UUID userId);
 
     ProjectInvitationResponse decideInvitation(UUID invitationId, InvitationDecisionRequest request, UUID userId);
