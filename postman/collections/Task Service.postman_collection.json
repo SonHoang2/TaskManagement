@@ -444,8 +444,7 @@
               "variable": [
                 {
                   "key": "id",
-                  "value": "{{taskId}}",
-                  "uuid": "c9a1f955-1a1e-487a-8548-db5595011aef"
+                  "value": "{{taskId}}"
                 }
               ]
             }
@@ -466,7 +465,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"taskId\": \"2b384cff-5270-4fd7-a00d-f02b35d6cf49\",\n  \"userId\": \"2dff47a9-57b3-42b8-baaa-35832889660e\",\n  \"content\": \"This is a sample comment for the task.\"\n}",
+              "raw": "{\n  \"taskId\": \"{{taskId}}\",\n  \"userId\": \"{{userId}}\",\n  \"content\": \"This is a sample comment for the task.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

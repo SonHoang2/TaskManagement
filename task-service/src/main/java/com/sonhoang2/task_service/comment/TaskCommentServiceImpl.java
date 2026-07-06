@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.modelmapper.ModelMapper;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -45,6 +46,7 @@ public class TaskCommentServiceImpl implements TaskCommentService {
                 .taskId(request.getTaskId())
                 .userId(request.getUserId())
                 .content(request.getContent())
+                .createdAt(Instant.now())
                 .build();
 
         TaskComment savedComment = taskCommentRepository.save(comment);
