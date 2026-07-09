@@ -19,11 +19,17 @@ public class RabbitMQConfig {
     @Value("${app.rabbitmq.queue.task-comment-created}")
     private String taskCommentCreatedQueue;
 
+    @Value("${app.rabbitmq.queue.project-invitation-created}")
+    private String projectInvitationCreatedQueue;
+
     @Value("${app.rabbitmq.routing-key.task-assigned}")
     private String taskAssignedRoutingKey;
 
     @Value("${app.rabbitmq.routing-key.task-comment-created}")
     private String taskCommentCreatedRoutingKey;
+
+    @Value("${app.rabbitmq.routing-key.project-invitation-created}")
+    private String projectInvitationCreatedRoutingKey;
 
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -46,6 +52,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue projectInvitationCreatedQueue() {
+        return QueueBuilder.durable(projectInvitationCreatedQueue).build();
+    }
+
+    @Bean
     public Binding taskAssignedBinding() {
         return BindingBuilder.bind(taskAssignedQueue())
                 .to(taskEventsExchange())
@@ -57,5 +68,12 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(taskCommentCreatedQueue())
                 .to(taskEventsExchange())
                 .with(taskCommentCreatedRoutingKey);
+    }
+
+    @Bean
+    public Binding projectInvitationCreatedBinding() {
+        return BindingBuilder.bind(projectInvitationCreatedQueue())
+                .to(taskEventsExchange())
+                .with(projectInvitationCreatedRoutingKey);
     }
 }
