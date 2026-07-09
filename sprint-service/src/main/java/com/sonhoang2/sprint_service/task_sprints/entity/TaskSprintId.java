@@ -1,4 +1,4 @@
-package com.sonhoang2.sprint_service.sprint.entity;
+package com.sonhoang2.sprint_service.task_sprints.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

@@ -1,5 +1,6 @@
-package com.sonhoang2.sprint_service.sprint.entity;
+package com.sonhoang2.sprint_service.task_sprints.entity;
 
+import com.sonhoang2.sprint_service.sprints.entity.Sprint;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

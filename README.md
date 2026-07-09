@@ -326,7 +326,7 @@ cd task-service
 ./mvnw spring-boot:run
 
 # Sprint Service
-cd sprint-service
+cd task_sprints-service
 ./mvnw spring-boot:run
 
 # Notification Service
