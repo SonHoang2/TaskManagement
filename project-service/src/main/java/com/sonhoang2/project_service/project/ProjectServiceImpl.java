@@ -104,11 +104,11 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResourceConflictException("User is already a project member");
         }
 
-//        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(projectId,
-//                inviteeId,
-//                ProjectInvitationStatus.PENDING)) {
-//            throw new ResourceConflictException("A pending invitation already exists for this user");
-//        }
+        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(projectId,
+                inviteeId,
+                ProjectInvitationStatus.PENDING)) {
+            throw new ResourceConflictException("A pending invitation already exists for this user");
+        }
 
         ProjectInvitation invitation = projectInvitationRepository.save(ProjectInvitation.builder()
                 .project(project)
