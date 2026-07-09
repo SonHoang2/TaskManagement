@@ -52,4 +52,23 @@ public class EventConsumer {
             log.error("Error processing TaskCommentCreatedEvent: {}", e.getMessage(), e);
         }
     }
+
+    @RabbitListener(queues = "${app.rabbitmq.queue.project-invitation-created}")
+    public void handleProjectInvitationCreatedEvent(ProjectInvitationCreatedEvent event) {
+        log.info("Received ProjectInvitationCreatedEvent: {}", event);
+        
+        try {
+            NotificationCreateRequest request = NotificationCreateRequest.builder()
+                    .userId(event.getInviteeId())
+                    .type(NotificationType.PROJECT_INVITATION)
+                    .content("You have been invited to join project: " + event.getProjectName())
+                    .isRead(false)
+                    .build();
+            
+            notificationService.create(request);
+            log.info("Successfully created notification for ProjectInvitationCreatedEvent");
+        } catch (Exception e) {
+            log.error("Error processing ProjectInvitationCreatedEvent: {}", e.getMessage(), e);
+        }
+    }
 }

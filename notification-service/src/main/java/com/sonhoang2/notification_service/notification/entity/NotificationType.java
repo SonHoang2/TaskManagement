@@ -5,6 +5,7 @@ public enum NotificationType {
     TASK_COMMENT,
     COMMENT,
     TASK_UPDATED,
+    PROJECT_INVITATION,
     SYSTEM
 }
 

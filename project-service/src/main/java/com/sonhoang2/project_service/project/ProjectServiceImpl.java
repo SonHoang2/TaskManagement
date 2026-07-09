@@ -2,6 +2,8 @@ package com.sonhoang2.project_service.project;
 
 import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.project_service.events.EventPublisher;
+import com.sonhoang2.project_service.events.ProjectInvitationCreatedEvent;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
@@ -34,6 +36,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
     private final UserServiceClient userServiceClient;
+    private final EventPublisher eventPublisher;
 
     private void assertUserExists(UUID userId) {
         try {
@@ -101,11 +104,11 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResourceConflictException("User is already a project member");
         }
 
-        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(projectId,
-                inviteeId,
-                ProjectInvitationStatus.PENDING)) {
-            throw new ResourceConflictException("A pending invitation already exists for this user");
-        }
+//        if (projectInvitationRepository.existsByProjectIdAndInviteeIdAndStatus(projectId,
+//                inviteeId,
+//                ProjectInvitationStatus.PENDING)) {
+//            throw new ResourceConflictException("A pending invitation already exists for this user");
+//        }
 
         ProjectInvitation invitation = projectInvitationRepository.save(ProjectInvitation.builder()
                 .project(project)
@@ -113,6 +116,18 @@ public class ProjectServiceImpl implements ProjectService {
                 .inviteeId(inviteeId)
                 .status(ProjectInvitationStatus.PENDING)
                 .build());
+
+        // Emit event for notification
+        ProjectInvitationCreatedEvent event = ProjectInvitationCreatedEvent.builder()
+                .invitationId(invitation.getId())
+                .projectId(project.getId())
+                .projectName(project.getName())
+                .invitedById(userId)
+                .inviteeId(inviteeId)
+                .eventType("PROJECT_INVITATION")
+                .build();
+
+        eventPublisher.publishProjectInvitationCreatedEvent(event);
 
         return toInvitationResponse(invitation);
     }
