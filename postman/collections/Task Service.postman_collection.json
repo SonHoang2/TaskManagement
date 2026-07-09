@@ -303,10 +303,7 @@
                   "const firstTaskId = responseData.data.page.content[0].id;\r",
                   "\r",
                   "// 3. Lưu giá trị id vào biến môi trường (Environment Variable) tên là 'taskId'\r",
-                  "pm.environment.set(\"taskId\", firstTaskId);\r",
-                  "\r",
-                  "// In ra console để kiểm tra (Xem tại mục Postman Console - Ctrl+Alt+C)\r",
-                  "console.log(\"Đã lưu taskId thành công:\", firstTaskId);"
+                  "pm.environment.set(\"taskId\", firstTaskId);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
