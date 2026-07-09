@@ -6,7 +6,201 @@
   },
   "item": [
     {
-      "name": "Sprint",
+      "name": "Sprints",
+      "item": [
+        {
+          "name": "create",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "fb882189-9465-407e-b972-b73d8e75f60c",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "2cc98dd3-fc07-4c88-8046-750aea37ef2a",
+                "exec": [
+                  "// 1. Phân tích cú pháp chuỗi JSON trả về từ API\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Trích xuất sprintId từ cấu trúc data.sprint.id\r",
+                  "const sprintId = responseData.data.sprint.id;\r",
+                  "\r",
+                  "// 3. Lưu vào biến môi trường (Khuyên dùng)\r",
+                  "pm.environment.set(\"sprintId\", sprintId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "sprint-create",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint 1\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-01-14\",\n  \"projectId\": \"{{projectId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/sprint-service/sprints",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "sprints"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find all",
+          "id": "sprint-find-all",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/sprints",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "sprints"
+              ],
+              "query": [
+                {
+                  "key": "projectId",
+                  "value": "{{projectId}}",
+                  "description": "Optional filter by project ID",
+                  "uuid": "15be903b-1e84-4bb1-8422-45e27aeaa0aa",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "uuid": "d1e4b5b7-25b6-4ece-9f72-4f9840119ac1",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "10",
+                  "uuid": "72bcde4c-dcdf-4aec-80dc-8c610d63a09d",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "find by id",
+          "id": "sprint-find-by-id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{sprintId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "update",
+          "id": "sprint-update",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Sprint Name\",\n  \"startDate\": \"2024-01-02\",\n  \"endDate\": \"2024-01-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/sprint-service/sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{sprintId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete",
+          "id": "sprint-delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/sprint-service/sprints/:id",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "sprint-service",
+                "sprints",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{sprintId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "sprints-folder"
+    },
+    {
+      "name": "Task Sprints",
       "item": [
         {
           "name": "find all",
@@ -15,13 +209,33 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/sprint-service/task-sprints",
+              "raw": "{{url}}/sprint-service/task-sprints?taskId={{taskId}}&sprintId={{sprintId}}&page=0&size=10",
               "host": [
                 "{{url}}"
               ],
               "path": [
                 "sprint-service",
                 "task-sprints"
+              ],
+              "query": [
+                {
+                  "key": "taskId",
+                  "value": "{{taskId}}",
+                  "description": "Optional filter by task ID"
+                },
+                {
+                  "key": "sprintId",
+                  "value": "{{sprintId}}",
+                  "description": "Optional filter by sprint ID"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
               ]
             }
           },
@@ -34,19 +248,24 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "raw": "{{url}}/sprint-service/task-sprints/:taskId/:sprintId",
               "host": [
                 "{{url}}"
               ],
               "path": [
                 "sprint-service",
                 "task-sprints",
-                ":id"
+                ":taskId",
+                ":sprintId"
               ],
               "variable": [
                 {
-                  "key": "id",
-                  "value": "1d9260c7-492f-49f2-a9e1-4cc9884762b2"
+                  "key": "taskId",
+                  "value": "{{taskId}}"
+                },
+                {
+                  "key": "sprintId",
+                  "value": "{{sprintId}}"
                 }
               ]
             }
@@ -54,25 +273,30 @@
           "response": []
         },
         {
-          "name": "find by id",
+          "name": "delete",
           "id": "82b40f30-35b1-40e2-8dd5-eff41051171f",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "raw": "{{url}}/sprint-service/task-sprints/:taskId/:sprintId",
               "host": [
                 "{{url}}"
               ],
               "path": [
                 "sprint-service",
                 "task-sprints",
-                ":id"
+                ":taskId",
+                ":sprintId"
               ],
               "variable": [
                 {
-                  "key": "id",
-                  "value": "1d9260c7-492f-49f2-a9e1-4cc9884762b2"
+                  "key": "taskId",
+                  "value": "{{taskId}}"
+                },
+                {
+                  "key": "sprintId",
+                  "value": "{{sprintId}}"
                 }
               ]
             }
@@ -80,14 +304,14 @@
           "response": []
         },
         {
-          "name": "update by id",
+          "name": "update",
           "id": "028de90d-fbbd-4f78-b477-9da3238cc269",
           "request": {
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN 123\"\n}",
+              "raw": "{\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN\",\n  \"newValue\": \"IN_PROGRESS\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -95,19 +319,24 @@
               }
             },
             "url": {
-              "raw": "{{url}}/sprint-service/task-sprints/:id",
+              "raw": "{{url}}/sprint-service/task-sprints/:taskId/:sprintId",
               "host": [
                 "{{url}}"
               ],
               "path": [
                 "sprint-service",
                 "task-sprints",
-                ":id"
+                ":taskId",
+                ":sprintId"
               ],
               "variable": [
                 {
-                  "key": "id",
-                  "value": "d4f75714-d7cc-44ff-8d98-cbb8c17917f2"
+                  "key": "taskId",
+                  "value": "{{taskId}}"
+                },
+                {
+                  "key": "sprintId",
+                  "value": "{{sprintId}}"
                 }
               ]
             }
@@ -122,7 +351,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"taskId\": \"e22aaf85-5cc6-4b9f-9d2a-94a3da25a670\",\n  \"changedBy\": \"2dff47a9-57b3-42b8-baaa-35832889660e\",\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN\",\n  \"newValue\": \"IN_PROGRESS\"\n}",
+              "raw": "{\n  \"taskId\": \"{{taskId}}\",\n  \"changedBy\": \"2dff47a9-57b3-42b8-baaa-35832889660e\",\n  \"field\": \"status\",\n  \"oldValue\": \"OPEN\",\n  \"newValue\": \"IN_PROGRESS\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -155,31 +384,5 @@
         "type": "string"
       }
     ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "id": "7f94b59c-0344-464b-9083-fe7ddd93fbe6",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "id": "5ea5fd41-264a-41b3-86fe-403f51aec21e",
-        "type": "text/javascript",
-        "packages": {},
-        "requests": {},
-        "exec": [
-          ""
-        ]
-      }
-    }
-  ]
+  }
 }

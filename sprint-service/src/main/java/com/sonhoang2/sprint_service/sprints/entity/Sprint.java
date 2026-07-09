@@ -1,5 +1,6 @@
-package com.sonhoang2.sprint_service.sprint.entity;
+package com.sonhoang2.sprint_service.sprints.entity;
 
+import com.sonhoang2.sprint_service.task_sprints.entity.TaskSprint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -51,4 +52,3 @@ public class Sprint {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 }
-

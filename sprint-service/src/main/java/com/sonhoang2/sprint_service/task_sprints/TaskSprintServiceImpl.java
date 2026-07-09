@@ -1,12 +1,12 @@
-package com.sonhoang2.sprint_service.sprint;
+package com.sonhoang2.sprint_service.task_sprints;
 
 import com.sonhoang2.sprint_service.common.dto.PageResponse;
 import com.sonhoang2.sprint_service.common.exception.ResourceNotFoundException;
-import com.sonhoang2.sprint_service.sprint.dto.TaskSprintCreateRequest;
-import com.sonhoang2.sprint_service.sprint.dto.TaskSprintResponse;
-import com.sonhoang2.sprint_service.sprint.dto.TaskSprintUpdateRequest;
-import com.sonhoang2.sprint_service.sprint.entity.TaskSprint;
-import com.sonhoang2.sprint_service.sprint.entity.TaskSprintId;
+import com.sonhoang2.sprint_service.task_sprints.dto.TaskSprintCreateRequest;
+import com.sonhoang2.sprint_service.task_sprints.dto.TaskSprintResponse;
+import com.sonhoang2.sprint_service.task_sprints.dto.TaskSprintUpdateRequest;
+import com.sonhoang2.sprint_service.task_sprints.entity.TaskSprint;
+import com.sonhoang2.sprint_service.task_sprints.entity.TaskSprintId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

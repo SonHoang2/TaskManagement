@@ -1,4 +1,4 @@
-package com.sonhoang2.sprint_service.sprint.dto;
+package com.sonhoang2.sprint_service.task_sprints.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
