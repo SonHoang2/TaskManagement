@@ -47,5 +47,149 @@ services:
     depends_on:
       - loki
     mem_limit: 256m
+
+  service-registry:
+    build: ./service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+    depends_on:
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "service-registry"
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "api-gateway"
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8081:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "user-service"
+
+  task-service:
+    build: ./task-service
+    container_name: task-service
+    ports:
+      - "8082:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "task-service"
+
+  project-service:
+    build: ./project-service
+    container_name: project-service
+    ports:
+      - "8083:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "project-service"
+
+  sprint-service:
+    build: ./sprint-service
+    container_name: sprint-service
+    ports:
+      - "8084:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "sprint-service"
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8085:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "notification-service"
+
 volumes:
   rabbitmq_data:
