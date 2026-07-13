@@ -13,7 +13,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,10 +27,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: user_db,project_db,task_db,sprint_db,notification_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -126,7 +127,12 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${USER_DB_NAME}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - LOGGING_LEVEL_SPRING_SECURITY=${LOGGING_LEVEL_SPRING_SECURITY}
+      - LOGGING_LEVEL_SPRING_WEB=${LOGGING_LEVEL_SPRING_WEB}
     depends_on:
       - service-registry
       - rabbitmq
@@ -156,6 +162,9 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${TASK_DB_NAME}
       - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE}
     depends_on:
       - service-registry
@@ -186,8 +195,13 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${PROJECT_DB_NAME}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
       - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE}
+      - RABBITMQ_QUEUE_PROJECT_INVITATION_CREATED=${RABBITMQ_QUEUE_PROJECT_INVITATION_CREATED}
+      - RABBITMQ_ROUTING_KEY_PROJECT_INVITATION_CREATED=${RABBITMQ_ROUTING_KEY_PROJECT_INVITATION_CREATED}
     depends_on:
       - service-registry
       - rabbitmq
@@ -217,6 +231,9 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${SPRINT_DB_NAME}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
     depends_on:
       - service-registry
@@ -247,6 +264,9 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE=${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${NOTIFICATION_DB_NAME}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
       - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE}
     depends_on:
