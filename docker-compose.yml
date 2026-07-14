@@ -91,6 +91,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
     depends_on:
       - service-registry
       - rabbitmq
