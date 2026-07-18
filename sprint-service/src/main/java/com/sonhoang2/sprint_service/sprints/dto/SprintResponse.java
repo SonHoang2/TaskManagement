@@ -20,5 +20,6 @@ public class SprintResponse {
     private String name;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String status;
     private Instant createdAt;
 }
