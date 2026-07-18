@@ -6,6 +6,7 @@ import com.sonhoang2.sprint_service.sprints.dto.SprintCreateRequest;
 import com.sonhoang2.sprint_service.sprints.dto.SprintResponse;
 import com.sonhoang2.sprint_service.sprints.dto.SprintUpdateRequest;
 import com.sonhoang2.sprint_service.sprints.entity.Sprint;
+import com.sonhoang2.sprint_service.sprints.entity.SprintStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ public class SprintServiceImpl implements SprintService {
                 .name(request.getName())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
+                .status(request.getStatus() != null ? request.getStatus() : SprintStatus.PLANNED.name())
                 .build();
         return toResponse(sprintRepository.save(sprint));
     }
@@ -66,6 +68,9 @@ public class SprintServiceImpl implements SprintService {
         existing.setName(request.getName());
         existing.setStartDate(request.getStartDate());
         existing.setEndDate(request.getEndDate());
+        if (request.getStatus() != null) {
+            existing.setStatus(request.getStatus());
+        }
         return toResponse(sprintRepository.save(existing));
     }
 
@@ -86,6 +91,7 @@ public class SprintServiceImpl implements SprintService {
                 .name(sprint.getName())
                 .startDate(sprint.getStartDate())
                 .endDate(sprint.getEndDate())
+                .status(sprint.getStatus())
                 .createdAt(sprint.getCreatedAt())
                 .build();
     }

@@ -44,6 +44,10 @@ public class Sprint {
 
     private LocalDate endDate;
 
+    @Column(nullable = false, length = 32)
+    @Builder.Default
+    private String status = SprintStatus.PLANNED.name();
+
     @Builder.Default
     @OneToMany(mappedBy = "sprint")
     private List<TaskSprint> taskSprints = new ArrayList<>();
