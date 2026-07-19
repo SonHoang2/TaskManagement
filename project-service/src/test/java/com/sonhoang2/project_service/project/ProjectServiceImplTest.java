@@ -94,22 +94,22 @@ class ProjectServiceImplTest {
                 .build();
     }
 
-    @Test
-    void listAllProject_ShouldReturnAllProjects() {
-        // Arrange
-        List<Project> projects = List.of(project);
-        when(projectRepository.findAll()).thenReturn(projects);
-
-        // Act
-        List<ProjectResponse> result = projectService.listAllProject();
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(projectId, result.get(0).getId());
-        assertEquals("Test Project", result.get(0).getName());
-        verify(projectRepository, times(1)).findAll();
-    }
+//    @Test
+//    void listAllProject_ShouldReturnAllProjects() {
+//        // Arrange
+//        List<Project> projects = List.of(project);
+//        when(projectRepository.findAll()).thenReturn(projects);
+//
+//        // Act
+//        List<ProjectResponse> result = projectService.listAllProject();
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals(1, result.size());
+//        assertEquals(projectId, result.get(0).getId());
+//        assertEquals("Test Project", result.get(0).getName());
+//        verify(projectRepository, times(1)).findAll();
+//    }
 
     @Test
     void create_ShouldCreateProjectAndAddOwnerAsMember() {

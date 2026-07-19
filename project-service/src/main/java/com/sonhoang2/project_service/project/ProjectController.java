@@ -1,13 +1,16 @@
 package com.sonhoang2.project_service.project;
 
 import com.sonhoang2.project_service.common.dto.JSendResponse;
+import com.sonhoang2.project_service.common.dto.PageResponse;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
+import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -97,9 +100,10 @@ public class ProjectController {
     }
 
     @GetMapping()
-    public ResponseEntity<JSendResponse<Map<String, List<ProjectResponse>>>> listAllProject() {
-        // Optionally, you can add userId here if needed, but it's not required for public listing
-        return ResponseEntity.ok(JSendResponse.success(Map.of("projects", projectService.listAllProject())));
+    public ResponseEntity<JSendResponse<PageResponse<ProjectDetailResponse>>> listAllProject(
+            Pageable pageable,
+            @RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(JSendResponse.success(projectService.listAllProject(pageable, userId)));
     }
 
     @GetMapping("/{id}")

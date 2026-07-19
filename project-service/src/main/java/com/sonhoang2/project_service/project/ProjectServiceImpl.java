@@ -4,13 +4,20 @@ import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.project_service.events.EventPublisher;
 import com.sonhoang2.project_service.events.ProjectInvitationCreatedEvent;
+import com.sonhoang2.project_service.common.dto.PageResponse;
+import com.sonhoang2.project_service.common.dto.UserResponse;
+import com.sonhoang2.project_service.project.dto.ActiveSprint;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
+import com.sonhoang2.project_service.project.dto.MemberInfo;
+import com.sonhoang2.project_service.project.dto.OwnerInfo;
+import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
+import com.sonhoang2.project_service.project.dto.TaskStats;
 import com.sonhoang2.project_service.project.entity.Project;
 import com.sonhoang2.project_service.project.entity.ProjectInvitation;
 import com.sonhoang2.project_service.project.entity.ProjectInvitationStatus;
@@ -20,12 +27,15 @@ import com.sonhoang2.project_service.project.feign.UserServiceClient;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -47,8 +57,24 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectResponse> listAllProject() {
-        return projectRepository.findAll().stream().map(this::toProjectResponse).toList();
+    @Transactional(readOnly = true)
+    public PageResponse<ProjectDetailResponse> listAllProject(Pageable pageable, UUID userId) {
+        Page<Project> projectPage = projectRepository.findAll(pageable);
+
+        List<ProjectDetailResponse> content = projectPage.getContent().stream()
+                .map(project -> toProjectDetailResponse(project, userId))
+                .collect(Collectors.toList());
+
+        return new PageResponse<>(
+                content,
+                projectPage.getNumber(),
+                projectPage.getSize(),
+                projectPage.getTotalElements(),
+                projectPage.getTotalPages(),
+                projectPage.hasNext(),
+                projectPage.hasPrevious(),
+                projectPage.getNumberOfElements()
+        );
     }
 
     @Override
@@ -241,5 +267,85 @@ public class ProjectServiceImpl implements ProjectService {
                 .role(member.getRole())
                 .joinedAt(member.getJoinedAt())
                 .build();
+    }
+
+    private ProjectDetailResponse toProjectDetailResponse(Project project, UUID userId) {
+        // Get owner info
+        OwnerInfo owner = getOwnerInfo(project.getOwnerId());
+
+        // Get user's role in the project
+        ProjectMemberRole myRole = projectMemberRepository
+                .findByProjectIdAndUserId(project.getId(), userId)
+                .map(ProjectMember::getRole)
+                .orElse(null);
+
+        // Get members
+        List<ProjectMember> members = projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(project.getId());
+        int memberCount = members.size();
+
+        // Get member info (limit to first 5 for preview)
+        List<MemberInfo> memberInfos = members.stream()
+                .limit(5)
+                .map(member -> getMemberInfo(member.getUserId()))
+                .collect(Collectors.toList());
+
+        // Task stats - placeholder (implement when task service is available)
+        TaskStats taskStats = TaskStats.builder()
+                .total(0)
+                .todo(0)
+                .inProgress(0)
+                .done(0)
+                .build();
+
+        // Active sprint - placeholder (implement when sprint service is available)
+        ActiveSprint activeSprint = null;
+
+        return ProjectDetailResponse.builder()
+                .id(project.getId())
+                .name(project.getName())
+                .description(project.getDescription())
+                .owner(owner)
+                .myRole(myRole)
+                .memberCount(memberCount)
+                .members(memberInfos)
+                .taskStats(taskStats)
+                .activeSprint(activeSprint)
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
+                .build();
+    }
+
+    private OwnerInfo getOwnerInfo(UUID ownerId) {
+        try {
+            var response = userServiceClient.findById(ownerId);
+            UserResponse user = response.data().get("user");
+            return OwnerInfo.builder()
+                    .id(user.getId())
+                    .fullName(user.getFullName())
+                    .avatarUrl(user.getAvatarUrl())
+                    .build();
+        } catch (FeignException e) {
+            return OwnerInfo.builder()
+                    .id(ownerId)
+                    .fullName("Unknown")
+                    .avatarUrl(null)
+                    .build();
+        }
+    }
+
+    private MemberInfo getMemberInfo(UUID userId) {
+        try {
+            var response = userServiceClient.findById(userId);
+            UserResponse user = response.data().get("user");
+            return MemberInfo.builder()
+                    .id(user.getId())
+                    .avatarUrl(user.getAvatarUrl())
+                    .build();
+        } catch (FeignException e) {
+            return MemberInfo.builder()
+                    .id(userId)
+                    .avatarUrl(null)
+                    .build();
+        }
     }
 }
