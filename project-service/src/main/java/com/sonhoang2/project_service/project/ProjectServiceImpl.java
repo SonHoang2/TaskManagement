@@ -11,6 +11,7 @@ import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
+import com.sonhoang2.project_service.project.dto.ListProjectRequest;
 import com.sonhoang2.project_service.project.dto.MemberInfo;
 import com.sonhoang2.project_service.project.dto.OwnerInfo;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,12 +60,51 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProjectDetailResponse> listAllProject(Pageable pageable, UUID userId) {
-        Page<Project> projectPage = projectRepository.findAll(pageable);
+    public PageResponse<ProjectDetailResponse> listAllProject(Pageable pageable,
+                                                              UUID userId,
+                                                              ListProjectRequest request) {
+        Page<Project> projectPage;
 
+        // Apply search filter if provided
+        if (request.getSearch() != null && !request.getSearch().trim().isEmpty()) {
+            projectPage = projectRepository.searchByNameOrDescription(request.getSearch(), pageable);
+        } else {
+            projectPage = projectRepository.findAll(pageable);
+        }
+
+        // Convert to response DTOs
         List<ProjectDetailResponse> content = projectPage.getContent().stream()
                 .map(project -> toProjectDetailResponse(project, userId))
                 .collect(Collectors.toList());
+
+        // Apply custom sorting if specified
+        if (request.getSortBy() != null && !request.getSortBy().trim().isEmpty()) {
+            Sort.Direction direction = request.getSortDirection() != null
+                    && request.getSortDirection().equalsIgnoreCase("desc")
+                    ? Sort.Direction.DESC
+                    : Sort.Direction.ASC;
+
+            content.sort((p1, p2) -> {
+                int comparison = 0;
+                switch (request.getSortBy().toLowerCase()) {
+                    case "membercount":
+                        comparison = Integer.compare(p1.getMemberCount(), p2.getMemberCount());
+                        break;
+                    case "taskcount":
+                        comparison = Integer.compare(p1.getTaskStats().getTotal(), p2.getTaskStats().getTotal());
+                        break;
+                    case "createdat":
+                        comparison = p1.getCreatedAt().compareTo(p2.getCreatedAt());
+                        break;
+                    case "updatedat":
+                        comparison = p1.getUpdatedAt().compareTo(p2.getUpdatedAt());
+                        break;
+                    default:
+                        return 0;
+                }
+                return direction == Sort.Direction.ASC ? comparison : -comparison;
+            });
+        }
 
         return new PageResponse<>(
                 content,
