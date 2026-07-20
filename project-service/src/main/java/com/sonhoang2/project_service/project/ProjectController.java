@@ -5,6 +5,7 @@ import com.sonhoang2.project_service.common.dto.PageResponse;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
+import com.sonhoang2.project_service.project.dto.ListProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
@@ -102,8 +103,17 @@ public class ProjectController {
     @GetMapping()
     public ResponseEntity<JSendResponse<PageResponse<ProjectDetailResponse>>> listAllProject(
             Pageable pageable,
-            @RequestHeader("X-User-Id") UUID userId) {
-        return ResponseEntity.ok(JSendResponse.success(projectService.listAllProject(pageable, userId)));
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
+
+        ListProjectRequest request = new ListProjectRequest();
+        request.setSearch(search);
+        request.setSortBy(sortBy);
+        request.setSortDirection(sortDirection);
+
+        return ResponseEntity.ok(JSendResponse.success(projectService.listAllProject(pageable, userId, request)));
     }
 
     @GetMapping("/{id}")
