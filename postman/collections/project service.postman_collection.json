@@ -215,7 +215,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/project-service/projects?size=10",
+              "raw": "{{url}}/project-service/projects?size=20&sortBy=membercount&sortDirection=desc",
               "host": [
                 "{{url}}"
               ],
@@ -226,9 +226,18 @@
               "query": [
                 {
                   "key": "size",
-                  "value": "10",
-                  "type": "text",
+                  "value": "20",
                   "uuid": "587f2899-8ed3-4515-93d5-013cf7ff93be"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "membercount",
+                  "uuid": "7afdd86d-0b50-45af-a01a-21ce211d85d0"
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "desc",
+                  "uuid": "274860e4-2cf4-4e48-84a2-5785901fd0b5"
                 }
               ]
             }
