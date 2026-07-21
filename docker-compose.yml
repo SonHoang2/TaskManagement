@@ -116,6 +116,7 @@ services:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
@@ -143,6 +144,7 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
@@ -169,6 +171,7 @@ services:
       - DB_NAME=${TASK_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
@@ -195,6 +198,7 @@ services:
       - DB_NAME=${PROJECT_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
@@ -221,6 +225,7 @@ services:
       - DB_NAME=${SPRINT_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
@@ -247,6 +252,7 @@ services:
       - DB_NAME=${NOTIFICATION_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
     depends_on:
       - service-registry
       - rabbitmq
