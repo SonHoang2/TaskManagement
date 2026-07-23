@@ -199,7 +199,7 @@
                   "const responseData = pm.response.json();\r",
                   "\r",
                   "// 2. Truy cập vào phần tử đầu tiên trong mảng \"projects\" và lấy \"id\"\r",
-                  "const firstProjectId = responseData.data.projects[0].id;\r",
+                  "const firstProjectId = responseData.data.content[0].id;\r",
                   "\r",
                   "// 3. Lưu project id vào biến môi trường (Environment Variable) của Postman\r",
                   "pm.environment.set(\"projectId\", firstProjectId);"
@@ -215,7 +215,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{url}}/project-service/projects?size=20&sortBy=membercount&sortDirection=desc",
+              "raw": "{{url}}/project-service/projects?size=20&search=beacon delta haven prism",
               "host": [
                 "{{url}}"
               ],
@@ -232,12 +232,19 @@
                 {
                   "key": "sortBy",
                   "value": "membercount",
-                  "uuid": "7afdd86d-0b50-45af-a01a-21ce211d85d0"
+                  "uuid": "7afdd86d-0b50-45af-a01a-21ce211d85d0",
+                  "disabled": true
                 },
                 {
                   "key": "sortDirection",
                   "value": "desc",
-                  "uuid": "274860e4-2cf4-4e48-84a2-5785901fd0b5"
+                  "uuid": "274860e4-2cf4-4e48-84a2-5785901fd0b5",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "beacon delta haven prism",
+                  "uuid": "dc66c85c-0ecd-4545-a955-c9ddcb2d4918"
                 }
               ]
             }
