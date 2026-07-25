@@ -1,13 +1,12 @@
-package com.sonhoang2.api_gateway.dashboard;
+package com.sonhoang2.dashboard_service;
 
-import com.sonhoang2.api_gateway.dashboard.dto.*;
+import com.sonhoang2.dashboard_service.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -16,7 +15,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -30,17 +28,10 @@ public class DashboardService {
     private final CircuitBreaker sprintServiceCircuitBreaker;
     private final ObjectMapper objectMapper;
 
-    @Value("${services.project-service.url:http://project-service}")
-    private String projectServiceUrl;
-
-    @Value("${services.task-service.url:http://task-service}")
-    private String taskServiceUrl;
-
-    @Value("${services.user-service.url:http://user-service}")
-    private String userServiceUrl;
-
-    @Value("${services.sprint-service.url:http://sprint-service}")
-    private String sprintServiceUrl;
+    private static final String PROJECT_SERVICE_URL = "http://project-service";
+    private static final String TASK_SERVICE_URL = "http://task-service";
+    private static final String USER_SERVICE_URL = "http://user-service";
+    private static final String SPRINT_SERVICE_URL = "http://sprint-service";
 
     public Mono<DashboardResponse> getDashboard(UUID userId) {
         log.info("Fetching dashboard data for user: {}", userId);
@@ -98,7 +89,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalProjects(UUID userId) {
         return webClient.get()
-                .uri(projectServiceUrl + "/projects")
+                .uri(PROJECT_SERVICE_URL + "/projects")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -112,7 +103,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalTasks() {
         return webClient.get()
-                .uri(taskServiceUrl + "/tasks")
+                .uri(TASK_SERVICE_URL + "/tasks")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -125,7 +116,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalUsers() {
         return webClient.get()
-                .uri(userServiceUrl + "/users")
+                .uri(USER_SERVICE_URL + "/users")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -138,7 +129,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchActiveSprints() {
         return webClient.get()
-                .uri(sprintServiceUrl + "/sprints")
+                .uri(SPRINT_SERVICE_URL + "/sprints")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -151,7 +142,7 @@ public class DashboardService {
 
     private Mono<List<ProjectSummary>> fetchRecentProjects(UUID userId) {
         return webClient.get()
-                .uri(projectServiceUrl + "/projects?size=5")
+                .uri(PROJECT_SERVICE_URL + "/projects?size=5")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -165,7 +156,7 @@ public class DashboardService {
 
     private Mono<TaskDistribution> fetchTaskDistribution(UUID userId) {
         return webClient.get()
-                .uri(taskServiceUrl + "/tasks")
+                .uri(TASK_SERVICE_URL + "/tasks")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTaskDistribution)

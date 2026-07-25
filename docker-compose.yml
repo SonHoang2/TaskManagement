@@ -269,6 +269,29 @@ services:
           cpus: "0.5"
           memory: 512M
 
+  dashboard-service:
+    build: ./dashboard-service
+    container_name: dashboard-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+    depends_on:
+      - service-registry
+      - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        labels: "service"
+    labels:
+      service: "dashboard-service"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
 volumes:
   rabbitmq_data:
   postgres_data:

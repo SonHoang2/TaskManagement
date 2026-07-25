@@ -315,7 +315,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"secret123\",\n    \"fullName\": \"Son Hoang\"\n}",
+              "raw": "{\n    \"email\": \"son@example.com\",\n    \"password\": \"secret123\",\n    \"fullName\": \"Son Hoang\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

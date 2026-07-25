@@ -1,4 +1,4 @@
-package com.sonhoang2.api_gateway.dashboard.dto;
+package com.sonhoang2.dashboard_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
