@@ -1,7 +1,6 @@
-package com.sonhoang2.api_gateway.dashboard;
+package com.sonhoang2.dashboard_service;
 
-import com.sonhoang2.api_gateway.common.dto.JSendResponse;
-import com.sonhoang2.api_gateway.dashboard.dto.DashboardResponse;
+import com.sonhoang2.dashboard_service.dto.DashboardResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,20 +19,15 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping
-    public Mono<ResponseEntity<JSendResponse<Map<String, DashboardResponse>>>> getDashboard(
+    public Mono<ResponseEntity<Map<String, DashboardResponse>>> getDashboard(
             @RequestHeader("X-User-Id") UUID userId) {
         log.info("Dashboard request for user: {}", userId);
 
         return dashboardService.getDashboard(userId)
-                .map(dashboard -> ResponseEntity.ok(
-                        JSendResponse.success(Map.of("dashboard", dashboard))
-                ))
+                .map(dashboard -> ResponseEntity.ok(Map.of("dashboard", dashboard)))
                 .onErrorResume(e -> {
                     log.error("Error fetching dashboard", e);
-                    return Mono.just(ResponseEntity.internalServerError()
-                            .body(JSendResponse.<Map<String, DashboardResponse>>error("Failed to fetch dashboard data",
-                                    500,
-                                    null)));
+                    return Mono.just(ResponseEntity.internalServerError().build());
                 });
     }
 }

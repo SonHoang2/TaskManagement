@@ -21,11 +21,12 @@
               }
             ],
             "url": {
-              "raw": "{{url}}/dashboard",
+              "raw": "{{url}}/dashboard-service/dashboard",
               "host": [
                 "{{url}}"
               ],
               "path": [
+                "dashboard-service",
                 "dashboard"
               ]
             }
