@@ -94,6 +94,7 @@ public class DashboardService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
+                .doOnNext(total -> log.info("Total projects: {}", total))
                 .transform(CircuitBreakerOperator.of(projectServiceCircuitBreaker))
                 .onErrorResume(e -> {
                     log.error("Error fetching total projects", e);
@@ -142,7 +143,7 @@ public class DashboardService {
 
     private Mono<List<ProjectSummary>> fetchRecentProjects(UUID userId) {
         return webClient.get()
-                .uri(PROJECT_SERVICE_URL + "/projects?size=5")
+                .uri(PROJECT_SERVICE_URL + "/projects?size=20")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -156,7 +157,7 @@ public class DashboardService {
 
     private Mono<TaskDistribution> fetchTaskDistribution(UUID userId) {
         return webClient.get()
-                .uri(TASK_SERVICE_URL + "/tasks")
+                .uri(TASK_SERVICE_URL + "/tasks/distribution")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTaskDistribution)
@@ -234,33 +235,12 @@ public class DashboardService {
         try {
             JsonNode root = objectMapper.readTree(response);
             JsonNode data = root.path("data");
-            JsonNode content;
+            JsonNode distribution = data.path("distribution");
 
-            if (data.has("content")) {
-                content = data.get("content");
-            } else if (data.has("page") && data.get("page").has("content")) {
-                content = data.get("page").get("content");
-            } else {
-                return TaskDistribution.builder().todo(0).inProgress(0).done(0).build();
-            }
+            int todo = distribution.has("todo") ? distribution.get("todo").asInt() : 0;
+            int inProgress = distribution.has("inProgress") ? distribution.get("inProgress").asInt() : 0;
+            int done = distribution.has("done") ? distribution.get("done").asInt() : 0;
 
-            int todo = 0, inProgress = 0, done = 0;
-            for (JsonNode node : content) {
-                String status = node.has("status") ? node.get("status").asText().toLowerCase() : "";
-                switch (status) {
-                    case "todo":
-                        todo++;
-                        break;
-                    case "in_progress":
-                    case "inprogress":
-                        inProgress++;
-                        break;
-                    case "done":
-                    case "completed":
-                        done++;
-                        break;
-                }
-            }
             return TaskDistribution.builder().todo(todo).inProgress(inProgress).done(done).build();
         } catch (Exception e) {
             log.error("Error extracting task distribution from response", e);

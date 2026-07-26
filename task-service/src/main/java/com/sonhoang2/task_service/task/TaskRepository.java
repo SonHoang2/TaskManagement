@@ -18,4 +18,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             String keyword,
             Pageable pageable
     );
+
+    long countByStatus(TaskStatus status);
 }

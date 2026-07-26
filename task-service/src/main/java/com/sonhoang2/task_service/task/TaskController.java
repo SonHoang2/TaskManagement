@@ -3,6 +3,7 @@ package com.sonhoang2.task_service.task;
 import com.sonhoang2.task_service.common.dto.JSendResponse;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
+import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import jakarta.validation.Valid;
@@ -65,5 +66,11 @@ public class TaskController {
     public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
         taskService.delete(id);
         return ResponseEntity.ok(JSendResponse.success(null));
+    }
+
+    @GetMapping("/distribution")
+    public ResponseEntity<JSendResponse<Map<String, TaskDistributionResponse>>> getTaskDistribution() {
+        TaskDistributionResponse distribution = taskService.getTaskDistribution();
+        return ResponseEntity.ok(JSendResponse.success(Map.of("distribution", distribution)));
     }
 }

@@ -6,6 +6,7 @@ import com.sonhoang2.task_service.events.EventPublisher;
 import com.sonhoang2.task_service.events.TaskAssignedEvent;
 import com.sonhoang2.task_service.feign.ProjectServiceClient;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
+import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import com.sonhoang2.task_service.task.entity.Task;
@@ -105,6 +106,20 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void delete(UUID id) {
         taskRepository.delete(findTaskByIdOrThrow(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TaskDistributionResponse getTaskDistribution() {
+        long todo = taskRepository.countByStatus(TaskStatus.TODO);
+        long inProgress = taskRepository.countByStatus(TaskStatus.IN_PROGRESS);
+        long done = taskRepository.countByStatus(TaskStatus.DONE);
+
+        return TaskDistributionResponse.builder()
+                .todo((int) todo)
+                .inProgress((int) inProgress)
+                .done((int) done)
+                .build();
     }
 
     private Task findTaskByIdOrThrow(UUID id) {
