@@ -43,8 +43,11 @@ services:
     deploy:
       resources:
         limits:
+          cpus: "1.0"
+          memory: 4G
+        reservations:
           cpus: "0.25"
-          memory: 1G
+          memory: 512M
   loki:
     image: grafana/loki:2.9.0
     container_name: loki

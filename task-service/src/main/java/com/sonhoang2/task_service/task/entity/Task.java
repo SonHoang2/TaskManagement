@@ -1,5 +1,6 @@
 package com.sonhoang2.task_service.task.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sonhoang2.task_service.attachment.entity.TaskAttachment;
 import com.sonhoang2.task_service.comment.entity.TaskComment;
 import com.sonhoang2.task_service.history.entity.TaskHistory;
@@ -48,7 +49,6 @@ public class Task {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Lob
     @Column(columnDefinition = "text")
     private String description;
 
@@ -77,6 +77,7 @@ public class Task {
 
     @ManyToOne
     @JoinColumn(name = "parent_task_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Task parentTask;
 
     @Builder.Default
