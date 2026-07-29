@@ -10,9 +10,9 @@ export const options = {
     scenarios: {
         constant_load: {
             executor: 'constant-arrival-rate',
-            rate: 10, // 10 requests per second
+            rate: 1000, // 1000 requests per second
             timeUnit: '1s',
-            duration: '1s', // Total 10 requests (rate * duration)
+            duration: '10s', // Total 10000 requests (rate * duration)
             preAllocatedVUs: 50,
             maxVUs: 100,
         },
