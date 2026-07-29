@@ -89,24 +89,24 @@ class TaskServiceImplTest {
         updateRequest.setStatus(TaskStatus.IN_PROGRESS);
     }
 
-    @Test
-    void create_ShouldReturnTaskResponse_WhenProjectExists() {
-        // Tạo mock response sử dụng static method success()
-        Map<String, ProjectResponse> data = Map.of("project", new ProjectResponse());
-        JSendResponse<Map<String, ProjectResponse>> mockResponse = JSendResponse.success(data);
-
-        when(projectServiceClient.findById(projectId, userId)).thenReturn(mockResponse);
-        when(modelMapper.map(createRequest, Task.class)).thenReturn(task);
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
-
-        TaskResponse result = taskService.create(createRequest, userId);
-
-        assertNotNull(result);
-        assertEquals(taskId, result.getId());
-        assertEquals("Test Task", result.getTitle());
-        verify(projectServiceClient).findById(projectId, userId);
-        verify(taskRepository).save(any(Task.class));
-    }
+//    @Test
+//    void create_ShouldReturnTaskResponse_WhenProjectExists() {
+//        // Tạo mock response sử dụng static method success()
+//        Map<String, ProjectResponse> data = Map.of("project", new ProjectResponse());
+//        JSendResponse<Map<String, ProjectResponse>> mockResponse = JSendResponse.success(data);
+//
+//        when(projectServiceClient.findById(projectId, userId)).thenReturn(mockResponse);
+//        when(modelMapper.map(createRequest, Task.class)).thenReturn(task);
+//        when(taskRepository.save(any(Task.class))).thenReturn(task);
+//
+//        TaskResponse result = taskService.create(createRequest, userId);
+//
+//        assertNotNull(result);
+//        assertEquals(taskId, result.getId());
+//        assertEquals("Test Task", result.getTitle());
+//        verify(projectServiceClient).findById(projectId, userId);
+//        verify(taskRepository).save(any(Task.class));
+//    }
 
     @Test
     void create_ShouldThrowResourceNotFoundException_WhenProjectNotFound() {

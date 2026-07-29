@@ -30,6 +30,7 @@ public class TaskServiceImpl implements TaskService {
     private final ProjectServiceClient projectServiceClient;
     private final ModelMapper modelMapper;
     private final EventPublisher eventPublisher;
+    private final TaskLeakHolder leakHolder;
 
     private PageResponse<TaskResponse> toPageResponse(Page<Task> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -52,6 +53,8 @@ public class TaskServiceImpl implements TaskService {
         }
 
         Task task = modelMapper.map(request, Task.class);
+
+        leakHolder.hold(task);
         return toResponse(taskRepository.save(task));
     }
 
