@@ -42,8 +42,7 @@ class TaskControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private TaskService taskService;
+    @MockitoBean   private TaskService taskService;
 
     private UUID taskId = UUID.randomUUID();
     private UUID projectId = UUID.randomUUID();
@@ -70,6 +69,7 @@ class TaskControllerTest {
 
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-User-Id", UUID.randomUUID().toString())
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("success"))
