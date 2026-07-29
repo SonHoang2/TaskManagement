@@ -54,11 +54,13 @@ class TaskServiceImplTest {
     private TaskUpdateRequest updateRequest;
     private UUID taskId;
     private UUID projectId;
+    private UUID userId;
 
     @BeforeEach
     void setUp() {
         taskId = UUID.randomUUID();
         projectId = UUID.randomUUID();
+        userId = UUID.randomUUID();
 
         task = Task.builder()
                 .id(taskId)
@@ -93,26 +95,26 @@ class TaskServiceImplTest {
         Map<String, ProjectResponse> data = Map.of("project", new ProjectResponse());
         JSendResponse<Map<String, ProjectResponse>> mockResponse = JSendResponse.success(data);
 
-        when(projectServiceClient.findById(projectId)).thenReturn(mockResponse);
+        when(projectServiceClient.findById(projectId, userId)).thenReturn(mockResponse);
         when(modelMapper.map(createRequest, Task.class)).thenReturn(task);
         when(taskRepository.save(any(Task.class))).thenReturn(task);
 
-        TaskResponse result = taskService.create(createRequest);
+        TaskResponse result = taskService.create(createRequest, userId);
 
         assertNotNull(result);
         assertEquals(taskId, result.getId());
         assertEquals("Test Task", result.getTitle());
-        verify(projectServiceClient).findById(projectId);
+        verify(projectServiceClient).findById(projectId, userId);
         verify(taskRepository).save(any(Task.class));
     }
 
     @Test
     void create_ShouldThrowResourceNotFoundException_WhenProjectNotFound() {
-        when(projectServiceClient.findById(projectId)).thenThrow(FeignException.NotFound.class);
+        when(projectServiceClient.findById(projectId, userId)).thenThrow(FeignException.NotFound.class);
 
-        assertThrows(ResourceNotFoundException.class, () -> taskService.create(createRequest));
+        assertThrows(ResourceNotFoundException.class, () -> taskService.create(createRequest, userId));
 
-        verify(projectServiceClient).findById(projectId);
+        verify(projectServiceClient).findById(projectId, userId);
         verify(taskRepository, never()).save(any(Task.class));
     }
 

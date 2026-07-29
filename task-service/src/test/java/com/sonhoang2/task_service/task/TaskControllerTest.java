@@ -66,7 +66,7 @@ class TaskControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(taskService.create(any(TaskCreateRequest.class))).thenReturn(response);
+        when(taskService.create(any(TaskCreateRequest.class), any(UUID.class))).thenReturn(response);
 
         mockMvc.perform(post("/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
