@@ -35,6 +35,9 @@ class TaskCommentServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private com.sonhoang2.task_service.task.TaskRepository taskRepository;
+
     @InjectMocks
     private TaskCommentServiceImpl taskCommentService;
 
