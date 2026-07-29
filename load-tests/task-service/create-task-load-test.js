@@ -13,8 +13,8 @@ export const options = {
             rate: 1000, // 1000 requests per second
             timeUnit: '1s',
             duration: '10s', // Total 10000 requests (rate * duration)
-            preAllocatedVUs: 50,
-            maxVUs: 100,
+            preAllocatedVUs: 100,
+            maxVUs: 200,
         },
     },
     thresholds: {
