@@ -19,7 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -114,14 +118,17 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     public TaskDistributionResponse getTaskDistribution() {
-        long todo = taskRepository.countByStatus(TaskStatus.TODO);
-        long inProgress = taskRepository.countByStatus(TaskStatus.IN_PROGRESS);
-        long done = taskRepository.countByStatus(TaskStatus.DONE);
+        List<Object[]> rows = taskRepository.countByStatusGrouped();
+        Map<TaskStatus, Long> counts = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (TaskStatus) row[0],
+                        row -> (Long) row[1]
+                ));
 
         return TaskDistributionResponse.builder()
-                .todo((int) todo)
-                .inProgress((int) inProgress)
-                .done((int) done)
+                .todo(counts.getOrDefault(TaskStatus.TODO, 0L).intValue())
+                .inProgress(counts.getOrDefault(TaskStatus.IN_PROGRESS, 0L).intValue())
+                .done(counts.getOrDefault(TaskStatus.DONE, 0L).intValue())
                 .build();
     }
 
