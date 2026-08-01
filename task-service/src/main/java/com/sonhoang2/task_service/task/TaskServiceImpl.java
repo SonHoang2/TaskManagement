@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -117,6 +118,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "taskDistribution", key = "'status_count'")
     public TaskDistributionResponse getTaskDistribution() {
         List<Object[]> rows = taskRepository.countByStatusGrouped();
         Map<TaskStatus, Long> counts = rows.stream()
