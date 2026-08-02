@@ -25,4 +25,21 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("SELECT t.status, COUNT(t) FROM Task t GROUP BY t.status")
     List<Object[]> countByStatusGrouped();
+
+    @Query("SELECT DISTINCT t FROM Task t " +
+           "LEFT JOIN FETCH t.comments " +
+           "WHERE t.projectId = :projectId")
+    List<Task> findByProjectIdWithComments(UUID projectId);
+
+    @Query("SELECT DISTINCT t FROM Task t " +
+           "LEFT JOIN FETCH t.attachments " +
+           "WHERE t.projectId = :projectId")
+    List<Task> findByProjectIdWithAttachments(UUID projectId);
+
+    @Query("SELECT DISTINCT t FROM Task t " +
+           "LEFT JOIN FETCH t.taskLabels " +
+           "WHERE t.projectId = :projectId")
+    List<Task> findByProjectIdWithLabels(UUID projectId);
+
+    Page<Task> findByProjectId(UUID projectId, Pageable pageable);
 }

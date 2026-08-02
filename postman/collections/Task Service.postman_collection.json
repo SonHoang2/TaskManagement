@@ -447,6 +447,71 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "get distribution",
+          "id": "e76add59-272f-4cc6-92b3-2e4babc95d5b",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/task-service/tasks/distribution",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "task-service",
+                "tasks",
+                "distribution"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10",
+                  "uuid": "9336c2db-86f8-4df3-9a29-a7f61c7ef9e1",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "id,asc",
+                  "uuid": "9c53557a-a749-45a2-95ba-ac439aeaac89",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS",
+                  "uuid": "97a9b068-196b-4867-8564-7ac4088d9b17",
+                  "disabled": true
+                },
+                {
+                  "key": "keyword",
+                  "value": "keyword",
+                  "uuid": "a2e203a4-14cb-4cc3-9fe1-193fa085c6ab",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ],
       "id": "3fe76a7e-c923-4e6f-ab3e-b35848758fbf"
@@ -590,6 +655,45 @@
         }
       ],
       "id": "1a448b5e-3b0a-4ca4-870d-d3d0f3891e18"
+    },
+    {
+      "name": "Check Leak Memory",
+      "id": "d0ce5080-b724-43ae-9fce-981d31238c0d",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/task-service/debug/leak-size",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "task-service",
+            "debug",
+            "leak-size"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "auth": {

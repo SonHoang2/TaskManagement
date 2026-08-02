@@ -252,6 +252,89 @@
           "response": []
         },
         {
+          "name": "Get My Projects",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "d2937313-b517-4566-a842-0cab25167109",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "84256e64-c3f4-46cd-a627-9503c2aef612",
+                "exec": [
+                  "// 1. Parse dữ liệu JSON từ response trả về\r",
+                  "const responseData = pm.response.json();\r",
+                  "\r",
+                  "// 2. Truy cập vào phần tử đầu tiên trong mảng \"projects\" và lấy \"id\"\r",
+                  "const firstProjectId = responseData.data.content[0].id;\r",
+                  "\r",
+                  "// 3. Lưu project id vào biến môi trường (Environment Variable) của Postman\r",
+                  "pm.environment.set(\"projectId\", firstProjectId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567891",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects/me?page=0&size=20",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "uuid": "587f2899-8ed3-4515-93d5-013cf7ff93bf"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "uuid": "587f2899-8ed3-4515-93d5-013cf7ff93be"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "uuid": "dc66c85c-0ecd-4545-a955-c9ddcb2d4919",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "",
+                  "uuid": "7afdd86d-0b50-45af-a01a-21ce211d85d1",
+                  "disabled": true
+                },
+                {
+                  "key": "sortDirection",
+                  "value": "",
+                  "uuid": "274860e4-2cf4-4e48-84a2-5785901fd0b6",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Create Project",
           "event": [
             {
@@ -442,6 +525,45 @@
                 "projects",
                 "invitations",
                 "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Tasks",
+          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/project-service/projects/:id/tasks?page=1&size=20",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "project-service",
+                "projects",
+                ":id",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "uuid": "773beae5-171c-401c-826e-54395ffd94a2"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "uuid": "4741ceb8-b84b-4cbd-acfb-3ceb15825a30"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{projectId}}"
+                }
               ]
             }
           },

@@ -116,6 +116,22 @@ public class ProjectController {
         return ResponseEntity.ok(JSendResponse.success(projectService.listAllProject(pageable, userId, request)));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<JSendResponse<PageResponse<ProjectDetailResponse>>> getMyProjects(
+            Pageable pageable,
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
+
+        ListProjectRequest request = new ListProjectRequest();
+        request.setSearch(search);
+        request.setSortBy(sortBy);
+        request.setSortDirection(sortDirection);
+
+        return ResponseEntity.ok(JSendResponse.success(projectService.getMyProjects(pageable, userId, request)));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, ProjectResponse>>> getProjectById(
             @PathVariable UUID id,
@@ -123,6 +139,17 @@ public class ProjectController {
 
         return ResponseEntity.ok(JSendResponse.success(
                 Map.of("project", projectService.getProjectById(id, userId))
+        ));
+    }
+
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<JSendResponse<Map<String, PageResponse<Map<String, Object>>>>> getProjectTasks(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId,
+            Pageable pageable) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("page", projectService.getProjectTasks(id, userId, pageable))
         ));
     }
 }

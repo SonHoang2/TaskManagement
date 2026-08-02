@@ -14,5 +14,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     Optional<ProjectMember> findByProjectIdAndUserId(UUID projectId, UUID userId);
 
     List<ProjectMember> findByProjectIdOrderByJoinedAtAsc(UUID projectId);
+
+    List<ProjectMember> findByUserId(UUID userId);
 }
 

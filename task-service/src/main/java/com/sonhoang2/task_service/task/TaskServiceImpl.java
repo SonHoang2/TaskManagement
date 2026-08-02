@@ -1,16 +1,23 @@
 package com.sonhoang2.task_service.task;
 
+import com.sonhoang2.task_service.attachment.entity.TaskAttachment;
+import com.sonhoang2.task_service.comment.entity.TaskComment;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.task_service.events.EventPublisher;
 import com.sonhoang2.task_service.events.TaskAssignedEvent;
 import com.sonhoang2.task_service.feign.ProjectServiceClient;
+import com.sonhoang2.task_service.task.dto.TaskAttachmentResponse;
+import com.sonhoang2.task_service.task.dto.TaskCommentResponse;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
+import com.sonhoang2.task_service.task.dto.TaskDetailResponse;
 import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
+import com.sonhoang2.task_service.task.dto.TaskLabelResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import com.sonhoang2.task_service.task.entity.Task;
 import com.sonhoang2.task_service.task.entity.TaskStatus;
+import com.sonhoang2.task_service.tasklabel.entity.TaskLabel;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -134,6 +141,65 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable) {
+        Page<Task> taskPage = taskRepository.findByProjectId(projectId, pageable);
+        List<Task> tasks = taskPage.getContent();
+
+        if (tasks.isEmpty()) {
+            return new PageResponse<>(List.of(),
+                    taskPage.getNumber(),
+                    taskPage.getSize(),
+                    taskPage.getTotalElements(),
+                    taskPage.getTotalPages(),
+                    taskPage.hasNext(),
+                    taskPage.hasPrevious(),
+                    taskPage.getNumberOfElements());
+        }
+
+        List<UUID> taskIds = tasks.stream().map(Task::getId).collect(Collectors.toList());
+
+        List<Task> tasksWithComments = taskRepository.findByProjectIdWithComments(projectId);
+        Map<UUID, Task> taskMap = tasksWithComments.stream()
+                .filter(t -> taskIds.contains(t.getId()))
+                .collect(Collectors.toMap(Task::getId, t -> t));
+
+        List<Task> tasksWithAttachments = taskRepository.findByProjectIdWithAttachments(projectId);
+        tasksWithAttachments.forEach(t -> {
+            if (taskIds.contains(t.getId())) {
+                Task task = taskMap.get(t.getId());
+                if (task != null) {
+                    task.setAttachments(t.getAttachments());
+                }
+            }
+        });
+
+        List<Task> tasksWithLabels = taskRepository.findByProjectIdWithLabels(projectId);
+        tasksWithLabels.forEach(t -> {
+            if (taskIds.contains(t.getId())) {
+                Task task = taskMap.get(t.getId());
+                if (task != null) {
+                    task.setTaskLabels(t.getTaskLabels());
+                }
+            }
+        });
+
+        List<TaskDetailResponse> responses = taskIds.stream()
+                .map(taskMap::get)
+                .map(this::toDetailResponse)
+                .collect(Collectors.toList());
+
+        return new PageResponse<>(responses,
+                taskPage.getNumber(),
+                taskPage.getSize(),
+                taskPage.getTotalElements(),
+                taskPage.getTotalPages(),
+                taskPage.hasNext(),
+                taskPage.hasPrevious(),
+                taskPage.getNumberOfElements());
+    }
+
     private Task findTaskByIdOrThrow(UUID id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task with id " + id + " not found"));
@@ -154,6 +220,55 @@ public class TaskServiceImpl implements TaskService {
                 .parentTaskId(task.getParentTaskId())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .build();
+    }
+
+    private TaskDetailResponse toDetailResponse(Task task) {
+        List<TaskCommentResponse> commentResponses = task.getComments().stream()
+                .map(comment -> TaskCommentResponse.builder()
+                        .id(comment.getId())
+                        .taskId(comment.getTaskId())
+                        .userId(comment.getUserId())
+                        .content(comment.getContent())
+                        .createdAt(comment.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<TaskAttachmentResponse> attachmentResponses = task.getAttachments().stream()
+                .map(attachment -> TaskAttachmentResponse.builder()
+                        .id(attachment.getId())
+                        .taskId(attachment.getTaskId())
+                        .fileUrl(attachment.getFileUrl())
+                        .fileName(attachment.getFileName())
+                        .uploadedBy(attachment.getUploadedBy())
+                        .createdAt(attachment.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<TaskLabelResponse> labelResponses = task.getTaskLabels().stream()
+                .map(taskLabel -> TaskLabelResponse.builder()
+                        .taskId(taskLabel.getTaskId())
+                        .labelId(taskLabel.getLabelId())
+                        .build())
+                .collect(Collectors.toList());
+
+        return TaskDetailResponse.builder()
+                .id(task.getId())
+                .projectId(task.getProjectId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .status(task.getStatus())
+                .priority(task.getPriority())
+                .assigneeId(task.getAssigneeId())
+                .reporterId(task.getReporterId())
+                .dueDate(task.getDueDate())
+                .startDate(task.getStartDate())
+                .parentTaskId(task.getParentTaskId())
+                .createdAt(task.getCreatedAt())
+                .updatedAt(task.getUpdatedAt())
+                .comments(commentResponses)
+                .attachments(attachmentResponses)
+                .labels(labelResponses)
                 .build();
     }
 }

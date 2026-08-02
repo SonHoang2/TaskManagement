@@ -24,6 +24,7 @@ import com.sonhoang2.project_service.project.entity.ProjectInvitation;
 import com.sonhoang2.project_service.project.entity.ProjectInvitationStatus;
 import com.sonhoang2.project_service.project.entity.ProjectMember;
 import com.sonhoang2.project_service.project.entity.ProjectMemberRole;
+import com.sonhoang2.project_service.project.feign.TaskServiceClient;
 import com.sonhoang2.project_service.project.feign.UserServiceClient;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,6 +50,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
     private final UserServiceClient userServiceClient;
+    private final TaskServiceClient taskServiceClient;
     private final EventPublisher eventPublisher;
 
     private void assertUserExists(UUID userId) {
@@ -73,16 +76,15 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         // Convert to response DTOs
-        List<ProjectDetailResponse> content = projectPage.getContent().stream()
+        List<ProjectDetailResponse> content = projectPage.getContent()
+                .stream()
                 .map(project -> toProjectDetailResponse(project, userId))
                 .collect(Collectors.toList());
 
         // Apply custom sorting if specified
         if (request.getSortBy() != null && !request.getSortBy().trim().isEmpty()) {
-            Sort.Direction direction = request.getSortDirection() != null
-                    && request.getSortDirection().equalsIgnoreCase("desc")
-                    ? Sort.Direction.DESC
-                    : Sort.Direction.ASC;
+            Sort.Direction direction = request.getSortDirection() != null && request.getSortDirection()
+                    .equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
 
             content.sort((p1, p2) -> {
                 int comparison = 0;
@@ -106,16 +108,14 @@ public class ProjectServiceImpl implements ProjectService {
             });
         }
 
-        return new PageResponse<>(
-                content,
+        return new PageResponse<>(content,
                 projectPage.getNumber(),
                 projectPage.getSize(),
                 projectPage.getTotalElements(),
                 projectPage.getTotalPages(),
                 projectPage.hasNext(),
                 projectPage.hasPrevious(),
-                projectPage.getNumberOfElements()
-        );
+                projectPage.getNumberOfElements());
     }
 
     @Override
@@ -156,8 +156,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project with id " + projectId + " not found"));
 
         // Check current user's membership and role using the passed userId
-        ProjectMember currentMembership = projectMemberRepository
-                .findByProjectIdAndUserId(projectId, userId)
+        ProjectMember currentMembership = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new AccessDeniedException("You are not a member of this project"));
 
         if (currentMembership.getRole() != ProjectMemberRole.OWNER && currentMembership.getRole() != ProjectMemberRole.ADMIN) {
@@ -258,19 +257,118 @@ public class ProjectServiceImpl implements ProjectService {
             throw new AccessDeniedException("You are not a member of this project");
         }
 
-        return projectInvitationRepository.findByProjectId(projectId)
-                .stream()
-                .map(this::toInvitationResponse)
-                .toList();
+        return projectInvitationRepository.findByProjectId(projectId).stream().map(this::toInvitationResponse).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId) {
-        return projectInvitationRepository.findByInviteeId(userId)
-                .stream()
-                .map(this::toInvitationResponse)
-                .toList();
+        return projectInvitationRepository.findByInviteeId(userId).stream().map(this::toInvitationResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable, UUID userId, ListProjectRequest request) {
+        // Get all project memberships for the current user
+        List<ProjectMember> memberships = projectMemberRepository.findByUserId(userId);
+        
+        // Extract project IDs
+        List<UUID> projectIds = memberships.stream()
+                .map(member -> member.getProject().getId())
+                .collect(Collectors.toList());
+        
+        // Fetch projects
+        List<Project> projects = projectRepository.findAllById(projectIds);
+        
+        // Apply search filter if provided
+        if (request.getSearch() != null && !request.getSearch().trim().isEmpty()) {
+            String searchLower = request.getSearch().toLowerCase();
+            projects = projects.stream()
+                    .filter(p -> p.getName().toLowerCase().contains(searchLower) || 
+                            (p.getDescription() != null && p.getDescription().toLowerCase().contains(searchLower)))
+                    .collect(Collectors.toList());
+        }
+        
+        // Convert to response DTOs
+        List<ProjectDetailResponse> content = projects.stream()
+                .map(project -> toProjectDetailResponse(project, userId))
+                .collect(Collectors.toList());
+        
+        // Apply custom sorting if specified
+        if (request.getSortBy() != null && !request.getSortBy().trim().isEmpty()) {
+            Sort.Direction direction = request.getSortDirection() != null && request.getSortDirection()
+                    .equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            
+            content.sort((p1, p2) -> {
+                int comparison = 0;
+                switch (request.getSortBy().toLowerCase()) {
+                    case "membercount":
+                        comparison = Integer.compare(p1.getMemberCount(), p2.getMemberCount());
+                        break;
+                    case "taskcount":
+                        comparison = Integer.compare(p1.getTaskStats().getTotal(), p2.getTaskStats().getTotal());
+                        break;
+                    case "createdat":
+                        comparison = p1.getCreatedAt().compareTo(p2.getCreatedAt());
+                        break;
+                    case "updatedat":
+                        comparison = p1.getUpdatedAt().compareTo(p2.getUpdatedAt());
+                        break;
+                    default:
+                        return 0;
+                }
+                return direction == Sort.Direction.ASC ? comparison : -comparison;
+            });
+        }
+        
+        // Apply pagination manually
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), content.size());
+        
+        if (start >= content.size()) {
+            content = List.of();
+        } else {
+            content = content.subList(start, end);
+        }
+        
+        return new PageResponse<>(content,
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                projects.size(),
+                (int) Math.ceil((double) projects.size() / pageable.getPageSize()),
+                end < projects.size(),
+                start > 0,
+                content.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<Map<String, Object>> getProjectTasks(UUID projectId, UUID userId, Pageable pageable) {
+        // Verify that the requesting user is a member
+        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new AccessDeniedException("You are not a member of this project");
+        }
+
+        String sort = buildSortParam(pageable.getSort());
+
+        var response = taskServiceClient.findByProjectId(
+                projectId,
+                userId,
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sort
+        );
+
+        return response.data().get("page");
+    }
+
+    private String buildSortParam(Sort sort) {
+        if (sort == null || sort.isUnsorted()) {
+            return null;
+        }
+        return sort.stream()
+                .map(order -> order.getProperty() + "," + order.getDirection().name().toLowerCase())
+                .collect(Collectors.joining(","));
     }
 
     // Helper methods (unchanged)
@@ -315,8 +413,7 @@ public class ProjectServiceImpl implements ProjectService {
         OwnerInfo owner = getOwnerInfo(project.getOwnerId());
 
         // Get user's role in the project
-        ProjectMemberRole myRole = projectMemberRepository
-                .findByProjectIdAndUserId(project.getId(), userId)
+        ProjectMemberRole myRole = projectMemberRepository.findByProjectIdAndUserId(project.getId(), userId)
                 .map(ProjectMember::getRole)
                 .orElse(null);
 
@@ -331,12 +428,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .collect(Collectors.toList());
 
         // Task stats - placeholder (implement when task service is available)
-        TaskStats taskStats = TaskStats.builder()
-                .total(0)
-                .todo(0)
-                .inProgress(0)
-                .done(0)
-                .build();
+        TaskStats taskStats = TaskStats.builder().total(0).todo(0).inProgress(0).done(0).build();
 
         // Active sprint - placeholder (implement when sprint service is available)
         ActiveSprint activeSprint = null;
@@ -366,11 +458,7 @@ public class ProjectServiceImpl implements ProjectService {
                     .avatarUrl(user.getAvatarUrl())
                     .build();
         } catch (FeignException e) {
-            return OwnerInfo.builder()
-                    .id(ownerId)
-                    .fullName("Unknown")
-                    .avatarUrl(null)
-                    .build();
+            return OwnerInfo.builder().id(ownerId).fullName("Unknown").avatarUrl(null).build();
         }
     }
 
@@ -378,15 +466,9 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             var response = userServiceClient.findById(userId);
             UserResponse user = response.data().get("user");
-            return MemberInfo.builder()
-                    .id(user.getId())
-                    .avatarUrl(user.getAvatarUrl())
-                    .build();
+            return MemberInfo.builder().id(user.getId()).avatarUrl(user.getAvatarUrl()).build();
         } catch (FeignException e) {
-            return MemberInfo.builder()
-                    .id(userId)
-                    .avatarUrl(null)
-                    .build();
+            return MemberInfo.builder().id(userId).avatarUrl(null).build();
         }
     }
 }
