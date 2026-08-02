@@ -12,6 +12,7 @@ import com.sonhoang2.project_service.project.dto.ProjectResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface ProjectService {
@@ -30,4 +31,8 @@ public interface ProjectService {
     List<ProjectInvitationResponse> listInvitations(UUID projectId, UUID userId);
 
     List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId);
+
+    PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable, UUID userId, ListProjectRequest request);
+
+    PageResponse<Map<String, Object>> getProjectTasks(UUID projectId, UUID userId, Pageable pageable);
 }
