@@ -2,6 +2,7 @@ package com.sonhoang2.project_service.project;
 
 import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.project_service.events.EventPublisher;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
@@ -48,6 +49,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private UserServiceClient userServiceClient;
+
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -158,6 +162,7 @@ class ProjectServiceImplTest {
         assertEquals(inviteeId, result.getInviteeId());
         assertEquals(ProjectInvitationStatus.PENDING, result.getStatus());
         verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class));
+        verify(eventPublisher, times(1)).publishProjectInvitationCreatedEvent(any());
     }
 
     @Test
@@ -188,6 +193,7 @@ class ProjectServiceImplTest {
         // Assert
         assertNotNull(result);
         verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class));
+        verify(eventPublisher, times(1)).publishProjectInvitationCreatedEvent(any());
     }
 
     @Test

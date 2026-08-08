@@ -42,4 +42,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     List<Task> findByProjectIdWithLabels(UUID projectId);
 
     Page<Task> findByProjectId(UUID projectId, Pageable pageable);
+
+    @Query("SELECT t.status, COUNT(t) FROM Task t WHERE t.projectId = :projectId GROUP BY t.status")
+    List<Object[]> countByStatusGroupedByProjectId(UUID projectId);
 }
