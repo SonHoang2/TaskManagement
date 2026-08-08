@@ -14,6 +14,7 @@ import com.sonhoang2.task_service.task.dto.TaskDetailResponse;
 import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
 import com.sonhoang2.task_service.task.dto.TaskLabelResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
+import com.sonhoang2.task_service.task.dto.TaskStats;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import com.sonhoang2.task_service.task.entity.Task;
 import com.sonhoang2.task_service.task.entity.TaskStatus;
@@ -198,6 +199,28 @@ public class TaskServiceImpl implements TaskService {
                 taskPage.hasNext(),
                 taskPage.hasPrevious(),
                 taskPage.getNumberOfElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TaskStats getTaskStatsByProjectId(UUID projectId) {
+        List<Object[]> rows = taskRepository.countByStatusGroupedByProjectId(projectId);
+        Map<TaskStatus, Long> counts = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (TaskStatus) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        int todo = counts.getOrDefault(TaskStatus.TODO, 0L).intValue();
+        int inProgress = counts.getOrDefault(TaskStatus.IN_PROGRESS, 0L).intValue();
+        int done = counts.getOrDefault(TaskStatus.DONE, 0L).intValue();
+
+        return TaskStats.builder()
+                .total(todo + inProgress + done)
+                .todo(todo)
+                .inProgress(inProgress)
+                .done(done)
+                .build();
     }
 
     private Task findTaskByIdOrThrow(UUID id) {

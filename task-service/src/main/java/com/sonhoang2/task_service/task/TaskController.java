@@ -6,6 +6,7 @@ import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
 import com.sonhoang2.task_service.task.dto.TaskDetailResponse;
 import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
+import com.sonhoang2.task_service.task.dto.TaskStats;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -82,5 +83,11 @@ public class TaskController {
     public ResponseEntity<JSendResponse<Map<String, TaskDistributionResponse>>> getTaskDistribution() {
         TaskDistributionResponse distribution = taskService.getTaskDistribution();
         return ResponseEntity.ok(JSendResponse.success(Map.of("distribution", distribution)));
+    }
+
+    @GetMapping("/project/{projectId}/stats")
+    public ResponseEntity<JSendResponse<Map<String, TaskStats>>> getTaskStatsByProjectId(@PathVariable UUID projectId) {
+        TaskStats stats = taskService.getTaskStatsByProjectId(projectId);
+        return ResponseEntity.ok(JSendResponse.success(Map.of("stats", stats)));
     }
 }

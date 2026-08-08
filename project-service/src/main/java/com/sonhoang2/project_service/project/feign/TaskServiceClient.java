@@ -22,4 +22,7 @@ public interface TaskServiceClient {
             @RequestParam("page") int page,
             @RequestParam("size") int size,
             @RequestParam(value = "sort", required = false) String sort);
+
+    @GetMapping("/tasks/project/{projectId}/stats")
+    JSendResponse<Map<String, Map<String, Object>>> getTaskStatsByProjectId(@PathVariable UUID projectId);
 }
