@@ -516,7 +516,7 @@
           "response": []
         },
         {
-          "name": "get distribution Copy",
+          "name": "get distribution",
           "id": "b2811274-0371-44fd-b2de-757afe1bfc35",
           "request": {
             "auth": {
