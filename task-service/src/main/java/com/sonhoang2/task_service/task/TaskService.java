@@ -5,6 +5,7 @@ import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
 import com.sonhoang2.task_service.task.dto.TaskDetailResponse;
 import com.sonhoang2.task_service.task.dto.TaskDistributionResponse;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
+import com.sonhoang2.task_service.task.dto.TaskStats;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -26,4 +27,6 @@ public interface TaskService {
     TaskDistributionResponse getTaskDistribution();
 
     PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable);
+
+    TaskStats getTaskStatsByProjectId(UUID projectId);
 }

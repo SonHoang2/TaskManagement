@@ -449,8 +449,75 @@
           "response": []
         },
         {
-          "name": "get distribution",
+          "name": "get task stats",
           "id": "e76add59-272f-4cc6-92b3-2e4babc95d5b",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/task-service/tasks/project/{{projectId}}/stats",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "task-service",
+                "tasks",
+                "project",
+                "{{projectId}}",
+                "stats"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10",
+                  "uuid": "9336c2db-86f8-4df3-9a29-a7f61c7ef9e1",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "id,asc",
+                  "uuid": "9c53557a-a749-45a2-95ba-ac439aeaac89",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS",
+                  "uuid": "97a9b068-196b-4867-8564-7ac4088d9b17",
+                  "disabled": true
+                },
+                {
+                  "key": "keyword",
+                  "value": "keyword",
+                  "uuid": "a2e203a4-14cb-4cc3-9fe1-193fa085c6ab",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get distribution Copy",
+          "id": "b2811274-0371-44fd-b2de-757afe1bfc35",
           "request": {
             "auth": {
               "type": "bearer",
