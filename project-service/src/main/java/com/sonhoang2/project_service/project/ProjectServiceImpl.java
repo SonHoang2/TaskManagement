@@ -87,7 +87,7 @@ public class ProjectServiceImpl implements ProjectService {
                     .equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
 
             content.sort((p1, p2) -> {
-                int comparison = 0;
+                int comparison;
                 switch (request.getSortBy().toLowerCase()) {
                     case "membercount":
                         comparison = Integer.compare(p1.getMemberCount(), p2.getMemberCount());
@@ -268,39 +268,41 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable, UUID userId, ListProjectRequest request) {
+    public PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable,
+                                                             UUID userId,
+                                                             ListProjectRequest request) {
         // Get all project memberships for the current user
         List<ProjectMember> memberships = projectMemberRepository.findByUserId(userId);
-        
+
         // Extract project IDs
         List<UUID> projectIds = memberships.stream()
                 .map(member -> member.getProject().getId())
                 .collect(Collectors.toList());
-        
+
         // Fetch projects
         List<Project> projects = projectRepository.findAllById(projectIds);
-        
+
         // Apply search filter if provided
         if (request.getSearch() != null && !request.getSearch().trim().isEmpty()) {
             String searchLower = request.getSearch().toLowerCase();
             projects = projects.stream()
-                    .filter(p -> p.getName().toLowerCase().contains(searchLower) || 
+                    .filter(p -> p.getName().toLowerCase().contains(searchLower) ||
                             (p.getDescription() != null && p.getDescription().toLowerCase().contains(searchLower)))
-                    .collect(Collectors.toList());
+                    .toList();
         }
-        
+
         // Convert to response DTOs
         List<ProjectDetailResponse> content = projects.stream()
                 .map(project -> toProjectDetailResponse(project, userId))
                 .collect(Collectors.toList());
-        
+
         // Apply custom sorting if specified
         if (request.getSortBy() != null && !request.getSortBy().trim().isEmpty()) {
             Sort.Direction direction = request.getSortDirection() != null && request.getSortDirection()
                     .equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-            
+
             content.sort((p1, p2) -> {
-                int comparison = 0;
+                int comparison;
                 switch (request.getSortBy().toLowerCase()) {
                     case "membercount":
                         comparison = Integer.compare(p1.getMemberCount(), p2.getMemberCount());
@@ -320,17 +322,17 @@ public class ProjectServiceImpl implements ProjectService {
                 return direction == Sort.Direction.ASC ? comparison : -comparison;
             });
         }
-        
+
         // Apply pagination manually
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), content.size());
-        
+
         if (start >= content.size()) {
             content = List.of();
         } else {
             content = content.subList(start, end);
         }
-        
+
         return new PageResponse<>(content,
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
@@ -427,8 +429,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(member -> getMemberInfo(member.getUserId()))
                 .collect(Collectors.toList());
 
-        // Task stats - placeholder (implement when task service is available)
-        TaskStats taskStats = TaskStats.builder().total(0).todo(0).inProgress(0).done(0).build();
+        // Task stats - fetch from task service
+        TaskStats taskStats = getTaskStats(project.getId());
 
         // Active sprint - placeholder (implement when sprint service is available)
         ActiveSprint activeSprint = null;
@@ -470,5 +472,30 @@ public class ProjectServiceImpl implements ProjectService {
         } catch (FeignException e) {
             return MemberInfo.builder().id(userId).avatarUrl(null).build();
         }
+    }
+
+    private TaskStats getTaskStats(UUID projectId) {
+        try {
+            var response = taskServiceClient.getTaskStatsByProjectId(projectId);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> statsData = (Map<String, Object>) response.data().get("stats");
+
+            int todo = (Integer) statsData.getOrDefault("todo", 0);
+            int inProgress = (Integer) statsData.getOrDefault("inProgress", 0);
+            int done = (Integer) statsData.getOrDefault("done", 0);
+
+            return TaskStats.builder()
+                    .total(todo + inProgress + done)
+                    .todo(todo)
+                    .inProgress(inProgress)
+                    .done(done)
+                    .build();
+        } catch (FeignException | ClassCastException e) {
+            return emptyTaskStats();
+        }
+    }
+
+    private TaskStats emptyTaskStats() {
+        return TaskStats.builder().total(0).todo(0).inProgress(0).done(0).build();
     }
 }
