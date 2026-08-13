@@ -139,10 +139,13 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -167,10 +170,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -194,10 +200,13 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -221,10 +230,13 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -248,10 +260,13 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -275,10 +290,13 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
       - postgres
+      - redis
     logging:
       driver: "json-file"
       options:
@@ -299,9 +317,12 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - service-registry
       - rabbitmq
+      - redis
     logging:
       driver: "json-file"
       options:
