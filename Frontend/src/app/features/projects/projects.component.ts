@@ -1,16 +1,16 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-projects',
   standalone: true,
   template: `
-    <div class="dashboard-placeholder">
-      <h1>Dashboard</h1>
-      <p>Dashboard will be implemented in Phase 6</p>
+    <div class="feature-placeholder">
+      <h1>Projects</h1>
+      <p>Projects management will be implemented in Phase 4</p>
     </div>
   `,
   styles: `
-    .dashboard-placeholder {
+    .feature-placeholder {
       padding: 40px;
       text-align: center;
       h1 {
@@ -21,6 +21,6 @@ import { Component } from '@angular/core';
         color: #666;
       }
     }
-  `,
+  `
 })
-export class DashboardComponent {}
+export class ProjectsComponent {}

@@ -28,7 +28,7 @@ export interface JSendResponse<T> {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly TOKEN_KEY = 'jwt_token';
@@ -41,26 +41,26 @@ export class AuthService {
 
   constructor(
     private httpService: HttpService,
-    private router: Router
+    private router: Router,
   ) {}
 
   login(credentials: LoginRequest): Observable<JSendResponse<AuthResponse>> {
-    return this.httpService.post<JSendResponse<AuthResponse>>('/api/auth/login', credentials).pipe(
-      tap(response => {
+    return this.httpService.post<JSendResponse<AuthResponse>>('/user-service/auth/login', credentials).pipe(
+      tap((response) => {
         if (response.status === 'success' && response.data) {
           this.setSession(response.data);
         }
-      })
+      }),
     );
   }
 
   signup(userData: SignupRequest): Observable<JSendResponse<AuthResponse>> {
-    return this.httpService.post<JSendResponse<AuthResponse>>('/api/auth/signup', userData).pipe(
-      tap(response => {
+    return this.httpService.post<JSendResponse<AuthResponse>>('/user-service/auth/signup', userData).pipe(
+      tap((response) => {
         if (response.status === 'success' && response.data) {
           this.setSession(response.data);
         }
-      })
+      }),
     );
   }
 

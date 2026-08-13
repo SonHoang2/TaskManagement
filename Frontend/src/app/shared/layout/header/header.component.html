@@ -1,0 +1,56 @@
+<header class="header">
+  <div class="header-left">
+    <button class="menu-toggle" (click)="onToggleSidebar()" aria-label="Toggle sidebar">
+      <span class="hamburger-icon">☰</span>
+    </button>
+    <h1 class="page-title">Task Management</h1>
+  </div>
+
+  <div class="header-right">
+    @if (currentUser()) {
+      <div class="user-menu-container">
+        <button 
+          class="user-menu-trigger" 
+          (click)="toggleUserMenu()"
+          aria-label="User menu"
+          aria-expanded="isUserMenuOpen()"
+        >
+          <div class="user-avatar">
+            <span class="avatar-initials">{{ currentUser()!.name.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ currentUser()!.name }}</span>
+            <span class="user-email">{{ currentUser()!.email }}</span>
+          </div>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+
+        @if (isUserMenuOpen()) {
+          <div class="user-menu-dropdown">
+            <ul class="user-menu-list">
+              <li class="user-menu-item">
+                <button class="user-menu-button" (click)="closeUserMenu()">
+                  <span class="menu-icon">👤</span>
+                  <span>Profile</span>
+                </button>
+              </li>
+              <li class="user-menu-item">
+                <button class="user-menu-button" (click)="closeUserMenu()">
+                  <span class="menu-icon">⚙️</span>
+                  <span>Settings</span>
+                </button>
+              </li>
+              <li class="user-menu-divider"></li>
+              <li class="user-menu-item">
+                <button class="user-menu-button logout-button" (click)="onLogout()">
+                  <span class="menu-icon">🚪</span>
+                  <span>Logout</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</header>
