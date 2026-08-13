@@ -1,0 +1,45 @@
+<aside class="sidebar" [class.collapsed]="!isOpen()">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">📝</span>
+      @if (isOpen()) {
+        <span class="logo-text">TaskManager</span>
+      }
+    </div>
+    <div class="header-actions">
+      <button class="toggle-btn desktop-only" (click)="onToggle()" aria-label="Toggle sidebar">
+        <span class="toggle-icon">@if (isOpen()) { ◀ } @else { ▶ }</span>
+      </button>
+      <button class="close-btn mobile-only" (click)="close.emit()" aria-label="Close sidebar">
+        <span class="close-icon">✕</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list">
+      @for (item of navItems; track item.path) {
+        <li class="nav-item">
+          <a 
+            class="nav-link" 
+            [routerLink]="item.path" 
+            routerLinkActive="active"
+            (click)="onNavigate()"
+            [attr.aria-label]="item.label"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            @if (isOpen()) {
+              <span class="nav-label">{{ item.label }}</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  @if (isOpen()) {
+    <div class="sidebar-footer">
+      <p class="footer-text">© 2024 TaskManager</p>
+    </div>
+  }
+</aside>
