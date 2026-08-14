@@ -1,0 +1,84 @@
+<div class="project-detail-container">
+  @if (isLoading()) {
+    <div class="loading" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Loading project details...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error" role="alert">
+      <p>{{ error() }}</p>
+      <button class="btn btn-secondary" (click)="goBack()">Go Back</button>
+    </div>
+  } @else if (project()) {
+    <div class="project-header">
+      <button class="btn btn-secondary back-btn" (click)="goBack()" aria-label="Go back to projects">
+        ← Back
+      </button>
+      <div class="project-actions">
+        <button class="btn btn-secondary" (click)="editProject()" aria-label="Edit project">
+          Edit
+        </button>
+        <button class="btn btn-danger" (click)="deleteProject()" aria-label="Delete project">
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <div class="project-content">
+      <div class="project-info-section">
+        <h1>{{ project()!.name }}</h1>
+        <div class="project-meta">
+          <div class="meta-item">
+            <span class="label">Created:</span>
+            <span class="value">{{ formatDate(project()!.createdAt) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Last Updated:</span>
+            <span class="value">{{ formatDate(project()!.updatedAt) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">Project ID:</span>
+            <span class="value">{{ project()!.id }}</span>
+          </div>
+        </div>
+
+        <div class="project-description">
+          <h2>Description</h2>
+          <p>{{ project()!.description }}</p>
+        </div>
+
+        <div class="project-quick-actions">
+          <h2>Quick Actions</h2>
+          <div class="action-buttons">
+            <button class="btn btn-primary" (click)="navigateToTasks()" aria-label="View project tasks">
+              View Tasks
+            </button>
+            <button class="btn btn-secondary" (click)="navigateToSprints()" aria-label="View project sprints">
+              View Sprints
+            </button>
+            <button class="btn btn-secondary" (click)="toggleMembers()" aria-label="Toggle project members">
+              Members
+            </button>
+            <button class="btn btn-secondary" (click)="toggleInvitations()" aria-label="Toggle project invitations">
+              Invitations
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (showMembers()) {
+        <div class="project-members-section">
+          <h2>Project Members</h2>
+          <app-project-members [projectId]="project()!.id"></app-project-members>
+        </div>
+      }
+
+      @if (showInvitations()) {
+        <div class="project-invitations-section">
+          <h2>Project Invitations</h2>
+          <app-project-invitations [projectId]="project()!.id"></app-project-invitations>
+        </div>
+      }
+    </div>
+  }
+</div>

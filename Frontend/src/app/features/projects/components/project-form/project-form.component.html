@@ -1,0 +1,89 @@
+<div class="project-form-container">
+  @if (isLoading()) {
+    <div class="loading" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Loading project...</p>
+    </div>
+  } @else {
+    <div class="form-header">
+      <button class="btn btn-secondary back-btn" (click)="cancel()" aria-label="Cancel and go back">
+        ← Cancel
+      </button>
+      <h1>{{ getTitle() }}</h1>
+    </div>
+
+    @if (error()) {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="project-form" novalidate>
+      <div class="form-group">
+        <label for="name">Project Name *</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="form-control"
+          placeholder="Enter project name"
+          [attr.aria-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched ? 'true' : 'false'"
+          [attr.aria-describedby]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched ? 'name-error' : null"
+        />
+        @if (getErrorMessage('name')) {
+          <small id="name-error" class="error-message" role="alert">{{ getErrorMessage('name') }}</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description *</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          class="form-control"
+          rows="5"
+          placeholder="Enter project description (min 10 characters)"
+          [attr.aria-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched ? 'true' : 'false'"
+          [attr.aria-describedby]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched ? 'description-error' : null"
+        ></textarea>
+        @if (getErrorMessage('description')) {
+          <small id="description-error" class="error-message" role="alert">{{ getErrorMessage('description') }}</small>
+        }
+      </div>
+
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="isSubmitting()"
+          aria-label="Save project"
+        >
+          @if (isSubmitting()) {
+            <span class="spinner-small"></span>
+            Saving...
+          } @else {
+            {{ isEditMode() ? 'Update Project' : 'Create Project' }}
+          }
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="cancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cancel"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+
+    <div class="form-info">
+      <h3>Project Guidelines</h3>
+      <ul>
+        <li>Project name must be between 3 and 100 characters</li>
+        <li>Description must be between 10 and 500 characters</li>
+        <li>Provide a clear description to help team members understand the project's purpose</li>
+      </ul>
+    </div>
+  }
+</div>

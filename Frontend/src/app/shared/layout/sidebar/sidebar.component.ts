@@ -4,7 +4,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 interface NavItem {
   path: string;
   label: string;
-  icon: string;
+  icon: 'dashboard' | 'tasks' | 'projects' | 'team' | 'settings';
 }
 
 @Component({
@@ -24,11 +24,11 @@ export class SidebarComponent {
   readonly close = output<void>();
 
   protected readonly navItems: NavItem[] = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/tasks', label: 'Tasks', icon: '📋' },
-    { path: '/projects', label: 'Projects', icon: '📁' },
-    { path: '/team', label: 'Team', icon: '👥' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' }
+    { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { path: '/tasks', label: 'Tasks', icon: 'tasks' },
+    { path: '/projects', label: 'Projects', icon: 'projects' },
+    { path: '/team', label: 'Team', icon: 'team' },
+    { path: '/settings', label: 'Settings', icon: 'settings' }
   ];
 
   constructor(private router: Router) {}

@@ -6,12 +6,14 @@
   left: 0;
   width: $sidebar-width;
   height: 100vh;
-  background: $bg-primary;
-  border-right: 1px solid $border-color;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba($border-color, 0.8);
   display: flex;
   flex-direction: column;
-  transition: width $transition-base ease-in-out, transform $transition-base ease-in-out;
+  transition: all $transition-base ease-in-out;
   z-index: $z-modal;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
 
   &.collapsed {
     width: $sidebar-collapsed-width;
@@ -23,28 +25,54 @@
   align-items: center;
   justify-content: space-between;
   padding: $spacing-lg;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 1px solid rgba($border-color, 0.6);
   height: $header-height;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(255, 255, 255, 0.9) 100%);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: $spacing-md;
   flex: 1;
   overflow: hidden;
+  transition: all $transition-base ease-in-out;
 }
 
 .logo-icon {
-  font-size: $font-size-xl;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+  border-radius: $radius-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all $transition-base ease-in-out;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    stroke: $text-inverse;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  }
 }
 
 .logo-text {
   font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-weight: $font-weight-bold;
   color: $text-primary;
   white-space: nowrap;
+  background: linear-gradient(135deg, $text-primary 0%, $primary-dark 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .header-actions {
@@ -55,18 +83,31 @@
 
 .toggle-btn,
 .close-btn {
-  background: none;
-  border: none;
+  background: linear-gradient(135deg, $bg-tertiary 0%, $bg-secondary 100%);
+  border: 1px solid $border-color;
   cursor: pointer;
-  padding: $spacing-sm;
-  border-radius: $radius-md;
-  transition: background $transition-fast;
+  padding: $spacing-md;
+  border-radius: $radius-lg;
+  transition: all $transition-base ease-in-out;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: $shadow-sm;
 
   &:hover {
-    background: $bg-tertiary;
+    background: linear-gradient(135deg, $primary-light 0%, $primary-color 100%);
+    border-color: $primary-color;
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+
+    .toggle-icon,
+    .close-icon {
+      stroke: $text-inverse;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 
   &:focus {
@@ -77,8 +118,10 @@
 
 .toggle-icon,
 .close-icon {
-  font-size: $font-size-sm;
-  color: $text-secondary;
+  width: 18px;
+  height: 18px;
+  stroke: $text-secondary;
+  transition: stroke $transition-base ease-in-out;
 }
 
 .desktop-only {
@@ -97,8 +140,25 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: $spacing-md;
+  padding: $spacing-lg $spacing-md;
   overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-dark;
+    border-radius: $radius-full;
+
+    &:hover {
+      background: $secondary-color;
+    }
+  }
 }
 
 .nav-list {
@@ -116,21 +176,51 @@
   align-items: center;
   gap: $spacing-md;
   padding: $spacing-md;
-  border-radius: $radius-md;
+  border-radius: $radius-lg;
   color: $text-secondary;
   text-decoration: none;
-  transition: all $transition-fast;
+  transition: all $transition-base ease-in-out;
   white-space: nowrap;
   overflow: hidden;
+  position: relative;
+  font-weight: $font-weight-medium;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, $primary-color 0%, $primary-dark 100%);
+    border-radius: 0 $radius-sm $radius-sm 0;
+    transition: height $transition-base ease-in-out;
+  }
 
   &:hover {
-    background: $bg-tertiary;
-    color: $text-primary;
+    background: linear-gradient(135deg, rgba($primary-color, 0.1) 0%, rgba($primary-light, 0.05) 100%);
+    color: $primary-dark;
+    transform: translateX(4px);
+
+    &::before {
+      height: 60%;
+    }
   }
 
   &.active {
-    background: $primary-color;
+    background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
     color: $text-inverse;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+    &::before {
+      height: 70%;
+      background: $text-inverse;
+    }
+
+    .nav-icon {
+      stroke: $text-inverse;
+    }
   }
 
   &:focus {
@@ -140,25 +230,32 @@
 }
 
 .nav-icon {
-  font-size: $font-size-lg;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
   flex-shrink: 0;
+  transition: stroke $transition-base ease-in-out;
 }
 
 .nav-label {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
+  letter-spacing: -0.25px;
 }
 
 .sidebar-footer {
   padding: $spacing-lg;
-  border-top: 1px solid $border-color;
+  border-top: 1px solid rgba($border-color, 0.6);
   text-align: center;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(255, 255, 255, 0.9) 100%);
 }
 
 .footer-text {
   font-size: $font-size-xs;
   color: $text-tertiary;
   margin: 0;
+  font-weight: $font-weight-medium;
+  letter-spacing: 0.5px;
 }
 
 // Responsive design
@@ -166,6 +263,7 @@
   .sidebar {
     transform: translateX(-100%);
     width: $sidebar-width;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
 
     &.collapsed {
       transform: translateX(-100%);
@@ -175,5 +273,17 @@
     &.mobile-open {
       transform: translateX(0);
     }
+  }
+
+  .sidebar-header {
+    padding: $spacing-md;
+  }
+
+  .sidebar-nav {
+    padding: $spacing-md;
+  }
+
+  .sidebar-footer {
+    padding: $spacing-md;
   }
 }
