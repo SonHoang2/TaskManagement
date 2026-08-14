@@ -1,0 +1,23 @@
+name: dev
+values:
+  - key: url
+    value: ''
+  - key: accessToken
+    value: ''
+  - key: tokenType
+    value: ''
+  - key: projectId
+    value: ''
+  - key: userId
+    value: ''
+  - key: invitedUserId
+    value: ''
+  - key: invitationId
+    value: ''
+  - key: notificationId
+    value: ''
+  - key: taskId
+    value: ''
+  - key: sprintId
+    value: ''
+color: 0

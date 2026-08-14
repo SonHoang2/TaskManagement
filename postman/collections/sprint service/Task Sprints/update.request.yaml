@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{url}}/sprint-service/task-sprints/:taskId/:sprintId"
+method: PATCH
+pathVariables:
+  taskId: "{{taskId}}"
+  sprintId: "{{sprintId}}"
+body:
+  type: json
+  content: |-
+    {
+      "field": "status",
+      "oldValue": "OPEN",
+      "newValue": "IN_PROGRESS"
+    }
+order: 4000

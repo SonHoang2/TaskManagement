@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{url}}/sprint-service/sprints/:id"
+method: GET
+pathVariables:
+  id: "{{sprintId}}"
+order: 3000

@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{url}}/sprint-service/task-sprints"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "taskId": "{{taskId}}",
+        "sprintId": "{{sprintId}}"
+    }
+order: 5000

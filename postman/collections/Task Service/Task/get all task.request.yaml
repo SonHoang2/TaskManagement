@@ -1,0 +1,42 @@
+$kind: http-request
+url: "{{url}}/task-service/tasks"
+method: GET
+queryParams:
+  - key: size
+    value: "10"
+    disabled: true
+  - key: sort
+    value: id,asc
+    disabled: true
+  - key: status
+    value: IN_PROGRESS
+    disabled: true
+  - key: keyword
+    value: keyword
+    disabled: true
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: afterResponse
+    code: "// 1. Phân tích cú pháp chuỗi JSON phản hồi từ API\r
+
+      const responseData = pm.response.json();\r
+
+      \r
+
+      // 2. Trích xuất id từ phần tử đầu tiên trong mảng content\r
+
+      const firstTaskId = responseData.data.page.content[0].id;\r
+
+      \r
+
+      // 3. Lưu giá trị id vào biến môi trường (Environment Variable) tên là 'taskId'\r
+
+      pm.environment.set(\"taskId\", firstTaskId);"
+    language: text/javascript
+order: 1000

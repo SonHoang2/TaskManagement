@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{url}}/task-service/task-labels"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "taskId": "e22aaf85-5cc6-4b9f-9d2a-94a3da25a670",
+      "changedBy": "2dff47a9-57b3-42b8-baaa-35832889660e",
+      "field": "status",
+      "oldValue": "OPEN",
+      "newValue": "IN_PROGRESS"
+    }
+order: 5000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{url}}/sprint-service/sprints/:id"
+method: PATCH
+pathVariables:
+  id: "{{sprintId}}"
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Sprint Name",
+      "startDate": "2024-01-02",
+      "endDate": "2024-01-15"
+    }
+order: 4000

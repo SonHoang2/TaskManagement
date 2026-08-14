@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{url}}/notification-service/notifications/:id"
+method: GET
+pathVariables:
+  id: "{{notificationId}}"
+order: 3000

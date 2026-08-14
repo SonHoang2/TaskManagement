@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{url}}/task-service/tasks/project/{{projectId}}/stats"
+method: GET
+queryParams:
+  - key: size
+    value: "10"
+    disabled: true
+  - key: sort
+    value: id,asc
+    disabled: true
+  - key: status
+    value: IN_PROGRESS
+    disabled: true
+  - key: keyword
+    value: keyword
+    disabled: true
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 4000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{url}}/sprint-service/task-sprints?taskId={{taskId}}&sprintId={{sprintId}}&page=0&size=10"
+method: GET
+queryParams:
+  - key: taskId
+    value: "{{taskId}}"
+    description: Optional filter by task ID
+  - key: sprintId
+    value: "{{sprintId}}"
+    description: Optional filter by sprint ID
+  - key: page
+    value: "0"
+  - key: size
+    value: "10"
+order: 1000

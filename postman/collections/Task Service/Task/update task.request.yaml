@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{url}}/task-service/tasks/:id"
+method: PATCH
+pathVariables:
+  id: "{{taskId}}"
+body:
+  type: json
+  content: |-
+    {
+        "assigneeId": "{{invitedUserId}}"
+    }
+order: 3000

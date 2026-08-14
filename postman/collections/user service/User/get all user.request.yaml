@@ -1,0 +1,73 @@
+$kind: http-request
+url: "{{url}}/user-service/users"
+method: GET
+queryParams:
+  - key: size
+    value: "10"
+    disabled: true
+  - key: sort
+    value: id,asc
+    disabled: true
+  - key: status
+    value: IN_PROGRESS
+    disabled: true
+  - key: keyword
+    value: keyword
+    disabled: true
+scripts:
+  - type: afterResponse
+    code: "// 1. Phân tích cú pháp chuỗi JSON phản hồi từ server\r
+
+      const responseData = pm.response.json();\r
+
+      \r
+
+      // Lấy userId hiện tại từ biến môi trường để so sánh\r
+
+      const currentUserId = pm.environment.get(\"userId\");\r
+
+      \r
+
+      // 2. Lấy danh sách user từ mảng content\r
+
+      const usersList = responseData?.data?.page?.content || [];\r
+
+      \r
+
+      // Lọc ra TẤT CẢ các user có id khác với currentUserId\r
+
+      const filteredUsers = usersList.filter(user => user.id !== currentUserId);\r
+
+      \r
+
+      if (filteredUsers.length > 0) {\r
+
+      \    // Chọn một chỉ mục (index) ngẫu nhiên trong mảng đã lọc\r
+
+      \    const randomIndex = Math.floor(Math.random() * filteredUsers.length);\r
+
+      \    const randomUser = filteredUsers[randomIndex];\r
+
+      \    \r
+
+      \    const invitedUserId = randomUser.id;\r
+
+      \r
+
+      \    // 3. Lưu vào biến môi trường (Environment Variable) tên là 'invitedUserId'\r
+
+      \    pm.environment.set(\"invitedUserId\", invitedUserId);\r
+
+      \r
+
+      \    // In ra console để kiểm tra\r
+
+      \    console.log(`Đã lưu ngẫu nhiên invitedUserId (khác với userId hiện tại): ${invitedUserId} (Chọn từ ${filteredUsers.length} users phù hợp)`);\r
+
+      } else {\r
+
+      \    console.warn(\"Không tìm thấy user nào có ID khác với userId hiện tại hoặc danh sách trống.\");\r
+
+      }"
+    language: text/javascript
+order: 1000

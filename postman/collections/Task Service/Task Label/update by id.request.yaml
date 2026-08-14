@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{url}}/task-service/task-labels/:id"
+method: PATCH
+pathVariables:
+  id: d4f75714-d7cc-44ff-8d98-cbb8c17917f2
+body:
+  type: json
+  content: |-
+    {
+      "field": "status",
+      "oldValue": "OPEN 123"
+    }
+order: 4000

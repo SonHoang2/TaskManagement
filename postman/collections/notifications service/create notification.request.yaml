@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{url}}/notification-service/notifications"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "userId": "2dff47a9-57b3-42b8-baaa-35832889660e",
+      "type": "SYSTEM",
+      "content": "This is a sample notification content.",
+      "isRead": false
+    }
+order: 1000

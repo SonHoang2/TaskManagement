@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{url}}/user-service/users"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Nguyễn Văn A",
+      "email": "sonhoang3@gmail.com",
+      "password": "12345678",
+      "avatarUrl": "https://example.com/images/avatar-son.jpg"
+    }
+order: 4000
