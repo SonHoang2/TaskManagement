@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{url}}/project-service/projects/:id/members"
+method: GET
+pathVariables:
+  id: "{{projectId}}"
+order: 1000

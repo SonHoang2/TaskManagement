@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{url}}/user-service/users/:id"
+method: PUT
+pathVariables:
+  id: "{{userId}}"
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Nguyễn Văn A",
+      "email": "sonhoang2@gmail.com",
+      "password": "123456789",
+      "avatarUrl": "https://example.com/images/avatar-son.jpg",
+      "role": "ADMIN"
+    }
+order: 3000

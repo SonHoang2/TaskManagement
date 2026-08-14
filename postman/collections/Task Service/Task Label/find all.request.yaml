@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{url}}/task-service/task-labels"
+method: GET
+order: 1000

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{url}}/task-service/tasks"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "title": "Hoàn thành báo cáo tuần",
+      "description": "Viết và nộp báo cáo tuần cho dự án Task Management API",
+      "status": "IN_PROGRESS",
+      "projectId": "{{projectId}}"
+    }
+order: 2000

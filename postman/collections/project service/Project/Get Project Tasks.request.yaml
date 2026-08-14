@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{url}}/project-service/projects/:id/tasks?page=1&size=20"
+method: GET
+queryParams:
+  page: "1"
+  size: "20"
+pathVariables:
+  id: "{{projectId}}"
+order: 9000

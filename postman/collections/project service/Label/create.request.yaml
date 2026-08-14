@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{url}}/project-service/labels"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "projectId": "a8e2ad07-0c2e-45bb-921f-77ac28ddf25a",
+        "name": "Bug",
+        "color": "red"
+    }
+order: 5000

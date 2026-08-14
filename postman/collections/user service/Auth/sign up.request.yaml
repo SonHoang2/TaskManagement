@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{url}}/user-service/auth/signup"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "email": "son@example.com",
+        "password": "secret123",
+        "fullName": "Son Hoang"
+    }
+order: 2000

@@ -1,0 +1,59 @@
+$kind: http-request
+url: "{{url}}/user-service/auth/login"
+method: POST
+queryParams:
+  - key: size
+    value: "10"
+    disabled: true
+  - key: sort
+    value: id,asc
+    disabled: true
+  - key: status
+    value: IN_PROGRESS
+    disabled: true
+  - key: keyword
+    value: keyword
+    disabled: true
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"son@example.com\",\r
+
+    \  \"password\": \"secret123\"\r
+
+    }"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      // parse response JSON
+      const res = pm.response.json();
+
+      // lấy các thông tin từ response
+      const token = res?.data?.auth?.accessToken;
+      const userId = res?.data?.auth?.userId;
+
+      if (token) {
+          // lưu vào environment variable
+          pm.environment.set("accessToken", token);
+
+          // optional: lưu luôn token type nếu cần
+          const tokenType = res?.data?.auth?.tokenType || "Bearer";
+          pm.environment.set("tokenType", tokenType);
+
+          // lưu userId vào environment variable
+          if (userId) {
+              pm.environment.set("userId", userId);
+              console.log("User ID saved:", userId);
+          } else {
+              console.warn("Không tìm thấy userId trong auth object");
+          }
+
+          console.log("Token saved:", token);
+      } else {
+          console.error("Không tìm thấy accessToken trong response");
+      }
+    language: text/javascript
+order: 1000

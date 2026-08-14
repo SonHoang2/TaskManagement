@@ -1,0 +1,7 @@
+$kind: http-request
+name: find by id
+url: "{{url}}/task-service/task-histories/:id"
+method: DELETE
+pathVariables:
+  id: 1d9260c7-492f-49f2-a9e1-4cc9884762b2
+order: 4000

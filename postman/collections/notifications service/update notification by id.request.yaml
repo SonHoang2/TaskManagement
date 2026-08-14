@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{url}}/notification-service/notifications/:id"
+method: PATCH
+pathVariables:
+  id: "{{notificationId}}"
+body:
+  type: json
+  content: |-
+    {
+      "isRead": true
+    }
+order: 2000

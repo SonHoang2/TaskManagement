@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{url}}/sprint-service/task-sprints/:taskId/:sprintId"
+method: GET
+pathVariables:
+  taskId: "{{taskId}}"
+  sprintId: "{{sprintId}}"
+order: 2000

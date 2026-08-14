@@ -1,0 +1,35 @@
+$kind: http-request
+url: "{{url}}/project-service/projects"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "name": "My Sample Project",
+      "description": "This is a sample project description"
+    }
+scripts:
+  - type: afterResponse
+    code: "// 1. Phân tích cú pháp chuỗi JSON trả về từ API\r
+
+      const responseData = pm.response.json();\r
+
+      \r
+
+      // 2. Trích xuất projectId từ cấu trúc data.project.id\r
+
+      const projectId = responseData.data.project.id;\r
+
+      \r
+
+      // 3. Lưu vào biến môi trường (Khuyên dùng)\r
+
+      pm.environment.set(\"projectId\", projectId);\r
+
+      \r
+
+      // In ra console để bạn dễ dàng kiểm tra/debug nếu cần\r
+
+      console.log(\"Đã lưu projectId thành công:\", projectId);"
+    language: text/javascript
+order: 4000

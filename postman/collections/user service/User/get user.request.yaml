@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{url}}/user-service/users/:id"
+method: GET
+pathVariables:
+  id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "fullName": "Nguyễn Văn A",
+      "email": "sonhoang2@gmail.com",
+      "password": "123456789",
+      "avatarUrl": "https://example.com/images/avatar-son.jpg",
+      "role": "ADMIN"
+    }
+settings: {}
+order: 2000

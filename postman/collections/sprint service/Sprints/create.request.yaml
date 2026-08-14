@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{url}}/sprint-service/sprints"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "name": "Sprint 1",
+      "startDate": "2024-01-01",
+      "endDate": "2024-01-14",
+      "projectId": "{{projectId}}"
+    }
+scripts:
+  - type: afterResponse
+    code: "// 1. Phân tích cú pháp chuỗi JSON trả về từ API\r
+
+      const responseData = pm.response.json();\r
+
+      \r
+
+      // 2. Trích xuất sprintId từ cấu trúc data.sprint.id\r
+
+      const sprintId = responseData.data.sprint.id;\r
+
+      \r
+
+      // 3. Lưu vào biến môi trường (Khuyên dùng)\r
+
+      pm.environment.set(\"sprintId\", sprintId);"
+    language: text/javascript
+order: 1000

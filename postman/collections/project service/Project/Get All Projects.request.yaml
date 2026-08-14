@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{url}}/project-service/projects?size=20&search=beacon delta haven prism"
+method: GET
+queryParams:
+  - key: size
+    value: "20"
+  - key: sortBy
+    value: membercount
+    disabled: true
+  - key: sortDirection
+    value: desc
+    disabled: true
+  - key: search
+    value: beacon delta haven prism
+scripts:
+  - type: afterResponse
+    code: "// 1. Parse dữ liệu JSON từ response trả về\r
+
+      const responseData = pm.response.json();\r
+
+      \r
+
+      // 2. Truy cập vào phần tử đầu tiên trong mảng \"projects\" và lấy \"id\"\r
+
+      const firstProjectId = responseData.data.content[0].id;\r
+
+      \r
+
+      // 3. Lưu project id vào biến môi trường (Environment Variable) của Postman\r
+
+      pm.environment.set(\"projectId\", firstProjectId);"
+    language: text/javascript
+order: 2000

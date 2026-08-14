@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{url}}/task-service/task-comments"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "taskId": "{{taskId}}",
+      "userId": "{{userId}}",
+      "content": "This is a sample comment for the task."
+    }
+order: 1000

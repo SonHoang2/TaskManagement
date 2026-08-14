@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{url}}/task-service/task-comments"
+method: GET
+order: 5000
