@@ -1,4 +1,4 @@
-import { Component, output, signal, inject } from '@angular/core';
+import { Component, output, signal, inject, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../features/auth/services/auth.service';
 
@@ -6,13 +6,17 @@ import { AuthService } from '../../../features/auth/services/auth.service';
   selector: 'app-header',
   standalone: true,
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
+  host: {
+    '(document:click)': 'onDocumentClick($event)'
+  }
 })
 export class HeaderComponent {
   readonly toggleSidebar = output<void>();
   
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly elementRef = inject(ElementRef);
 
   protected readonly currentUser = signal<{ name: string; email: string } | null>(null);
   protected readonly isUserMenuOpen = signal(false);
@@ -30,6 +34,16 @@ export class HeaderComponent {
         name: userName || 'User',
         email: userEmail || ''
       });
+    }
+  }
+
+  onDocumentClick(event: MouseEvent) {
+    if (this.isUserMenuOpen()) {
+      const target = event.target as HTMLElement;
+      const clickedInside = this.elementRef.nativeElement.contains(target);
+      if (!clickedInside) {
+        this.closeUserMenu();
+      }
     }
   }
 
