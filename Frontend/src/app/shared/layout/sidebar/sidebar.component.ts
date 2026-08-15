@@ -27,6 +27,8 @@ export class SidebarComponent {
   readonly close = output<void>();
   private readonly router = inject(Router);
 
+  protected readonly isMobile = window.innerWidth <= 768;
+
   protected readonly navItems: NavItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { path: '/tasks', label: 'Tasks', icon: 'task' },

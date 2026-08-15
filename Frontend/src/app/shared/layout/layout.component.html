@@ -1,19 +1,15 @@
 <div class="layout-container">
-  <app-sidebar 
-    [isOpen]="isSidebarOpen()" 
-    [isMobileOpen]="isMobileSidebarOpen()"
-    (toggle)="toggleSidebar()"
-    (close)="closeMobileSidebar()"
-  ></app-sidebar>
-  
+  <app-sidebar [isOpen]="isSidebarOpen()" [isMobileOpen]="isMobileSidebarOpen()" (toggle)="toggleSidebar()"
+    (close)="closeMobileSidebar()"></app-sidebar>
+
   @if (isMobileSidebarOpen()) {
-    <div class="sidebar-overlay" (click)="closeMobileSidebar()"></div>
+  <div class="sidebar-overlay" (click)="closeMobileSidebar()"></div>
   }
-  
-  <div class="main-content" [class.sidebar-collapsed]="!isSidebarOpen()">
-    <app-header (menuToggle)="toggleSidebar()"></app-header>
-    
-    <main class="content-area">
+
+  <div class="main-content">
+    <app-header (menuToggle)="toggleSidebar()" (sidebarToggle)="toggleSidebar()" [isSidebarOpen]="isSidebarOpen()"></app-header>
+
+    <main class="content-area" [class.sidebar-collapsed]="!isSidebarOpen()">
       <router-outlet></router-outlet>
     </main>
   </div>

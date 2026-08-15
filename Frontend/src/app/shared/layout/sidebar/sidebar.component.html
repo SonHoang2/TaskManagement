@@ -1,44 +1,16 @@
 <aside class="sidebar" [class.collapsed]="!isOpen()">
-  <div class="sidebar-header">
-    <div class="logo">
-      <mat-icon class="logo-icon">task_alt</mat-icon>
-      @if (isOpen()) {
-        <span class="logo-text">Task Management</span>
-      }
-    </div>
-    <button mat-icon-button class="toggle-btn" (click)="onToggle()" aria-label="Toggle sidebar">
-      <mat-icon>
-        @if (isOpen()) {
-          chevron_left
-        } @else {
-          chevron_right
-        }
-      </mat-icon>
-    </button>
-  </div>
-
   <nav class="sidebar-nav">
     <mat-nav-list>
       @for (item of navItems; track item.path) {
-        <a 
-          mat-list-item 
-          [routerLink]="item.path" 
-          routerLinkActive="active"
-          (click)="onNavigate()"
-          [attr.aria-label]="item.label"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          @if (isOpen()) {
-            <span matLine>{{ item.label }}</span>
-          }
-        </a>
+      <a mat-list-item [routerLink]="item.path" routerLinkActive="active" (click)="onNavigate()"
+        [attr.aria-label]="item.label">
+        <mat-icon matListItemIcon class="material-symbols-outlined">{{ item.icon }}</mat-icon>
+        @if (isOpen()) {
+        <span matListItemTitle>{{ item.label }}</span>
+        }
+      </a>
       }
     </mat-nav-list>
   </nav>
 
-  @if (isOpen()) {
-    <div class="sidebar-footer">
-      <p class="footer-text">© 2024 Task Management</p>
-    </div>
-  }
 </aside>
