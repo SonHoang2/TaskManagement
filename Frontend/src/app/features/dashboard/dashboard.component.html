@@ -1,0 +1,82 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p>Overview of your tasks and projects</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <div class="stats-grid">
+      @for (card of statCards; track card.title) {
+        <mat-card class="stat-card" [class.color-primary]="card.color === 'primary'" 
+                  [class.color-accent]="card.color === 'accent'" 
+                  [class.color-warn]="card.color === 'warn'" 
+                  [class.color-success]="card.color === 'success'">
+          <div class="stat-card-content">
+            <div class="stat-icon">
+              <mat-icon>{{ card.icon }}</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-value">{{ card.value }}</h3>
+              <p class="stat-title">{{ card.title }}</p>
+              <p class="stat-trend">{{ card.trend }}</p>
+            </div>
+          </div>
+        </mat-card>
+      }
+    </div>
+
+    <div class="dashboard-content">
+      <mat-card class="recent-activities-card">
+        <div class="card-header">
+          <h2>Recent Activities</h2>
+          <button mat-button color="primary">View All</button>
+        </div>
+        <div class="activities-list">
+          @for (activity of recentActivities; track activity.id) {
+            <div class="activity-item">
+              <div class="activity-icon" 
+                   [class.color-primary]="activity.type === 'task'" 
+                   [class.color-accent]="activity.type === 'project'" 
+                   [class.color-warn]="activity.type === 'team'">
+                <mat-icon>{{ getActivityIcon(activity.type) }}</mat-icon>
+              </div>
+              <div class="activity-details">
+                <h4 class="activity-title">{{ activity.title }}</h4>
+                <p class="activity-description">{{ activity.description }}</p>
+                <span class="activity-time">{{ activity.time }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </mat-card>
+
+      <mat-card class="quick-actions-card">
+        <div class="card-header">
+          <h2>Quick Actions</h2>
+        </div>
+        <div class="quick-actions-grid">
+          <button mat-stroked-button class="quick-action-btn">
+            <mat-icon>add_task</mat-icon>
+            <span>New Task</span>
+          </button>
+          <button mat-stroked-button class="quick-action-btn">
+            <mat-icon>create_new_folder</mat-icon>
+            <span>New Project</span>
+          </button>
+          <button mat-stroked-button class="quick-action-btn">
+            <mat-icon>person_add</mat-icon>
+            <span>Invite Member</span>
+          </button>
+          <button mat-stroked-button class="quick-action-btn">
+            <mat-icon>analytics</mat-icon>
+            <span>View Reports</span>
+          </button>
+        </div>
+      </mat-card>
+    </div>
+  }
+</div>

@@ -1,0 +1,270 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>Settings</h1>
+    <p>Manage your account preferences</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <mat-card class="settings-card">
+      <mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
+        <!-- Profile Settings -->
+        <mat-tab label="Profile">
+          <div class="tab-content">
+            <div class="profile-section">
+              <div class="avatar-section">
+                <div class="avatar">
+                  <mat-icon class="avatar-icon">person</mat-icon>
+                </div>
+                <button mat-stroked-button class="change-avatar-btn">
+                  <mat-icon>camera_alt</mat-icon>
+                  <span>Change Avatar</span>
+                </button>
+              </div>
+
+              <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()" class="profile-form">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Full Name</mat-label>
+                  <input matInput formControlName="name" placeholder="Enter your full name">
+                  <mat-error>
+                    @if (profileForm.get('name')?.errors?.['required']) {
+                      Name is required
+                    }
+                    @if (profileForm.get('name')?.errors?.['minlength']) {
+                      Name must be at least 2 characters
+                    }
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Email</mat-label>
+                  <input matInput formControlName="email" type="email" placeholder="Enter your email">
+                  <mat-error>
+                    @if (profileForm.get('email')?.errors?.['required']) {
+                      Email is required
+                    }
+                    @if (profileForm.get('email')?.errors?.['email']) {
+                      Please enter a valid email
+                    }
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Phone</mat-label>
+                  <input matInput formControlName="phone" placeholder="Enter your phone number">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Bio</mat-label>
+                  <textarea matInput formControlName="bio" placeholder="Tell us about yourself" rows="3"></textarea>
+                </mat-form-field>
+
+                <div class="form-actions">
+                  <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid">
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Notification Settings -->
+        <mat-tab label="Notifications">
+          <div class="tab-content">
+            <form [formGroup]="notificationForm" (ngSubmit)="onNotificationSubmit()" class="notification-form">
+              <h3 class="section-title">Email Notifications</h3>
+              
+              <mat-checkbox formControlName="emailNotifications" class="notification-item">
+                <div class="notification-content">
+                  <span class="notification-label">Email Notifications</span>
+                  <span class="notification-description">Receive email updates about your activities</span>
+                </div>
+              </mat-checkbox>
+
+              <mat-checkbox formControlName="taskReminders" class="notification-item">
+                <div class="notification-content">
+                  <span class="notification-label">Task Reminders</span>
+                  <span class="notification-description">Get reminded about upcoming task deadlines</span>
+                </div>
+              </mat-checkbox>
+
+              <mat-checkbox formControlName="projectUpdates" class="notification-item">
+                <div class="notification-content">
+                  <span class="notification-label">Project Updates</span>
+                  <span class="notification-description">Receive updates when projects change</span>
+                </div>
+              </mat-checkbox>
+
+              <mat-checkbox formControlName="weeklyDigest" class="notification-item">
+                <div class="notification-content">
+                  <span class="notification-label">Weekly Digest</span>
+                  <span class="notification-description">Get a weekly summary of your activities</span>
+                </div>
+              </mat-checkbox>
+
+              <mat-divider class="settings-divider"></mat-divider>
+
+              <h3 class="section-title">Push Notifications</h3>
+              
+              <mat-checkbox formControlName="pushNotifications" class="notification-item">
+                <div class="notification-content">
+                  <span class="notification-label">Push Notifications</span>
+                  <span class="notification-description">Receive push notifications on your device</span>
+                </div>
+              </mat-checkbox>
+
+              <div class="form-actions">
+                <button mat-flat-button color="primary" type="submit">
+                  Save Preferences
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+
+        <!-- Appearance Settings -->
+        <mat-tab label="Appearance">
+          <div class="tab-content">
+            <form [formGroup]="appearanceForm" (ngSubmit)="onAppearanceSubmit()" class="appearance-form">
+              <h3 class="section-title">Theme</h3>
+              
+              <mat-radio-group formControlName="theme" class="theme-options">
+                <mat-radio-button value="light" class="theme-option">
+                  <div class="theme-preview">
+                    <mat-icon>light_mode</mat-icon>
+                    <span>Light</span>
+                  </div>
+                </mat-radio-button>
+                <mat-radio-button value="dark" class="theme-option">
+                  <div class="theme-preview">
+                    <mat-icon>dark_mode</mat-icon>
+                    <span>Dark</span>
+                  </div>
+                </mat-radio-button>
+                <mat-radio-button value="auto" class="theme-option">
+                  <div class="theme-preview">
+                    <mat-icon>brightness_auto</mat-icon>
+                    <span>Auto</span>
+                  </div>
+                </mat-radio-button>
+              </mat-radio-group>
+
+              <mat-divider class="settings-divider"></mat-divider>
+
+              <h3 class="section-title">Language</h3>
+              
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Language</mat-label>
+                <mat-select formControlName="language">
+                  <mat-option value="en">English</mat-option>
+                  <mat-option value="es">Español</mat-option>
+                  <mat-option value="fr">Français</mat-option>
+                  <mat-option value="de">Deutsch</mat-option>
+                  <mat-option value="ja">日本語</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-divider class="settings-divider"></mat-divider>
+
+              <h3 class="section-title">Font Size</h3>
+              
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Font Size: {{ appearanceForm.value.fontSize }}px</mat-label>
+                <mat-slider formControlName="fontSize" [min]="12" [max]="20" [step]="1" thumbLabel>
+                  <input matSliderThumb>
+                </mat-slider>
+              </mat-form-field>
+
+              <mat-divider class="settings-divider"></mat-divider>
+
+              <h3 class="section-title">Interface Density</h3>
+              
+              <mat-radio-group formControlName="density" class="density-options">
+                <mat-radio-button value="comfortable">Comfortable</mat-radio-button>
+                <mat-radio-button value="compact">Compact</mat-radio-button>
+              </mat-radio-group>
+
+              <div class="form-actions">
+                <button mat-flat-button color="primary" type="submit">
+                  Save Appearance
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+
+        <!-- Security Settings -->
+        <mat-tab label="Security">
+          <div class="tab-content">
+            <form [formGroup]="securityForm" (ngSubmit)="onSecuritySubmit()" class="security-form">
+              <h3 class="section-title">Change Password</h3>
+              
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Current Password</mat-label>
+                <input matInput formControlName="currentPassword" type="password">
+                <mat-error>
+                  @if (securityForm.get('currentPassword')?.errors?.['required']) {
+                    Current password is required
+                  }
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>New Password</mat-label>
+                <input matInput formControlName="newPassword" type="password">
+                <mat-error>
+                  @if (securityForm.get('newPassword')?.errors?.['required']) {
+                    New password is required
+                  }
+                  @if (securityForm.get('newPassword')?.errors?.['minlength']) {
+                    Password must be at least 8 characters
+                  }
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Confirm New Password</mat-label>
+                <input matInput formControlName="confirmPassword" type="password">
+                <mat-error>
+                  @if (securityForm.get('confirmPassword')?.errors?.['required']) {
+                    Please confirm your password
+                  }
+                  @if (securityForm.get('confirmPassword')?.errors?.['passwordMismatch']) {
+                    Passwords do not match
+                  }
+                </mat-error>
+              </mat-form-field>
+
+              <div class="form-actions">
+                <button mat-flat-button color="primary" type="submit" [disabled]="securityForm.invalid">
+                  Change Password
+                </button>
+              </div>
+
+              <mat-divider class="settings-divider"></mat-divider>
+
+              <div class="danger-zone">
+                <h3 class="section-title danger-title">Danger Zone</h3>
+                <p class="danger-description">These actions are irreversible. Please proceed with caution.</p>
+                
+                <button mat-stroked-button color="warn" class="danger-btn">
+                  <mat-icon>delete_forever</mat-icon>
+                  <span>Delete Account</span>
+                </button>
+
+                <button mat-button color="warn" class="logout-btn" (click)="logout()">
+                  <mat-icon>logout</mat-icon>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  }
+</div>

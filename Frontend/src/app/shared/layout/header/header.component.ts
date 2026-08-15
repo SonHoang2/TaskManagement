@@ -1,25 +1,25 @@
-import { Component, output, signal, inject, ElementRef } from '@angular/core';
+import { Component, signal, inject, output } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../features/auth/services/auth.service';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [MatMenuModule, MatButtonModule, MatIconModule, MatDividerModule, MatSnackBarModule],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss',
-  host: {
-    '(document:click)': 'onDocumentClick($event)'
-  }
+  styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  readonly toggleSidebar = output<void>();
-  
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  private readonly elementRef = inject(ElementRef);
+  readonly menuToggle = output<void>();
 
   protected readonly currentUser = signal<{ name: string; email: string } | null>(null);
-  protected readonly isUserMenuOpen = signal(false);
 
   constructor() {
     this.loadUserInfo();
@@ -37,31 +37,12 @@ export class HeaderComponent {
     }
   }
 
-  onDocumentClick(event: MouseEvent) {
-    if (this.isUserMenuOpen()) {
-      const target = event.target as HTMLElement;
-      const clickedInside = this.elementRef.nativeElement.contains(target);
-      if (!clickedInside) {
-        this.closeUserMenu();
-      }
-    }
-  }
-
-  onToggleSidebar() {
-    this.toggleSidebar.emit();
-  }
-
-  toggleUserMenu() {
-    this.isUserMenuOpen.update(isOpen => !isOpen);
-  }
-
   onLogout() {
     this.authService.logout();
     this.router.navigate(['/login']);
-    this.isUserMenuOpen.set(false);
   }
 
-  closeUserMenu() {
-    this.isUserMenuOpen.set(false);
+  onMenuToggle() {
+    this.menuToggle.emit();
   }
 }

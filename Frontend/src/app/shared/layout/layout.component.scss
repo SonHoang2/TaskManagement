@@ -1,27 +1,26 @@
-@use '../../../styles/variables' as *;
-
 .layout-container {
   display: flex;
   min-height: 100vh;
-  background: $bg-secondary;
+  background: var(--mat-sys-surface-container-low);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: $sidebar-width;
-  transition: margin-left $transition-base ease-in-out;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
 
   &.sidebar-collapsed {
-    margin-left: $sidebar-collapsed-width;
+    margin-left: 72px;
   }
 }
 
 .content-area {
   flex: 1;
-  padding: $spacing-xl;
+  padding: 24px;
   overflow-y: auto;
+  background: var(--mat-sys-surface-container-low);
 }
 
 .sidebar-overlay {
@@ -31,8 +30,8 @@
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  z-index: $z-modal-backdrop;
-  animation: fadeIn $transition-fast ease-in-out;
+  z-index: 999;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 @keyframes fadeIn {
@@ -44,8 +43,7 @@
   }
 }
 
-// Responsive design
-@media (max-width: $breakpoint-md) {
+@media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
 
@@ -55,6 +53,6 @@
   }
 
   .content-area {
-    padding: $spacing-md;
+    padding: 16px;
   }
 }

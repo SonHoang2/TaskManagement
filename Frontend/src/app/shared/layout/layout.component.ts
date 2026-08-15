@@ -2,11 +2,12 @@ import { Component, signal, inject, DestroyRef } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { HeaderComponent } from './header/header.component';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, MatButtonModule],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })
@@ -28,7 +29,7 @@ export class LayoutComponent {
   }
 
   private checkScreenSize() {
-    const mobile = window.innerWidth < 768; // $breakpoint-md
+    const mobile = window.innerWidth < 768;
     this.isMobile.set(mobile);
 
     if (mobile) {
