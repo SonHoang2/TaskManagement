@@ -1,88 +1,133 @@
 <div class="signup-container">
-  <div class="signup-card">
+  <mat-card class="signup-card">
     <div class="signup-header">
+      <mat-icon class="logo-icon">task_alt</mat-icon>
       <h1>Create Account</h1>
       <p>Join us today and get started</p>
     </div>
 
     <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
-      <div class="form-group">
-        <label for="name">Full Name</label>
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Full Name</mat-label>
         <input
-          id="name"
+          matInput
           type="text"
           formControlName="name"
           placeholder="Enter your full name"
-          [class.error]="nameControl?.invalid && nameControl?.touched"
+          autocomplete="name"
         />
-        <div class="error-message" *ngIf="nameControl?.invalid && nameControl?.touched">
-          <span *ngIf="nameControl?.errors?.['required']">Name is required</span>
-          <span *ngIf="nameControl?.errors?.['minlength']">Name must be at least 2 characters</span>
-          <span *ngIf="nameControl?.errors?.['maxlength']">Name must not exceed 50 characters</span>
-        </div>
-      </div>
+        <mat-icon matPrefix>person</mat-icon>
+        <mat-error>
+          @if (nameControl?.errors?.['required']) {
+            Name is required
+          }
+          @if (nameControl?.errors?.['minlength']) {
+            Name must be at least 2 characters
+          }
+          @if (nameControl?.errors?.['maxlength']) {
+            Name must not exceed 50 characters
+          }
+        </mat-error>
+      </mat-form-field>
 
-      <div class="form-group">
-        <label for="email">Email</label>
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Email</mat-label>
         <input
-          id="email"
+          matInput
           type="email"
           formControlName="email"
           placeholder="Enter your email"
-          [class.error]="emailControl?.invalid && emailControl?.touched"
+          autocomplete="email"
         />
-        <div class="error-message" *ngIf="emailControl?.invalid && emailControl?.touched">
-          <span *ngIf="emailControl?.errors?.['required']">Email is required</span>
-          <span *ngIf="emailControl?.errors?.['email']">Please enter a valid email</span>
-        </div>
-      </div>
+        <mat-icon matPrefix>email</mat-icon>
+        <mat-error>
+          @if (emailControl?.errors?.['required']) {
+            Email is required
+          }
+          @if (emailControl?.errors?.['email']) {
+            Please enter a valid email
+          }
+        </mat-error>
+      </mat-form-field>
 
-      <div class="form-group">
-        <label for="password">Password</label>
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Password</mat-label>
         <input
-          id="password"
-          type="password"
+          matInput
+          [type]="hidePassword() ? 'password' : 'text'"
           formControlName="password"
           placeholder="Create a password"
-          [class.error]="passwordControl?.invalid && passwordControl?.touched"
+          autocomplete="new-password"
         />
-        <div class="error-message" *ngIf="passwordControl?.invalid && passwordControl?.touched">
-          <span *ngIf="passwordControl?.errors?.['required']">Password is required</span>
-          <span *ngIf="passwordControl?.errors?.['minlength']">Password must be at least 6 characters</span>
-        </div>
-      </div>
+        <mat-icon matPrefix>lock</mat-icon>
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="'Hide password'"
+          [attr.aria-pressed]="hidePassword()"
+        >
+          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>
+          @if (passwordControl?.errors?.['required']) {
+            Password is required
+          }
+          @if (passwordControl?.errors?.['minlength']) {
+            Password must be at least 6 characters
+          }
+        </mat-error>
+      </mat-form-field>
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Password</label>
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Confirm Password</mat-label>
         <input
-          id="confirmPassword"
-          type="password"
+          matInput
+          [type]="hideConfirmPassword() ? 'password' : 'text'"
           formControlName="confirmPassword"
           placeholder="Confirm your password"
-          [class.error]="confirmPasswordControl?.invalid && confirmPasswordControl?.touched"
+          autocomplete="new-password"
         />
-        <div class="error-message" *ngIf="confirmPasswordControl?.invalid && confirmPasswordControl?.touched">
-          <span *ngIf="confirmPasswordControl?.errors?.['required']">Please confirm your password</span>
-          <span *ngIf="confirmPasswordControl?.errors?.['passwordMismatch']">Passwords do not match</span>
-        </div>
-      </div>
+        <mat-icon matPrefix>lock_outline</mat-icon>
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleConfirmPasswordVisibility()"
+          [attr.aria-label]="'Hide password'"
+          [attr.aria-pressed]="hideConfirmPassword()"
+        >
+          <mat-icon>{{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>
+          @if (confirmPasswordControl?.errors?.['required']) {
+            Please confirm your password
+          }
+          @if (confirmPasswordControl?.errors?.['passwordMismatch']) {
+            Passwords do not match
+          }
+        </mat-error>
+      </mat-form-field>
 
-      <div class="error-message global-error" *ngIf="errorMessage">
-        {{ errorMessage }}
+      <div class="form-actions">
+        <button
+          mat-flat-button
+          type="submit"
+          class="submit-button"
+          [disabled]="isLoading() || signupForm.invalid"
+        >
+          @if (isLoading()) {
+            <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+          } @else {
+            Create Account
+          }
+        </button>
       </div>
-
-      <button
-        type="submit"
-        class="submit-button"
-        [disabled]="isLoading || signupForm.invalid"
-      >
-        <span *ngIf="!isLoading">Create Account</span>
-        <span *ngIf="isLoading">Creating account...</span>
-      </button>
     </form>
 
     <div class="signup-footer">
-      <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+      <p>Already have an account? <a routerLink="/login" class="link">Sign in</a></p>
     </div>
-  </div>
+  </mat-card>
 </div>

@@ -1,81 +1,47 @@
 <header class="header">
   <div class="header-left">
-    <button class="menu-toggle" (click)="onToggleSidebar()" aria-label="Toggle sidebar">
-      <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
+    <button mat-icon-button class="menu-toggle" (click)="onMenuToggle()" aria-label="Toggle menu">
+      <mat-icon>menu</mat-icon>
     </button>
-    <div class="brand">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-          <path d="M2 17l10 5 10-5"></path>
-          <path d="M2 12l10 5 10-5"></path>
-        </svg>
-      </div>
-      <h1 class="page-title">TaskFlow</h1>
+    <div class="logo">
+      <mat-icon class="logo-icon">task_alt</mat-icon>
+      <span class="logo-text">Task Management</span>
     </div>
   </div>
 
   <div class="header-right">
     @if (currentUser()) {
-      <div class="user-menu-container">
-        <button 
-          class="user-menu-trigger" 
-          (click)="toggleUserMenu()"
-          aria-label="User menu"
-          aria-expanded="isUserMenuOpen()"
-        >
-          <div class="user-avatar">
-            <span class="avatar-initials">{{ currentUser()!.name.charAt(0).toUpperCase() }}</span>
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
+        <div class="user-avatar">
+          {{ currentUser()!.name.charAt(0).toUpperCase() }}
+        </div>
+      </button>
+
+      <mat-menu #userMenu="matMenu" class="user-menu">
+        <div class="user-menu-header">
+          <div class="user-avatar large">
+            {{ currentUser()!.name.charAt(0).toUpperCase() }}
           </div>
           <div class="user-info">
             <span class="user-name">{{ currentUser()!.name }}</span>
             <span class="user-email">{{ currentUser()!.email }}</span>
           </div>
-          <svg class="dropdown-arrow" [class.rotated]="isUserMenuOpen()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item>
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
         </button>
-
-        @if (isUserMenuOpen()) {
-          <div class="user-menu-dropdown">
-            <ul class="user-menu-list">
-              <li class="user-menu-item">
-                <button class="user-menu-button" (click)="closeUserMenu()">
-                  <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  <span>Profile</span>
-                </button>
-              </li>
-              <li class="user-menu-item">
-                <button class="user-menu-button" (click)="closeUserMenu()">
-                  <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
-                  <span>Settings</span>
-                </button>
-              </li>
-              <li class="user-menu-divider"></li>
-              <li class="user-menu-item">
-                <button class="user-menu-button logout-button" (click)="onLogout()">
-                  <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                  </svg>
-                  <span>Logout</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        }
-      </div>
+        <button mat-menu-item routerLink="/settings">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="onLogout()" class="logout-button">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
     }
   </div>
 </header>

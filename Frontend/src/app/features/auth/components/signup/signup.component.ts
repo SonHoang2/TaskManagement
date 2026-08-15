@@ -1,33 +1,46 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, SignupRequest } from '../../services/auth.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatCardModule,
+    MatIconModule,
+    MatSnackBarModule
+  ],
   templateUrl: './signup.component.html',
-  styleUrls: ['./signup.component.scss']
+  styleUrl: './signup.component.scss'
 })
 export class SignupComponent {
-  signupForm: FormGroup;
-  isLoading = false;
-  errorMessage = '';
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {
-    this.signupForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]]
-    }, { validators: this.passwordMatchValidator });
-  }
+  readonly signupForm: FormGroup = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', [Validators.required]]
+  }, { validators: this.passwordMatchValidator });
+
+  readonly isLoading = signal(false);
+  readonly hidePassword = signal(true);
+  readonly hideConfirmPassword = signal(true);
 
   passwordMatchValidator(formGroup: FormGroup): { [key: string]: boolean } | null {
     const password = formGroup.get('password');
@@ -46,8 +59,7 @@ export class SignupComponent {
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
 
     const signupData: SignupRequest = {
       name: this.signupForm.value.name,
@@ -57,18 +69,23 @@ export class SignupComponent {
 
     this.authService.signup(signupData).subscribe({
       next: (response) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         if (response.status === 'success') {
           this.router.navigate(['/dashboard']);
-        } else {
-          this.errorMessage = response.message || 'Signup failed';
         }
       },
       error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.message || 'An error occurred during signup';
+        this.isLoading.set(false);
       }
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.hidePassword.update(hide => !hide);
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.hideConfirmPassword.update(hide => !hide);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

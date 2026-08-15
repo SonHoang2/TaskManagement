@@ -11,7 +11,7 @@
   }
   
   <div class="main-content" [class.sidebar-collapsed]="!isSidebarOpen()">
-    <app-header (toggleSidebar)="toggleSidebar()"></app-header>
+    <app-header (menuToggle)="toggleSidebar()"></app-header>
     
     <main class="content-area">
       <router-outlet></router-outlet>

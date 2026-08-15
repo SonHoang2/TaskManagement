@@ -1,0 +1,234 @@
+<div class="team-container">
+  <div class="team-header">
+    <div class="header-left">
+      <h1>Team</h1>
+      <p>Manage your team members</p>
+    </div>
+    <button mat-flat-button color="primary" class="invite-btn" (click)="inviteMember()">
+      <mat-icon>person_add</mat-icon>
+      <span>Invite Member</span>
+    </button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">Total:</span>
+      <span class="stat-value">{{ getTeamStats().total }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Active:</span>
+      <span class="stat-value">{{ getTeamStats().active }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Pending:</span>
+      <span class="stat-value">{{ getTeamStats().pending }}</span>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search team members</mat-label>
+      <input matInput [value]="searchTerm()" (input)="onSearchChange($event.target.value)" placeholder="Search by name, email, or role">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <mat-card class="team-card">
+      <mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
+        <mat-tab label="All Members">
+          <div class="members-list">
+            @for (member of filteredMembers(); track member.id) {
+              <div class="member-item">
+                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
+                  {{ member.avatar }}
+                </div>
+                <div class="member-info">
+                  <div class="member-header">
+                    <h4 class="member-name">{{ member.name }}</h4>
+                    <mat-chip [color]="getStatusColor(member.status)" class="status-chip">
+                      {{ member.status.charAt(0).toUpperCase() + member.status.slice(1) }}
+                    </mat-chip>
+                  </div>
+                  <p class="member-email">{{ member.email }}</p>
+                  <div class="member-details">
+                    <span class="member-role">{{ member.role }}</span>
+                    <span class="member-department">{{ member.department }}</span>
+                  </div>
+                  <div class="member-stats">
+                    <div class="stat">
+                      <mat-icon>task_alt</mat-icon>
+                      <span>{{ member.tasksAssigned }} tasks</span>
+                    </div>
+                    <div class="stat">
+                      <mat-icon>folder</mat-icon>
+                      <span>{{ member.projects.length }} projects</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="member-actions">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item>
+                      <mat-icon>visibility</mat-icon>
+                      <span>View Profile</span>
+                    </button>
+                    <button mat-menu-item>
+                      <mat-icon>edit</mat-icon>
+                      <span>Edit Role</span>
+                    </button>
+                    <button mat-menu-item>
+                      <mat-icon>assignment</mat-icon>
+                      <span>Assign Tasks</span>
+                    </button>
+                    <mat-divider></mat-divider>
+                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
+                      <mat-icon>remove_circle</mat-icon>
+                      <span>Remove</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+            }
+
+            @if (filteredMembers().length === 0) {
+              <div class="empty-state">
+                <mat-icon class="empty-icon">people_outline</mat-icon>
+                <p>No team members found</p>
+                <button mat-button color="primary" (click)="searchTerm.set('')">
+                  Clear Search
+                </button>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Active">
+          <div class="members-list">
+            @for (member of activeMembers(); track member.id) {
+              <div class="member-item">
+                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
+                  {{ member.avatar }}
+                </div>
+                <div class="member-info">
+                  <div class="member-header">
+                    <h4 class="member-name">{{ member.name }}</h4>
+                    <mat-chip color="primary" class="status-chip">Active</mat-chip>
+                  </div>
+                  <p class="member-email">{{ member.email }}</p>
+                  <div class="member-details">
+                    <span class="member-role">{{ member.role }}</span>
+                    <span class="member-department">{{ member.department }}</span>
+                  </div>
+                  <div class="member-stats">
+                    <div class="stat">
+                      <mat-icon>task_alt</mat-icon>
+                      <span>{{ member.tasksAssigned }} tasks</span>
+                    </div>
+                    <div class="stat">
+                      <mat-icon>folder</mat-icon>
+                      <span>{{ member.projects.length }} projects</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="member-actions">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item>
+                      <mat-icon>visibility</mat-icon>
+                      <span>View Profile</span>
+                    </button>
+                    <button mat-menu-item>
+                      <mat-icon>edit</mat-icon>
+                      <span>Edit Role</span>
+                    </button>
+                    <button mat-menu-item>
+                      <mat-icon>assignment</mat-icon>
+                      <span>Assign Tasks</span>
+                    </button>
+                    <mat-divider></mat-divider>
+                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
+                      <mat-icon>remove_circle</mat-icon>
+                      <span>Remove</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+            }
+
+            @if (activeMembers().length === 0) {
+              <div class="empty-state">
+                <mat-icon class="empty-icon">people_outline</mat-icon>
+                <p>No active team members</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Pending">
+          <div class="members-list">
+            @for (member of pendingMembers(); track member.id) {
+              <div class="member-item">
+                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
+                  {{ member.avatar }}
+                </div>
+                <div class="member-info">
+                  <div class="member-header">
+                    <h4 class="member-name">{{ member.name }}</h4>
+                    <mat-chip color="warn" class="status-chip">Pending</mat-chip>
+                  </div>
+                  <p class="member-email">{{ member.email }}</p>
+                  <div class="member-details">
+                    <span class="member-role">{{ member.role }}</span>
+                    <span class="member-department">{{ member.department }}</span>
+                  </div>
+                  <div class="member-stats">
+                    <div class="stat">
+                      <mat-icon>event</mat-icon>
+                      <span>Joined: {{ member.joinedDate }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="member-actions">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item>
+                      <mat-icon>check_circle</mat-icon>
+                      <span>Approve</span>
+                    </button>
+                    <button mat-menu-item>
+                      <mat-icon>cancel</mat-icon>
+                      <span>Reject</span>
+                    </button>
+                    <mat-divider></mat-divider>
+                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
+                      <mat-icon>remove_circle</mat-icon>
+                      <span>Remove</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </div>
+            }
+
+            @if (pendingMembers().length === 0) {
+              <div class="empty-state">
+                <mat-icon class="empty-icon">hourglass_empty</mat-icon>
+                <p>No pending invitations</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  }
+</div>

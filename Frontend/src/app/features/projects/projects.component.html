@@ -1,0 +1,139 @@
+<div class="projects-container">
+  <div class="projects-header">
+    <div class="header-left">
+      <h1>Projects</h1>
+      <p>Manage and track your projects</p>
+    </div>
+    <button mat-flat-button color="primary" class="add-project-btn">
+      <mat-icon>add</mat-icon>
+      <span>New Project</span>
+    </button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">Total:</span>
+      <span class="stat-value">{{ getProjectStats().total }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Active:</span>
+      <span class="stat-value">{{ getProjectStats().active }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Completed:</span>
+      <span class="stat-value">{{ getProjectStats().completed }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">On Hold:</span>
+      <span class="stat-value">{{ getProjectStats().onHold }}</span>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search projects</mat-label>
+      <input matInput [value]="searchTerm()" (input)="onSearchChange($event.target.value)" placeholder="Search by name or description">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
+        <mat-option value="all">All</mat-option>
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="completed">Completed</mat-option>
+        <mat-option value="on-hold">On Hold</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else {
+    <div class="projects-grid">
+      @for (project of filteredProjects(); track project.id) {
+        <mat-card class="project-card">
+          <div class="project-card-header" [style.background-color]="project.color">
+            <div class="project-status">
+              <mat-chip [color]="getStatusColor(project.status)" class="status-chip">
+                {{ project.status === 'on-hold' ? 'On Hold' : project.status.charAt(0).toUpperCase() + project.status.slice(1) }}
+              </mat-chip>
+            </div>
+            <button mat-icon-button class="menu-btn" [matMenuTriggerFor]="menu" aria-label="Project menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item>
+                <mat-icon>edit</mat-icon>
+                <span>Edit</span>
+              </button>
+              <button mat-menu-item>
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </button>
+              <button mat-menu-item>
+                <mat-icon>group_add</mat-icon>
+                <span>Manage Team</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="deleteProject(project.id)" class="delete-action">
+                <mat-icon>delete</mat-icon>
+                <span>Delete</span>
+              </button>
+            </mat-menu>
+          </div>
+
+          <div class="project-card-content">
+            <h3 class="project-name">{{ project.name }}</h3>
+            <p class="project-description">{{ project.description }}</p>
+
+            <div class="project-progress">
+              <div class="progress-header">
+                <span class="progress-label">Progress</span>
+                <span class="progress-value">{{ project.progress }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="project.progress" [style.background-color]="getProgressColor(project.progress)"></div>
+              </div>
+            </div>
+
+            <div class="project-team">
+              <span class="team-label">Team:</span>
+              <div class="team-avatars">
+                @for (member of project.team.slice(0, 3); track member) {
+                  <div class="team-avatar" [title]="member">
+                    {{ member.charAt(0).toUpperCase() }}
+                  </div>
+                }
+                @if (project.team.length > 3) {
+                  <div class="team-avatar more">
+                    +{{ project.team.length - 3 }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="project-footer">
+              <div class="due-date">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ project.dueDate }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+      }
+    </div>
+
+    @if (filteredProjects().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="empty-icon">folder_open</mat-icon>
+        <p>No projects found</p>
+        <button mat-button color="primary" (click)="searchTerm.set(''); statusFilter.set('all')">
+          Clear Filters
+        </button>
+      </div>
+    }
+  }
+</div>

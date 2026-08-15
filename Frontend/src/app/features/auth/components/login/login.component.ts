@@ -1,35 +1,49 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService, LoginRequest } from '../../services/auth.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatCardModule,
+    MatIconModule,
+    MatSnackBarModule
+  ],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  loginForm: FormGroup;
-  isLoading = false;
-  errorMessage = '';
-  returnUrl: string = '/dashboard';
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
-    });
+  readonly loginForm: FormGroup = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]]
+  });
 
+  readonly isLoading = signal(false);
+  readonly hidePassword = signal(true);
+  readonly returnUrl = signal('/dashboard');
+
+  constructor() {
     this.route.queryParams.subscribe(params => {
-      this.returnUrl = params['returnUrl'] || '/dashboard';
+      this.returnUrl.set(params['returnUrl'] || '/dashboard');
     });
   }
 
@@ -39,8 +53,7 @@ export class LoginComponent {
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
 
     const loginData: LoginRequest = {
       email: this.loginForm.value.email,
@@ -49,18 +62,19 @@ export class LoginComponent {
 
     this.authService.login(loginData).subscribe({
       next: (response) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         if (response.status === 'success') {
-          this.router.navigate([this.returnUrl]);
-        } else {
-          this.errorMessage = response.message || 'Login failed';
+          this.router.navigate([this.returnUrl()]);
         }
       },
       error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.message || 'An error occurred during login';
+        this.isLoading.set(false);
       }
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.hidePassword.update(hide => !hide);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
