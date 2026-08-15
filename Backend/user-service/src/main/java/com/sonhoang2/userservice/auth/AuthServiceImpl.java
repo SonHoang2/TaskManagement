@@ -36,14 +36,14 @@ public class AuthServiceImpl implements AuthService {
         // Get user to retrieve userId
         UserResponse user = userService.findByEmail(request.getEmail());
         String token = jwtService.generateToken(user.getEmail(), user.getId()); // pass userId
-        return buildLoginResponse(token, user.getId());
+        return buildLoginResponse(token, user);
     }
 
     @Override
     public LoginResponse signup(RegisterRequest request) {
         UserResponse userResponse = userService.register(request);
         String token = jwtService.generateToken(userResponse.getEmail(), userResponse.getId());
-        return buildLoginResponse(token, userResponse.getId());
+        return buildLoginResponse(token, userResponse);
     }
 
     @Override
@@ -51,12 +51,12 @@ public class AuthServiceImpl implements AuthService {
         // Stateless
     }
 
-    private LoginResponse buildLoginResponse(String token, UUID userId) {
+    private LoginResponse buildLoginResponse(String token, UserResponse user) {
         return LoginResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresInMs(jwtService.getJwtExpirationMs())
-                .userId(userId)   // include userId in response
+                .user(user)
                 .build();
     }
 }

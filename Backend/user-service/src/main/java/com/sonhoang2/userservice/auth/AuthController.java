@@ -23,15 +23,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<JSendResponse<Map<String, LoginResponse>>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<JSendResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(JSendResponse.success(Map.of("auth", response)));
+        return ResponseEntity.ok(JSendResponse.success(response));
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<JSendResponse<Map<String, LoginResponse>>> signup(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<JSendResponse<LoginResponse>> signup(@Valid @RequestBody RegisterRequest request) {
         LoginResponse response = authService.signup(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(JSendResponse.success(Map.of("auth", response)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(JSendResponse.success(response));
     }
 
     @PostMapping("/logout")
