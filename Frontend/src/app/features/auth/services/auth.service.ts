@@ -14,11 +14,21 @@ export interface SignupRequest {
   name: string;
 }
 
-export interface AuthResponse {
-  token: string;
-  userId: string;
+export interface User {
+  id: string;
+  fullName: string;
   email: string;
-  name: string;
+  avatarUrl: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInMs: number;
+  user: User;
 }
 
 export interface JSendResponse<T> {
@@ -35,6 +45,7 @@ export class AuthService {
   private readonly USER_ID_KEY = 'user_id';
   private readonly USER_EMAIL_KEY = 'user_email';
   private readonly USER_NAME_KEY = 'user_name';
+  private readonly USER_AVATAR_KEY = 'user_avatar';
 
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasToken());
   isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -45,23 +56,27 @@ export class AuthService {
   ) {}
 
   login(credentials: LoginRequest): Observable<JSendResponse<AuthResponse>> {
-    return this.httpService.post<JSendResponse<AuthResponse>>('/user-service/auth/login', credentials).pipe(
-      tap((response) => {
-        if (response.status === 'success' && response.data) {
-          this.setSession(response.data);
-        }
-      }),
-    );
+    return this.httpService
+      .post<JSendResponse<AuthResponse>>('/user-service/auth/login', credentials)
+      .pipe(
+        tap((response) => {
+          if (response.status === 'success' && response.data) {
+            this.setSession(response.data);
+          }
+        }),
+      );
   }
 
   signup(userData: SignupRequest): Observable<JSendResponse<AuthResponse>> {
-    return this.httpService.post<JSendResponse<AuthResponse>>('/user-service/auth/signup', userData).pipe(
-      tap((response) => {
-        if (response.status === 'success' && response.data) {
-          this.setSession(response.data);
-        }
-      }),
-    );
+    return this.httpService
+      .post<JSendResponse<AuthResponse>>('/user-service/auth/signup', userData)
+      .pipe(
+        tap((response) => {
+          if (response.status === 'success' && response.data) {
+            this.setSession(response.data);
+          }
+        }),
+      );
   }
 
   logout(): void {
@@ -70,10 +85,11 @@ export class AuthService {
   }
 
   private setSession(authData: AuthResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, authData.token);
-    localStorage.setItem(this.USER_ID_KEY, authData.userId);
-    localStorage.setItem(this.USER_EMAIL_KEY, authData.email);
-    localStorage.setItem(this.USER_NAME_KEY, authData.name);
+    localStorage.setItem(this.TOKEN_KEY, authData.accessToken);
+    localStorage.setItem(this.USER_ID_KEY, authData.user.id);
+    localStorage.setItem(this.USER_EMAIL_KEY, authData.user.email);
+    localStorage.setItem(this.USER_NAME_KEY, authData.user.fullName);
+    localStorage.setItem(this.USER_AVATAR_KEY, authData.user.avatarUrl || '');
     this.isAuthenticatedSubject.next(true);
   }
 
@@ -82,6 +98,7 @@ export class AuthService {
     localStorage.removeItem(this.USER_ID_KEY);
     localStorage.removeItem(this.USER_EMAIL_KEY);
     localStorage.removeItem(this.USER_NAME_KEY);
+    localStorage.removeItem(this.USER_AVATAR_KEY);
     this.isAuthenticatedSubject.next(false);
   }
 
@@ -103,6 +120,11 @@ export class AuthService {
 
   getUserName(): string | null {
     return localStorage.getItem(this.USER_NAME_KEY);
+  }
+
+  getUserAvatar(): string | null {
+    const avatar = localStorage.getItem(this.USER_AVATAR_KEY);
+    return avatar && avatar !== '' ? avatar : null;
   }
 
   isLoggedIn(): boolean {

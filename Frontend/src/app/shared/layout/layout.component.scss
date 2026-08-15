@@ -8,19 +8,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 280px;
-  transition: margin-left 0.3s ease;
-
-  &.sidebar-collapsed {
-    margin-left: 72px;
-  }
 }
 
 .content-area {
   flex: 1;
   padding: 24px;
+  margin-left: 280px;
   overflow-y: auto;
   background: var(--mat-sys-surface-container-low);
+  transition: margin-left 0.3s ease;
+
+  &.sidebar-collapsed {
+    margin-left: 72px;
+  }
 }
 
 .sidebar-overlay {
@@ -44,15 +44,12 @@
 }
 
 @media (max-width: 1024px) {
-  .main-content {
+  .content-area {
     margin-left: 0;
+    padding: 16px;
 
     &.sidebar-collapsed {
       margin-left: 0;
     }
-  }
-
-  .content-area {
-    padding: 16px;
   }
 }

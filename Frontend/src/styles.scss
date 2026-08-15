@@ -59,3 +59,19 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--mat-sys-outline-variant);
 }
+
+.sidebar-nav {
+  .mat-mdc-list-item {
+    border-radius: 8px;
+    margin-bottom: 4px;
+    min-height: 48px;
+    display: flex;
+    align-items: center; // canh icon + content theo chiều dọc
+
+    .mdc-list-item__content {
+      display: flex;
+      align-items: center; // canh title bên trong content
+      flex: 1;
+    }
+  }
+}
