@@ -1,10 +1,10 @@
 <div class="projects-container">
   <div class="projects-header">
     <div class="header-left">
-      <h1>Projects</h1>
-      <p>Manage and track your projects</p>
+      <h1>{{ pageTitle() }}</h1>
+      <p>{{ isAdmin() ? 'Manage and track all projects' : 'Manage and track your projects' }}</p>
     </div>
-    <button mat-flat-button color="primary" class="add-project-btn">
+    <button mat-flat-button color="primary" class="add-project-btn" (click)="createNewProject()">
       <mat-icon>add</mat-icon>
       <span>New Project</span>
     </button>
@@ -54,15 +54,15 @@
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #menu="matMenu">
-                <button mat-menu-item>
+                <button mat-menu-item (click)="editProject(project.id)">
                   <mat-icon>edit</mat-icon>
                   <span>Edit</span>
                 </button>
-                <button mat-menu-item>
+                <button mat-menu-item (click)="viewProjectDetails(project.id)">
                   <mat-icon>visibility</mat-icon>
                   <span>View Details</span>
                 </button>
-                <button mat-menu-item>
+                <button mat-menu-item (click)="manageTeam(project.id)">
                   <mat-icon>group_add</mat-icon>
                   <span>Manage Team</span>
                 </button>

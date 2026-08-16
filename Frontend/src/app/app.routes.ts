@@ -35,6 +35,27 @@ export const routes: Routes = [
           import('./features/projects/projects.component').then((m) => m.ProjectsComponent),
       },
       {
+        path: 'projects/new',
+        loadComponent: () =>
+          import('./features/projects/components/project-form/project-form.component').then(
+            (m) => m.ProjectFormComponent,
+          ),
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () =>
+          import('./features/projects/components/project-detail/project-detail.component').then(
+            (m) => m.ProjectDetailComponent,
+          ),
+      },
+      {
+        path: 'projects/:id/edit',
+        loadComponent: () =>
+          import('./features/projects/components/project-form/project-form.component').then(
+            (m) => m.ProjectFormComponent,
+          ),
+      },
+      {
         path: 'team',
         loadComponent: () => import('./features/team/team.component').then((m) => m.TeamComponent),
       },
