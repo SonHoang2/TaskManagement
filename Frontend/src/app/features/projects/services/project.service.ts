@@ -19,6 +19,9 @@ import {
   SearchParams,
   PaginatedResponse,
   JSendResponse,
+  Task,
+  InviteMemberRequest,
+  DecideInvitationRequest,
 } from '../models/project.model';
 
 // Re-export types for convenience
@@ -39,6 +42,9 @@ export type {
   SearchParams,
   PaginatedResponse,
   JSendResponse,
+  Task,
+  InviteMemberRequest,
+  DecideInvitationRequest,
 };
 
 @Injectable({
@@ -66,9 +72,6 @@ export class ProjectService {
     if (search?.search) {
       params = params.set('search', search.search);
     }
-    if (search?.status) {
-      params = params.set('status', search.status);
-    }
 
     return this.httpService.get<JSendResponse<PaginatedResponse<Project>>>(
       `${this.basePath}/projects`,
@@ -78,6 +81,30 @@ export class ProjectService {
 
   getProject(projectId: string): Observable<JSendResponse<Project>> {
     return this.httpService.get<JSendResponse<Project>>(`${this.basePath}/projects/${projectId}`);
+  }
+
+  getMyProjects(
+    pagination: PaginationParams,
+    search?: SearchParams,
+  ): Observable<JSendResponse<PaginatedResponse<Project>>> {
+    let params = new HttpParams()
+      .set('page', pagination.page.toString())
+      .set('size', pagination.size.toString());
+
+    if (pagination.sort) {
+      params = params.set('sortBy', pagination.sort);
+    }
+    if (pagination.direction) {
+      params = params.set('sortDirection', pagination.direction);
+    }
+    if (search?.search) {
+      params = params.set('search', search.search);
+    }
+
+    return this.httpService.get<JSendResponse<PaginatedResponse<Project>>>(
+      `${this.basePath}/projects/me`,
+      params,
+    );
   }
 
   createProject(data: CreateProjectRequest): Observable<JSendResponse<Project>> {
@@ -169,6 +196,26 @@ export class ProjectService {
     return this.httpService.get<
       JSendResponse<PaginatedResponse<ProjectInvitation> | ProjectInvitation[]>
     >(`${this.basePath}/projects/${projectId}/invitations`, params);
+  }
+
+  inviteMember(
+    projectId: string,
+    data: InviteMemberRequest,
+  ): Observable<JSendResponse<ProjectInvitation>> {
+    return this.httpService.post<JSendResponse<ProjectInvitation>>(
+      `${this.basePath}/projects/${projectId}/invites`,
+      data,
+    );
+  }
+
+  decideInvitation(
+    invitationId: string,
+    data: DecideInvitationRequest,
+  ): Observable<JSendResponse<ProjectInvitation>> {
+    return this.httpService.patch<JSendResponse<ProjectInvitation>>(
+      `${this.basePath}/projects/invites/${invitationId}`,
+      data,
+    );
   }
 
   createInvitation(
@@ -269,6 +316,28 @@ export class ProjectService {
   deleteLabel(projectId: string, labelId: string): Observable<JSendResponse<{ message: string }>> {
     return this.httpService.delete<JSendResponse<{ message: string }>>(
       `${this.basePath}/projects/${projectId}/labels/${labelId}`,
+    );
+  }
+
+  // Project Tasks Operations
+  getProjectTasks(
+    projectId: string,
+    pagination: PaginationParams,
+  ): Observable<JSendResponse<PaginatedResponse<Task>>> {
+    let params = new HttpParams()
+      .set('page', pagination.page.toString())
+      .set('size', pagination.size.toString());
+
+    if (pagination.sort) {
+      params = params.set('sort', pagination.sort);
+    }
+    if (pagination.direction) {
+      params = params.set('direction', pagination.direction);
+    }
+
+    return this.httpService.get<JSendResponse<PaginatedResponse<Task>>>(
+      `${this.basePath}/projects/${projectId}/tasks`,
+      params,
     );
   }
 }

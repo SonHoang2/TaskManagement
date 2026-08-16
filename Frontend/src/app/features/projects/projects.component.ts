@@ -1,8 +1,7 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,17 +9,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: 'active' | 'completed' | 'on-hold';
-  progress: number;
-  team: string[];
-  dueDate: string;
-  color: string;
-}
+import { ProjectService } from './services/project.service';
+import { Project, PaginationParams, SearchParams } from './models/project.model';
 
 @Component({
   selector: 'app-projects',
@@ -29,123 +19,131 @@ interface Project {
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatChipsModule,
     MatMenuModule,
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './projects.component.html',
-  styleUrl: './projects.component.scss'
+  styleUrl: './projects.component.scss',
 })
-export class ProjectsComponent {
-  readonly isLoading = signal(false);
+export class ProjectsComponent implements OnInit {
+  private readonly projectService = inject(ProjectService);
+
+  readonly isLoading = signal(true);
   readonly searchTerm = signal('');
-  readonly statusFilter = signal('all');
+  readonly error = signal<string | null>(null);
 
-  readonly projects = signal<Project[]>([
-    {
-      id: 1,
-      name: 'Website Redesign',
-      description: 'Complete overhaul of the company website with modern design',
-      status: 'active',
-      progress: 65,
-      team: ['John Doe', 'Jane Smith', 'Bob Johnson'],
-      dueDate: '2024-09-15',
-      color: '#6366f1'
-    },
-    {
-      id: 2,
-      name: 'Mobile App Development',
-      description: 'Native mobile application for iOS and Android platforms',
-      status: 'active',
-      progress: 40,
-      team: ['Alice Williams', 'Charlie Brown'],
-      dueDate: '2024-10-20',
-      color: '#8b5cf6'
-    },
-    {
-      id: 3,
-      name: 'Marketing Campaign',
-      description: 'Q4 marketing campaign and social media strategy',
-      status: 'active',
-      progress: 25,
-      team: ['Diana Prince', 'Eve Adams'],
-      dueDate: '2024-12-01',
-      color: '#ec4899'
-    },
-    {
-      id: 4,
-      name: 'API Integration',
-      description: 'Integration with third-party APIs and services',
-      status: 'completed',
-      progress: 100,
-      team: ['Frank Miller', 'Grace Lee'],
-      dueDate: '2024-08-10',
-      color: '#10b981'
-    },
-    {
-      id: 5,
-      name: 'Database Migration',
-      description: 'Migration to new database infrastructure',
-      status: 'on-hold',
-      progress: 15,
-      team: ['Henry Wilson'],
-      dueDate: '2024-11-30',
-      color: '#f59e0b'
-    }
-  ]);
+  readonly projects = signal<Project[]>([]);
+  readonly currentPage = signal(0);
+  readonly pageSize = signal(10);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
 
-  readonly filteredProjects = computed(() => {
-    return this.projects().filter(project => {
-      const matchesSearch = project.name.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                           project.description.toLowerCase().includes(this.searchTerm().toLowerCase());
-      const matchesStatus = this.statusFilter() === 'all' || project.status === this.statusFilter();
-      return matchesSearch && matchesStatus;
-    });
+  readonly currentResultsCount = computed(() => this.projects().length);
+  readonly resultsRange = computed(() => {
+    const start = this.currentPage() * this.pageSize() + 1;
+    const end = Math.min((this.currentPage() + 1) * this.pageSize(), this.totalElements());
+    return { start, end };
   });
 
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'active':
-        return 'primary';
-      case 'completed':
-        return 'accent';
-      case 'on-hold':
-        return 'warn';
-      default:
-        return '';
-    }
+  ngOnInit(): void {
+    this.loadProjects();
   }
 
-  getProgressColor(progress: number): string {
-    if (progress >= 75) return '#10b981';
-    if (progress >= 50) return '#6366f1';
-    if (progress >= 25) return '#f59e0b';
-    return '#ef4444';
+  loadProjects(): void {
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    const pagination: PaginationParams = {
+      page: this.currentPage(),
+      size: this.pageSize(),
+    };
+
+    const search: SearchParams = {
+      search: this.searchTerm() || undefined,
+    };
+
+    this.projectService.getProjects(pagination, search).subscribe({
+      next: (response) => {
+        if (response.status === 'success' && response.data) {
+          this.projects.set(response.data.content);
+          this.totalElements.set(response.data.totalElements);
+          this.totalPages.set(response.data.totalPages);
+        } else {
+          this.error.set(response.message || 'Failed to load projects');
+        }
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.error.set('An error occurred while loading projects');
+        this.isLoading.set(false);
+      },
+    });
   }
 
   onSearchChange(value: string) {
     this.searchTerm.set(value);
+    this.currentPage.set(0);
+    this.loadProjects();
   }
 
-  onStatusFilterChange(value: string) {
-    this.statusFilter.set(value);
+  deleteProject(projectId: string) {
+    if (confirm('Are you sure you want to delete this project?')) {
+      this.isLoading.set(true);
+      this.projectService.deleteProject(projectId).subscribe({
+        next: (response) => {
+          if (response.status === 'success') {
+            this.loadProjects();
+          } else {
+            this.error.set(response.message || 'Failed to delete project');
+            this.isLoading.set(false);
+          }
+        },
+        error: (err) => {
+          this.error.set('An error occurred while deleting project');
+          this.isLoading.set(false);
+        },
+      });
+    }
   }
 
-  deleteProject(projectId: number) {
-    const updatedProjects = this.projects().filter(project => project.id !== projectId);
-    this.projects.set(updatedProjects);
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadProjects();
+    }
   }
 
-  getProjectStats() {
-    const total = this.projects().length;
-    const active = this.projects().filter(p => p.status === 'active').length;
-    const completed = this.projects().filter(p => p.status === 'completed').length;
-    const onHold = this.projects().filter(p => p.status === 'on-hold').length;
-    return { total, active, completed, onHold };
+  onPageInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const pageNumber = parseInt(input.value, 10);
+
+    if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= this.totalPages()) {
+      this.currentPage.set(pageNumber - 1);
+      this.loadProjects();
+    } else {
+      // Reset to current page if invalid
+      input.value = (this.currentPage() + 1).toString();
+    }
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  clearFilters(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
+    this.loadProjects();
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString();
   }
 }

@@ -28,7 +28,6 @@ export class ProjectListComponent {
 
   protected readonly searchForm: FormGroup = this.fb.group({
     search: [''],
-    status: [''],
   });
 
   protected readonly sortOptions = [
@@ -57,7 +56,6 @@ export class ProjectListComponent {
 
     const search: SearchParams = {
       search: this.searchForm.value.search || undefined,
-      status: this.searchForm.value.status || undefined,
     };
 
     this.projectService.getProjects(pagination, search).subscribe({

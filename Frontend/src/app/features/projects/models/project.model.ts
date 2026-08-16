@@ -94,7 +94,6 @@ export interface PaginationParams {
 
 export interface SearchParams {
   search?: string;
-  status?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -111,4 +110,30 @@ export interface JSendResponse<T> {
   status: 'success' | 'error' | 'fail';
   data?: T;
   message?: string;
+}
+
+export interface Task {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  assigneeId?: string;
+  assignee?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InviteMemberRequest {
+  userId: string;
+}
+
+export interface DecideInvitationRequest {
+  decision: 'ACCEPT' | 'REJECT';
 }
