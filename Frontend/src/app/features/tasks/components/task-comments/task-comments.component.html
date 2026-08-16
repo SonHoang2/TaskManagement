@@ -1,0 +1,130 @@
+<div class="task-comments-container">
+  <h3>Comments</h3>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="30"></mat-spinner>
+    </div>
+  }
+
+  <!-- Add Comment Form -->
+  <div class="add-comment-form">
+    <form [formGroup]="commentForm" (ngSubmit)="onSubmitComment()">
+      <mat-form-field appearance="outline" class="comment-input">
+        <mat-label>Add a comment...</mat-label>
+        <textarea
+          matInput
+          formControlName="content"
+          rows="2"
+          placeholder="Write your comment here"
+          [disabled]="isSubmitting()"
+        ></textarea>
+        <mat-error>{{ commentForm.get('content')?.hasError('required') ? 'Comment is required' : '' }}</mat-error>
+      </mat-form-field>
+      <button
+        mat-flat-button
+        type="submit"
+        color="primary"
+        [disabled]="commentForm.invalid || isSubmitting()"
+        class="submit-btn"
+      >
+        <mat-icon>send</mat-icon>
+        <span>Post</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Comments List -->
+  <div class="comments-list">
+    @if (comments().length === 0) {
+      <div class="no-comments">
+        <mat-icon>chat_bubble_outline</mat-icon>
+        <p>No comments yet. Be the first to comment!</p>
+      </div>
+    } @else {
+      @for (comment of comments(); track comment.id) {
+        <mat-card class="comment-card">
+          <div class="comment-header">
+            <div class="comment-author">
+              <div class="author-avatar">
+                {{ comment.user?.name ? comment.user!.name.charAt(0).toUpperCase() : 'U' }}
+              </div>
+              <div class="author-info">
+                <span class="author-name">{{ comment.user?.name || 'Unknown User' }}</span>
+                <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
+              </div>
+            </div>
+            @if (canEditComment(comment) || canDeleteComment(comment)) {
+              <div class="comment-actions">
+                @if (canEditComment(comment)) {
+                  <button
+                    mat-icon-button
+                    size="small"
+                    (click)="onStartEdit(comment)"
+                    matTooltip="Edit comment"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+                @if (canDeleteComment(comment)) {
+                  <button
+                    mat-icon-button
+                    size="small"
+                    (click)="onDeleteComment(comment.id)"
+                    matTooltip="Delete comment"
+                    class="delete-btn"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          @if (editingCommentId() === comment.id) {
+            <div class="edit-form">
+              <form [formGroup]="editForm" (ngSubmit)="onSubmitEdit(comment.id)">
+                <mat-form-field appearance="outline" class="edit-input">
+                  <textarea
+                    matInput
+                    formControlName="content"
+                    rows="3"
+                    [disabled]="isSubmitting()"
+                  ></textarea>
+                </mat-form-field>
+                <div class="edit-actions">
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="onCancelEdit()"
+                    [disabled]="isSubmitting()"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    mat-flat-button
+                    type="submit"
+                    color="primary"
+                    [disabled]="editForm.invalid || isSubmitting()"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          } @else {
+            <div class="comment-content">
+              <p>{{ comment.content }}</p>
+            </div>
+          }
+
+          @if (comment.updatedAt !== comment.createdAt) {
+            <div class="comment-edited">
+              <small>Edited {{ formatDate(comment.updatedAt) }}</small>
+            </div>
+          }
+        </mat-card>
+      }
+    }
+  </div>
+</div>

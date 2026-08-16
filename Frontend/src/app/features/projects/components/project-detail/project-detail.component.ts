@@ -108,6 +108,13 @@ export class ProjectDetailComponent implements OnInit {
     }
   }
 
+  protected navigateToKanban(): void {
+    const projectId = this.project()?.id;
+    if (projectId) {
+      this.router.navigate(['/projects', projectId, 'kanban']);
+    }
+  }
+
   protected navigateToSprints(): void {
     const projectId = this.project()?.id;
     if (projectId) {

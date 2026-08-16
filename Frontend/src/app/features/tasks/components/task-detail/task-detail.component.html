@@ -1,0 +1,150 @@
+<div class="task-detail-container">
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (task()) {
+    <div class="task-header">
+      <div class="header-left">
+        <button mat-icon-button (click)="onEditTask()" matTooltip="Edit task">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <div>
+          <h1>{{ task()!.title }}</h1>
+          <div class="task-meta">
+            <span class="task-id">#{{ task()!.id }}</span>
+            <span class="task-date">Created {{ formatDate(task()!.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="task-chips">
+          <mat-chip [color]="getStatusColor(task()!.status)" class="status-chip">
+            {{ formatStatus(task()!.status) }}
+          </mat-chip>
+          <mat-chip [color]="getPriorityColor(task()!.priority)" class="priority-chip">
+            {{ formatPriority(task()!.priority) }}
+          </mat-chip>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="task-content">
+      <div class="task-description">
+        <h3>Description</h3>
+        @if (task()!.description) {
+          <p>{{ task()!.description }}</p>
+        } @else {
+          <p class="no-description">No description provided</p>
+        }
+      </div>
+
+      <div class="task-details-grid">
+        <div class="detail-item">
+          <mat-icon>person</mat-icon>
+          <div class="detail-content">
+            <span class="detail-label">Assignee</span>
+            @if (task()!.assignee) {
+              <span class="detail-value">{{ task()!.assignee!.name }}</span>
+            } @else {
+              <span class="detail-value empty">Unassigned</span>
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <mat-icon>calendar_today</mat-icon>
+          <div class="detail-content">
+            <span class="detail-label">Due Date</span>
+            @if (task()!.dueDate) {
+              <span class="detail-value">{{ formatDate(task()!.dueDate!) }}</span>
+            } @else {
+              <span class="detail-value empty">No due date</span>
+            }
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <mat-icon>update</mat-icon>
+          <div class="detail-content">
+            <span class="detail-label">Last Updated</span>
+            <span class="detail-value">{{ formatDate(task()!.updatedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="selectedTab.set($event)" class="task-tabs">
+      <mat-tab label="Comments">
+        <app-task-comments
+          [taskId]="taskId()"
+          [currentUserId]="currentUserId()"
+        ></app-task-comments>
+      </mat-tab>
+
+      <mat-tab label="Attachments">
+        <app-task-attachments
+          [taskId]="taskId()"
+          [currentUserId]="currentUserId()"
+        ></app-task-attachments>
+      </mat-tab>
+
+      <mat-tab label="History">
+        <div class="history-container">
+          @if (isLoadingHistory()) {
+            <div class="loading-container">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+          } @else if (history().length === 0) {
+            <div class="no-history">
+              <mat-icon>history</mat-icon>
+              <p>No history yet</p>
+            </div>
+          } @else {
+            <div class="history-list">
+              @for (item of history(); track item.id) {
+                <div class="history-item">
+                  <div class="history-icon" [class]="getActionColor(item.action)">
+                    <mat-icon>{{ getActionIcon(item.action) }}</mat-icon>
+                  </div>
+                  <div class="history-content">
+                    <div class="history-header">
+                      <span class="history-action">{{ formatAction(item.action) }}</span>
+                      <span class="history-date">{{ formatDate(item.createdAt) }}</span>
+                    </div>
+                    @if (item.user) {
+                      <div class="history-user">
+                        <span>by {{ item.user.name }}</span>
+                      </div>
+                    }
+                    @if (item.field) {
+                      <div class="history-field">
+                        <span class="field-name">{{ item.field }}:</span>
+                        @if (item.oldValue) {
+                          <span class="old-value">{{ item.oldValue }}</span>
+                        }
+                        @if (item.oldValue && item.newValue) {
+                          <span class="arrow">→</span>
+                        }
+                        @if (item.newValue) {
+                          <span class="new-value">{{ item.newValue }}</span>
+                        }
+                      </div>
+                    }
+                    @if (item.description) {
+                      <div class="history-description">
+                        {{ item.description }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

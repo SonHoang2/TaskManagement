@@ -1,0 +1,72 @@
+<div class="task-form-container">
+  <h2>{{ isEditMode ? 'Edit Task' : 'Create New Task' }}</h2>
+
+  @if (isLoading) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+  }
+
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="Enter task title" />
+      <mat-error>{{ getErrorMessage('title') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" placeholder="Enter task description" rows="4"></textarea>
+      <mat-error>{{ getErrorMessage('description') }}</mat-error>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          @for (option of statusOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority">
+          @for (option of priorityOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Assignee</mat-label>
+        <mat-select formControlName="assigneeId" placeholder="Select assignee">
+          <mat-option [value]="''">Unassigned</mat-option>
+          @for (user of availableUsers; track user.id) {
+          <mat-option [value]="user.id">{{ user.name }} ({{ user.email }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Due Date</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="dueDate" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div class="form-actions">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading" class="cancel-btn">
+        Cancel
+      </button>
+      <button mat-flat-button type="submit" color="primary" [disabled]="isLoading || taskForm.invalid" class="save-btn">
+        <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+        <span>{{ isEditMode ? 'Update Task' : 'Create Task' }}</span>
+      </button>
+    </div>
+  </form>
+</div>

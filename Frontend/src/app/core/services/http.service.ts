@@ -59,11 +59,19 @@ export class HttpService {
     });
   }
 
+  getBlob(endpoint: string, params?: HttpParams): Observable<Blob> {
+    return this.http.get<Blob>(`${this.apiUrl}${endpoint}`, {
+      headers: this.getHeaders(),
+      params,
+      responseType: 'blob' as 'json',
+    });
+  }
+
   postFormData<T>(endpoint: string, formData: FormData): Observable<T> {
-    const headers = new HttpHeaders();
+    let headers = new HttpHeaders();
     const token = localStorage.getItem('jwt_token');
     if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
+      headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
     return this.http.post<T>(`${this.apiUrl}${endpoint}`, formData, {

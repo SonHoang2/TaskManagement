@@ -1,0 +1,115 @@
+<div class="task-attachments-container">
+  <h3>Attachments</h3>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="30"></mat-spinner>
+    </div>
+  }
+
+  <!-- Upload Section -->
+  <div class="upload-section">
+    @if (selectedFile()) {
+      <div class="selected-file-preview">
+        <div class="file-info">
+          <mat-icon>insert_drive_file</mat-icon>
+          <div class="file-details">
+            <span class="file-name">{{ selectedFile()?.name }}</span>
+            <span class="file-size">{{ formatFileSize(selectedFile()?.size || 0) }}</span>
+          </div>
+        </div>
+        <div class="file-actions">
+          <button
+            mat-button
+            (click)="clearSelectedFile()"
+            [disabled]="isUploading()"
+            class="cancel-btn"
+          >
+            Cancel
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="onUpload()"
+            [disabled]="isUploading()"
+            class="upload-btn"
+          >
+            <mat-icon>cloud_upload</mat-icon>
+            <span>Upload</span>
+          </button>
+        </div>
+      </div>
+      @if (isUploading()) {
+        <mat-progress-bar mode="determinate" [value]="uploadProgress()"></mat-progress-bar>
+      }
+    } @else {
+      <div class="upload-area">
+        <input
+          type="file"
+          id="fileInput"
+          (change)="onFileSelected($event)"
+          [disabled]="isUploading()"
+          class="file-input"
+        />
+        <label for="fileInput" class="upload-label">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <span>Click to upload or drag and drop</span>
+          <span class="upload-hint">Maximum file size: 10MB</span>
+        </label>
+      </div>
+    }
+  </div>
+
+  <!-- Attachments List -->
+  <div class="attachments-list">
+    @if (attachments().length === 0) {
+      <div class="no-attachments">
+        <mat-icon>folder_open</mat-icon>
+        <p>No attachments yet</p>
+      </div>
+    } @else {
+      @for (attachment of attachments(); track attachment.id) {
+        <mat-card class="attachment-card">
+          <div class="attachment-content">
+            <div class="file-icon">
+              <mat-icon>{{ getFileIcon(attachment.fileName) }}</mat-icon>
+            </div>
+            <div class="attachment-info">
+              <span class="attachment-name" [matTooltip]="attachment.fileName">
+                {{ attachment.fileName }}
+              </span>
+              <div class="attachment-meta">
+                <span class="file-size">{{ formatFileSize(attachment.fileSize) }}</span>
+                <span class="upload-date">{{ formatDate(attachment.uploadedAt) }}</span>
+                @if (attachment.uploader) {
+                  <span class="uploader">
+                    by {{ attachment.uploader.name }}
+                  </span>
+                }
+              </div>
+            </div>
+            <div class="attachment-actions">
+              <button
+                mat-icon-button
+                (click)="onDownloadAttachment(attachment)"
+                matTooltip="Download"
+              >
+                <mat-icon>download</mat-icon>
+              </button>
+              @if (canDeleteAttachment(attachment)) {
+                <button
+                  mat-icon-button
+                  (click)="onDeleteAttachment(attachment.id)"
+                  matTooltip="Delete"
+                  class="delete-btn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        </mat-card>
+      }
+    }
+  </div>
+</div>
