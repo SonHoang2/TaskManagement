@@ -1,21 +1,17 @@
-import {
-  HttpRequest,
-  HttpHandlerFn,
-  HttpEvent
-} from '@angular/common/http';
+import { HttpRequest, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export function jwtInterceptor(
   request: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> {
   const token = localStorage.getItem('jwt_token');
 
   if (token) {
     request = request.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
   }
 

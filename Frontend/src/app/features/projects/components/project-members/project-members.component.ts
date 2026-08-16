@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, inject, signal, input, OnInit } fro
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProjectService } from '../../services/project.service';
-import { ProjectMember, AddMemberRequest, UpdateMemberRoleRequest } from '../../models/project.model';
+import {
+  ProjectMember,
+  AddMemberRequest,
+  UpdateMemberRoleRequest,
+} from '../../models/project.model';
 
 @Component({
   selector: 'app-project-members',

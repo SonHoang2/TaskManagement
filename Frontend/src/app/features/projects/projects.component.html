@@ -1,124 +1,148 @@
 <div class="projects-container">
-    <div class="projects-header">
-        <div class="header-left">
-            <h1>Projects</h1>
-            <p>Manage and track your projects</p>
-        </div>
-        <button mat-flat-button color="primary" class="add-project-btn">
-            <mat-icon>add</mat-icon>
-            <span>New Project</span>
-        </button>
+  <div class="projects-header">
+    <div class="header-left">
+      <h1>Projects</h1>
+      <p>Manage and track your projects</p>
     </div>
+    <button mat-flat-button color="primary" class="add-project-btn">
+      <mat-icon>add</mat-icon>
+      <span>New Project</span>
+    </button>
+  </div>
 
-    <div class="filters-bar">
-        <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Search projects</mat-label>
-            <input matInput [value]="searchTerm()" (input)="onSearchChange($event.target.value)"
-                placeholder="Search by name or description">
-            <mat-icon matPrefix>search</mat-icon>
-        </mat-form-field>
-    </div>
+  <div class="filters-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search projects</mat-label>
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchChange($event.target.value)"
+        placeholder="Search by name or description"
+      />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+  </div>
 
-    @if (error()) {
+  @if (error()) {
     <div class="error-container">
-        <mat-icon class="error-icon">error_outline</mat-icon>
-        <p>{{ error() }}</p>
-        <button mat-button color="primary" (click)="loadProjects()">Retry</button>
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-button color="primary" (click)="loadProjects()">Retry</button>
     </div>
-    } @else if (isLoading()) {
+  } @else if (isLoading()) {
     <div class="loading-container">
-        <mat-spinner diameter="40"></mat-spinner>
+      <mat-spinner diameter="40"></mat-spinner>
     </div>
-    } @else {
+  } @else {
     @if (totalElements() === 0) {
-    <div class="empty-state">
+      <div class="empty-state">
         <mat-icon class="empty-icon">folder_open</mat-icon>
         <p>No projects found</p>
-        <button mat-button color="primary" (click)="clearFilters()">
-            Clear Filters
-        </button>
-    </div>
+        <button mat-button color="primary" (click)="clearFilters()">Clear Filters</button>
+      </div>
     } @else {
-    <div class="projects-grid">
-        @for (project of projects(); track project.id) {
-        <mat-card class="project-card">
+      <div class="projects-grid">
+        @for (project of projects(); track project.id; let i = $index) {
+          <mat-card class="project-card">
             <div class="project-card-content">
-                <button mat-icon-button class="menu-btn" [matMenuTriggerFor]="menu" aria-label="Project menu">
-                    <mat-icon>more_vert</mat-icon>
+              <button
+                mat-icon-button
+                class="menu-btn"
+                [matMenuTriggerFor]="menu"
+                aria-label="Project menu"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item>
+                  <mat-icon>edit</mat-icon>
+                  <span>Edit</span>
                 </button>
-                <mat-menu #menu="matMenu">
-                    <button mat-menu-item>
-                        <mat-icon>edit</mat-icon>
-                        <span>Edit</span>
-                    </button>
-                    <button mat-menu-item>
-                        <mat-icon>visibility</mat-icon>
-                        <span>View Details</span>
-                    </button>
-                    <button mat-menu-item>
-                        <mat-icon>group_add</mat-icon>
-                        <span>Manage Team</span>
-                    </button>
-                    <mat-divider></mat-divider>
-                    <button mat-menu-item (click)="deleteProject(project.id)" class="delete-action">
-                        <mat-icon>delete</mat-icon>
-                        <span>Delete</span>
-                    </button>
-                </mat-menu>
-                <h3 class="project-name">{{ project.name }}</h3>
-                <p class="project-description">{{ project.description }}</p>
+                <button mat-menu-item>
+                  <mat-icon>visibility</mat-icon>
+                  <span>View Details</span>
+                </button>
+                <button mat-menu-item>
+                  <mat-icon>group_add</mat-icon>
+                  <span>Manage Team</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="confirmDelete(project.id)" class="delete-action">
+                  <mat-icon>delete</mat-icon>
+                  <span>Delete</span>
+                </button>
+              </mat-menu>
+              <h3 class="project-name">{{ project.name }}</h3>
+              <p class="project-description">{{ project.description }}</p>
 
-                <div class="project-footer">
-                    <div class="date-info">
-                        <mat-icon>calendar_today</mat-icon>
-                        <span>Created: {{ formatDate(project.createdAt) }}</span>
-                    </div>
-                    <div class="date-info">
-                        <mat-icon>update</mat-icon>
-                        <span>Updated: {{ formatDate(project.updatedAt) }}</span>
-                    </div>
+              <div class="project-footer">
+                <div class="date-info">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span>Created: {{ formatDate(project.createdAt) }}</span>
                 </div>
+                <div class="date-info">
+                  <mat-icon>update</mat-icon>
+                  <span>Updated: {{ formatDate(project.updatedAt) }}</span>
+                </div>
+              </div>
             </div>
-        </mat-card>
+          </mat-card>
         }
-    </div>
+      </div>
 
-    @if (totalElements() > 0) {
-    <div class="pagination-container">
-        <button mat-icon-button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
+      @if (totalElements() > 0) {
+        <div class="pagination-container">
+          <button
+            mat-icon-button
+            [disabled]="currentPage() === 0"
+            (click)="goToPage(currentPage() - 1)"
+          >
             <mat-icon>chevron_left</mat-icon>
-        </button>
+          </button>
 
-        <div class="page-input-wrapper">
+          <div class="page-input-wrapper">
             <span>Page</span>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="page-input-field">
-                <input matInput type="number" [value]="currentPage() + 1" (change)="onPageInputChange($event)" [min]="1"
-                    [max]="totalPages()">
+              <input
+                matInput
+                type="number"
+                [value]="currentPage() + 1"
+                (change)="onPageInputChange($event)"
+                [min]="1"
+                [max]="totalPages()"
+              />
             </mat-form-field>
             <span class="page-divider">/ {{ totalPages() }}</span>
-        </div>
+          </div>
 
-        <button mat-icon-button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">
+          <button
+            mat-icon-button
+            [disabled]="currentPage() >= totalPages() - 1"
+            (click)="goToPage(currentPage() + 1)"
+          >
             <mat-icon>chevron_right</mat-icon>
-        </button>
+          </button>
 
-        <div class="results-info">
-            <span>{{ resultsRange().start }}-{{ resultsRange().end }} of {{ totalElements() }} results</span>
-        </div>
+          <div class="results-info">
+            <span
+              >{{ resultsRange().start }}-{{ resultsRange().end }} of
+              {{ totalElements() }} results</span
+            >
+          </div>
 
-        <div class="page-size-wrapper">
+          <div class="page-size-wrapper">
             <span>Rows per page</span>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="page-size-field">
-                <mat-select [value]="pageSize()" (selectionChange)="onPageSizeChange($event.value)">
-                    <mat-option [value]="5">5</mat-option>
-                    <mat-option [value]="10">10</mat-option>
-                    <mat-option [value]="20">20</mat-option>
-                    <mat-option [value]="50">50</mat-option>
-                </mat-select>
+              <mat-select [value]="pageSize()" (selectionChange)="onPageSizeChange($event.value)">
+                <mat-option [value]="5">5</mat-option>
+                <mat-option [value]="10">10</mat-option>
+                <mat-option [value]="20">20</mat-option>
+                <mat-option [value]="50">50</mat-option>
+              </mat-select>
             </mat-form-field>
+          </div>
         </div>
-    </div>
+      }
     }
-    }
-    }
+  }
 </div>

@@ -11,10 +11,13 @@
   } @else {
     <div class="stats-grid">
       @for (card of statCards; track card.title) {
-        <mat-card class="stat-card" [class.color-primary]="card.color === 'primary'" 
-                  [class.color-accent]="card.color === 'accent'" 
-                  [class.color-warn]="card.color === 'warn'" 
-                  [class.color-success]="card.color === 'success'">
+        <mat-card
+          class="stat-card"
+          [class.color-primary]="card.color === 'primary'"
+          [class.color-accent]="card.color === 'accent'"
+          [class.color-warn]="card.color === 'warn'"
+          [class.color-success]="card.color === 'success'"
+        >
           <div class="stat-card-content">
             <div class="stat-icon">
               <mat-icon>{{ card.icon }}</mat-icon>
@@ -38,10 +41,12 @@
         <div class="activities-list">
           @for (activity of recentActivities; track activity.id) {
             <div class="activity-item">
-              <div class="activity-icon" 
-                   [class.color-primary]="activity.type === 'task'" 
-                   [class.color-accent]="activity.type === 'project'" 
-                   [class.color-warn]="activity.type === 'team'">
+              <div
+                class="activity-icon"
+                [class.color-primary]="activity.type === 'task'"
+                [class.color-accent]="activity.type === 'project'"
+                [class.color-warn]="activity.type === 'team'"
+              >
                 <mat-icon>{{ getActivityIcon(activity.type) }}</mat-icon>
               </div>
               <div class="activity-details">

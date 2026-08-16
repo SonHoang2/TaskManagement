@@ -28,7 +28,7 @@
               <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()" class="profile-form">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Full Name</mat-label>
-                  <input matInput formControlName="name" placeholder="Enter your full name">
+                  <input matInput formControlName="name" placeholder="Enter your full name" />
                   <mat-error>
                     @if (profileForm.get('name')?.errors?.['required']) {
                       Name is required
@@ -41,7 +41,12 @@
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Email</mat-label>
-                  <input matInput formControlName="email" type="email" placeholder="Enter your email">
+                  <input
+                    matInput
+                    formControlName="email"
+                    type="email"
+                    placeholder="Enter your email"
+                  />
                   <mat-error>
                     @if (profileForm.get('email')?.errors?.['required']) {
                       Email is required
@@ -54,16 +59,26 @@
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Phone</mat-label>
-                  <input matInput formControlName="phone" placeholder="Enter your phone number">
+                  <input matInput formControlName="phone" placeholder="Enter your phone number" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Bio</mat-label>
-                  <textarea matInput formControlName="bio" placeholder="Tell us about yourself" rows="3"></textarea>
+                  <textarea
+                    matInput
+                    formControlName="bio"
+                    placeholder="Tell us about yourself"
+                    rows="3"
+                  ></textarea>
                 </mat-form-field>
 
                 <div class="form-actions">
-                  <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid">
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="submit"
+                    [disabled]="profileForm.invalid"
+                  >
                     Save Changes
                   </button>
                 </div>
@@ -75,20 +90,28 @@
         <!-- Notification Settings -->
         <mat-tab label="Notifications">
           <div class="tab-content">
-            <form [formGroup]="notificationForm" (ngSubmit)="onNotificationSubmit()" class="notification-form">
+            <form
+              [formGroup]="notificationForm"
+              (ngSubmit)="onNotificationSubmit()"
+              class="notification-form"
+            >
               <h3 class="section-title">Email Notifications</h3>
-              
+
               <mat-checkbox formControlName="emailNotifications" class="notification-item">
                 <div class="notification-content">
                   <span class="notification-label">Email Notifications</span>
-                  <span class="notification-description">Receive email updates about your activities</span>
+                  <span class="notification-description"
+                    >Receive email updates about your activities</span
+                  >
                 </div>
               </mat-checkbox>
 
               <mat-checkbox formControlName="taskReminders" class="notification-item">
                 <div class="notification-content">
                   <span class="notification-label">Task Reminders</span>
-                  <span class="notification-description">Get reminded about upcoming task deadlines</span>
+                  <span class="notification-description"
+                    >Get reminded about upcoming task deadlines</span
+                  >
                 </div>
               </mat-checkbox>
 
@@ -102,25 +125,27 @@
               <mat-checkbox formControlName="weeklyDigest" class="notification-item">
                 <div class="notification-content">
                   <span class="notification-label">Weekly Digest</span>
-                  <span class="notification-description">Get a weekly summary of your activities</span>
+                  <span class="notification-description"
+                    >Get a weekly summary of your activities</span
+                  >
                 </div>
               </mat-checkbox>
 
               <mat-divider class="settings-divider"></mat-divider>
 
               <h3 class="section-title">Push Notifications</h3>
-              
+
               <mat-checkbox formControlName="pushNotifications" class="notification-item">
                 <div class="notification-content">
                   <span class="notification-label">Push Notifications</span>
-                  <span class="notification-description">Receive push notifications on your device</span>
+                  <span class="notification-description"
+                    >Receive push notifications on your device</span
+                  >
                 </div>
               </mat-checkbox>
 
               <div class="form-actions">
-                <button mat-flat-button color="primary" type="submit">
-                  Save Preferences
-                </button>
+                <button mat-flat-button color="primary" type="submit">Save Preferences</button>
               </div>
             </form>
           </div>
@@ -129,9 +154,13 @@
         <!-- Appearance Settings -->
         <mat-tab label="Appearance">
           <div class="tab-content">
-            <form [formGroup]="appearanceForm" (ngSubmit)="onAppearanceSubmit()" class="appearance-form">
+            <form
+              [formGroup]="appearanceForm"
+              (ngSubmit)="onAppearanceSubmit()"
+              class="appearance-form"
+            >
               <h3 class="section-title">Theme</h3>
-              
+
               <mat-radio-group formControlName="theme" class="theme-options">
                 <mat-radio-button value="light" class="theme-option">
                   <div class="theme-preview">
@@ -156,7 +185,7 @@
               <mat-divider class="settings-divider"></mat-divider>
 
               <h3 class="section-title">Language</h3>
-              
+
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Language</mat-label>
                 <mat-select formControlName="language">
@@ -171,27 +200,25 @@
               <mat-divider class="settings-divider"></mat-divider>
 
               <h3 class="section-title">Font Size</h3>
-              
+
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Font Size: {{ appearanceForm.value.fontSize }}px</mat-label>
                 <mat-slider formControlName="fontSize" [min]="12" [max]="20" [step]="1" thumbLabel>
-                  <input matSliderThumb>
+                  <input matSliderThumb />
                 </mat-slider>
               </mat-form-field>
 
               <mat-divider class="settings-divider"></mat-divider>
 
               <h3 class="section-title">Interface Density</h3>
-              
+
               <mat-radio-group formControlName="density" class="density-options">
                 <mat-radio-button value="comfortable">Comfortable</mat-radio-button>
                 <mat-radio-button value="compact">Compact</mat-radio-button>
               </mat-radio-group>
 
               <div class="form-actions">
-                <button mat-flat-button color="primary" type="submit">
-                  Save Appearance
-                </button>
+                <button mat-flat-button color="primary" type="submit">Save Appearance</button>
               </div>
             </form>
           </div>
@@ -202,10 +229,10 @@
           <div class="tab-content">
             <form [formGroup]="securityForm" (ngSubmit)="onSecuritySubmit()" class="security-form">
               <h3 class="section-title">Change Password</h3>
-              
+
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Current Password</mat-label>
-                <input matInput formControlName="currentPassword" type="password">
+                <input matInput formControlName="currentPassword" type="password" />
                 <mat-error>
                   @if (securityForm.get('currentPassword')?.errors?.['required']) {
                     Current password is required
@@ -215,7 +242,7 @@
 
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>New Password</mat-label>
-                <input matInput formControlName="newPassword" type="password">
+                <input matInput formControlName="newPassword" type="password" />
                 <mat-error>
                   @if (securityForm.get('newPassword')?.errors?.['required']) {
                     New password is required
@@ -228,7 +255,7 @@
 
               <mat-form-field appearance="outline" class="form-field">
                 <mat-label>Confirm New Password</mat-label>
-                <input matInput formControlName="confirmPassword" type="password">
+                <input matInput formControlName="confirmPassword" type="password" />
                 <mat-error>
                   @if (securityForm.get('confirmPassword')?.errors?.['required']) {
                     Please confirm your password
@@ -240,7 +267,12 @@
               </mat-form-field>
 
               <div class="form-actions">
-                <button mat-flat-button color="primary" type="submit" [disabled]="securityForm.invalid">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="securityForm.invalid"
+                >
                   Change Password
                 </button>
               </div>
@@ -249,8 +281,10 @@
 
               <div class="danger-zone">
                 <h3 class="section-title danger-title">Danger Zone</h3>
-                <p class="danger-description">These actions are irreversible. Please proceed with caution.</p>
-                
+                <p class="danger-description">
+                  These actions are irreversible. Please proceed with caution.
+                </p>
+
                 <button mat-stroked-button color="warn" class="danger-btn">
                   <mat-icon>delete_forever</mat-icon>
                   <span>Delete Account</span>

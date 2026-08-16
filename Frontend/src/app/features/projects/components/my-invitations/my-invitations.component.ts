@@ -10,7 +10,7 @@ import { ProjectInvitation, InvitationResponse } from '../../models/project.mode
   imports: [CommonModule],
   templateUrl: './my-invitations.component.html',
   styleUrls: ['./my-invitations.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyInvitationsComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
@@ -42,7 +42,7 @@ export class MyInvitationsComponent implements OnInit {
       error: (err) => {
         this.error.set('An error occurred while loading invitations');
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
@@ -56,12 +56,15 @@ export class MyInvitationsComponent implements OnInit {
     }
   }
 
-  protected respondToInvitation(invitation: ProjectInvitation, response: 'ACCEPTED' | 'REJECTED'): void {
+  protected respondToInvitation(
+    invitation: ProjectInvitation,
+    response: 'ACCEPTED' | 'REJECTED',
+  ): void {
     this.isSubmitting.set(true);
     this.error.set(null);
 
     const data: InvitationResponse = {
-      status: response
+      status: response,
     };
 
     this.projectService.respondToInvitation(invitation.id, data).subscribe({
@@ -80,7 +83,7 @@ export class MyInvitationsComponent implements OnInit {
       error: (err) => {
         this.error.set(`An error occurred while ${response.toLowerCase()}ing invitation`);
         this.isSubmitting.set(false);
-      }
+      },
     });
   }
 

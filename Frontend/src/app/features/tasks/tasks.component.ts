@@ -41,10 +41,10 @@ interface Task {
     MatChipsModule,
     MatProgressSpinnerModule,
     MatDividerModule,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './tasks.component.html',
-  styleUrl: './tasks.component.scss'
+  styleUrl: './tasks.component.scss',
 })
 export class TasksComponent {
   readonly isLoading = signal(false);
@@ -52,7 +52,15 @@ export class TasksComponent {
   readonly statusFilter = signal('all');
   readonly priorityFilter = signal('all');
 
-  readonly displayedColumns: string[] = ['select', 'title', 'status', 'priority', 'dueDate', 'assignee', 'actions'];
+  readonly displayedColumns: string[] = [
+    'select',
+    'title',
+    'status',
+    'priority',
+    'dueDate',
+    'assignee',
+    'actions',
+  ];
   readonly tasks = signal<Task[]>([
     {
       id: 1,
@@ -61,7 +69,7 @@ export class TasksComponent {
       status: 'in-progress',
       priority: 'high',
       dueDate: '2024-08-20',
-      assignee: 'John Doe'
+      assignee: 'John Doe',
     },
     {
       id: 2,
@@ -70,7 +78,7 @@ export class TasksComponent {
       status: 'todo',
       priority: 'high',
       dueDate: '2024-08-22',
-      assignee: 'Jane Smith'
+      assignee: 'Jane Smith',
     },
     {
       id: 3,
@@ -79,7 +87,7 @@ export class TasksComponent {
       status: 'todo',
       priority: 'medium',
       dueDate: '2024-08-25',
-      assignee: 'Bob Johnson'
+      assignee: 'Bob Johnson',
     },
     {
       id: 4,
@@ -88,7 +96,7 @@ export class TasksComponent {
       status: 'completed',
       priority: 'low',
       dueDate: '2024-08-18',
-      assignee: 'Alice Williams'
+      assignee: 'Alice Williams',
     },
     {
       id: 5,
@@ -97,27 +105,29 @@ export class TasksComponent {
       status: 'in-progress',
       priority: 'medium',
       dueDate: '2024-08-28',
-      assignee: 'Charlie Brown'
-    }
+      assignee: 'Charlie Brown',
+    },
   ]);
 
   readonly selectedTasks = signal<Set<number>>(new Set());
 
   readonly filteredTasks = computed(() => {
-    return this.tasks().filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                           task.description.toLowerCase().includes(this.searchTerm().toLowerCase());
+    return this.tasks().filter((task) => {
+      const matchesSearch =
+        task.title.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
+        task.description.toLowerCase().includes(this.searchTerm().toLowerCase());
       const matchesStatus = this.statusFilter() === 'all' || task.status === this.statusFilter();
-      const matchesPriority = this.priorityFilter() === 'all' || task.priority === this.priorityFilter();
+      const matchesPriority =
+        this.priorityFilter() === 'all' || task.priority === this.priorityFilter();
       return matchesSearch && matchesStatus && matchesPriority;
     });
   });
 
   readonly taskStats = computed(() => {
     const total = this.tasks().length;
-    const completed = this.tasks().filter(t => t.status === 'completed').length;
-    const inProgress = this.tasks().filter(t => t.status === 'in-progress').length;
-    const todo = this.tasks().filter(t => t.status === 'todo').length;
+    const completed = this.tasks().filter((t) => t.status === 'completed').length;
+    const inProgress = this.tasks().filter((t) => t.status === 'in-progress').length;
+    const todo = this.tasks().filter((t) => t.status === 'todo').length;
     return { total, completed, inProgress, todo };
   });
 
@@ -158,14 +168,16 @@ export class TasksComponent {
   }
 
   isAllSelected() {
-    return this.filteredTasks().length > 0 && this.selectedTasks().size === this.filteredTasks().length;
+    return (
+      this.filteredTasks().length > 0 && this.selectedTasks().size === this.filteredTasks().length
+    );
   }
 
   toggleAllSelection() {
     if (this.isAllSelected()) {
       this.selectedTasks.set(new Set());
     } else {
-      this.selectedTasks.set(new Set(this.filteredTasks().map(task => task.id)));
+      this.selectedTasks.set(new Set(this.filteredTasks().map((task) => task.id)));
     }
   }
 
@@ -186,7 +198,7 @@ export class TasksComponent {
   }
 
   deleteTask(taskId: number) {
-    const updatedTasks = this.tasks().filter(task => task.id !== taskId);
+    const updatedTasks = this.tasks().filter((task) => task.id !== taskId);
     this.tasks.set(updatedTasks);
   }
 }

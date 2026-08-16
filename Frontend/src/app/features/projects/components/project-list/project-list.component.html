@@ -1,106 +1,142 @@
 <div class="project-list-container">
-    <div class="header">
-        <h1>Projects</h1>
-        <button class="btn btn-primary" (click)="createNewProject()" aria-label="Create new project">
-            + New Project
+  <div class="header">
+    <h1>Projects</h1>
+    <button class="btn btn-primary" (click)="createNewProject()" aria-label="Create new project">
+      + New Project
+    </button>
+  </div>
+
+  <div class="filters">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
+      <div class="form-group">
+        <input
+          type="text"
+          formControlName="search"
+          placeholder="Search projects..."
+          class="form-control"
+          aria-label="Search projects"
+        />
+      </div>
+
+      <div class="form-group">
+        <select
+          [value]="currentSort()"
+          (change)="onSortChange($any($event.target).value)"
+          class="form-control"
+          aria-label="Sort by"
+        >
+          @for (option of sortOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onSortDirectionChange()"
+          aria-label="Toggle sort direction"
+        >
+          {{ sortDirection() === 'ASC' ? '↑' : '↓' }}
         </button>
-    </div>
+      </div>
 
-    <div class="filters">
-        <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
-            <div class="form-group">
-                <input type="text" formControlName="search" placeholder="Search projects..." class="form-control"
-                    aria-label="Search projects" />
-            </div>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+  </div>
 
-            <div class="form-group">
-                <select [value]="currentSort()" (change)="onSortChange($any($event.target).value)" class="form-control"
-                    aria-label="Sort by">
-                    @for (option of sortOptions; track option.value) {
-                    <option [value]="option.value">{{ option.label }}</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-group">
-                <button type="button" class="btn btn-secondary" (click)="onSortDirectionChange()"
-                    aria-label="Toggle sort direction">
-                    {{ sortDirection() === 'ASC' ? '↑' : '↓' }}
-                </button>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
-    </div>
-
-    @if (isLoading()) {
+  @if (isLoading()) {
     <div class="loading" role="status" aria-live="polite">
-        <div class="spinner"></div>
-        <p>Loading projects...</p>
+      <div class="spinner"></div>
+      <p>Loading projects...</p>
     </div>
-    } @else if (error()) {
+  } @else if (error()) {
     <div class="error" role="alert">
-        <p>{{ error() }}</p>
-        <button class="btn btn-secondary" (click)="loadProjects()">Retry</button>
+      <p>{{ error() }}</p>
+      <button class="btn btn-secondary" (click)="loadProjects()">Retry</button>
     </div>
-    } @else if (projects().length === 0) {
+  } @else if (projects().length === 0) {
     <div class="empty-state">
-        <p>No projects found</p>
-        <button class="btn btn-primary" (click)="createNewProject()">Create your first project</button>
+      <p>No projects found</p>
+      <button class="btn btn-primary" (click)="createNewProject()">
+        Create your first project
+      </button>
     </div>
-    } @else {
+  } @else {
     <div class="projects-grid">
-        @for (project of projects(); track project.id) {
-        <div class="project-card" (click)="navigateToProject(project.id)" role="button" tabindex="0"
-            (keydown.enter)="navigateToProject(project.id)">
-            <div class="project-card-header">
-                <h3>{{ project.name }}</h3>
+      @for (project of projects(); track project.id) {
+        <div
+          class="project-card"
+          (click)="navigateToProject(project.id)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="navigateToProject(project.id)"
+        >
+          <div class="project-card-header">
+            <h3>{{ project.name }}</h3>
+          </div>
+          <div class="project-card-body">
+            <p class="description">{{ project.description }}</p>
+            <div class="meta">
+              <span class="created">Created: {{ formatDate(project.createdAt) }}</span>
             </div>
-            <div class="project-card-body">
-                <p class="description">{{ project.description }}</p>
-                <div class="meta">
-                    <span class="created">Created: {{ formatDate(project.createdAt) }}</span>
-                </div>
-            </div>
+          </div>
         </div>
-        }
+      }
     </div>
 
     <div class="pagination" aria-label="Project pagination">
-        <div class="pagination-controls">
-            <button class="btn btn-secondary" [disabled]="currentPage() === 0" (click)="onPageChange(currentPage() - 1)"
-                aria-label="Previous page">
-                Previous
-            </button>
+      <div class="pagination-controls">
+        <button
+          class="btn btn-secondary"
+          [disabled]="currentPage() === 0"
+          (click)="onPageChange(currentPage() - 1)"
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
 
-            @for (page of getPaginationArray(); track page) {
-            @if (page === currentPage()) {
+        @for (page of getPaginationArray(); track page) {
+          @if (page === currentPage()) {
             <button class="btn btn-primary current">{{ page + 1 }}</button>
-            } @else {
+          } @else {
             <button class="btn btn-secondary" (click)="onPageChange(page)">{{ page + 1 }}</button>
-            }
-            }
+          }
+        }
 
-            <button class="btn btn-secondary" [disabled]="currentPage() === totalPages() - 1"
-                (click)="onPageChange(currentPage() + 1)" aria-label="Next page">
-                Next
-            </button>
-        </div>
+        <button
+          class="btn btn-secondary"
+          [disabled]="currentPage() === totalPages() - 1"
+          (click)="onPageChange(currentPage() + 1)"
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </div>
 
-        <div class="page-size">
-            <label for="pageSize">Per page:</label>
-            <select id="pageSize" [value]="pageSize()" (change)="onPageSizeChange($any($event.target).value)"
-                class="form-control">
-                <option [value]="10">10</option>
-                <option [value]="25">25</option>
-                <option [value]="50">50</option>
-            </select>
-        </div>
+      <div class="page-size">
+        <label for="pageSize">Per page:</label>
+        <select
+          id="pageSize"
+          [value]="pageSize()"
+          (change)="onPageSizeChange($any($event.target).value)"
+          class="form-control"
+        >
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
 
-        <div class="pagination-info">
-            <span>Showing {{ currentPage() * pageSize() + 1 }}-{{ min((currentPage() + 1) * pageSize(), totalElements())
-                }} of {{ totalElements() }} projects</span>
-        </div>
+      <div class="pagination-info">
+        <span
+          >Showing {{ currentPage() * pageSize() + 1 }}-{{
+            min((currentPage() + 1) * pageSize(), totalElements())
+          }}
+          of {{ totalElements() }} projects</span
+        >
+      </div>
     </div>
-    }
+  }
 </div>

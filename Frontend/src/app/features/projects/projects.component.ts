@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from './services/project.service';
 import { Project, PaginationParams, SearchParams } from './models/project.model';
@@ -32,6 +33,7 @@ import { Project, PaginationParams, SearchParams } from './models/project.model'
 })
 export class ProjectsComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly isLoading = signal(true);
   readonly searchTerm = signal('');
@@ -91,24 +93,46 @@ export class ProjectsComponent implements OnInit {
     this.loadProjects();
   }
 
+  confirmDelete(projectId: string): void {
+    const snackBarRef = this.snackBar.open(
+      'Are you sure you want to delete this project?',
+      'Delete',
+      {
+        duration: 5000,
+        panelClass: 'delete-snackbar',
+      },
+    );
+
+    snackBarRef.onAction().subscribe(() => {
+      this.deleteProject(projectId);
+    });
+  }
+
   deleteProject(projectId: string) {
-    if (confirm('Are you sure you want to delete this project?')) {
-      this.isLoading.set(true);
-      this.projectService.deleteProject(projectId).subscribe({
-        next: (response) => {
-          if (response.status === 'success') {
-            this.loadProjects();
-          } else {
-            this.error.set(response.message || 'Failed to delete project');
-            this.isLoading.set(false);
-          }
-        },
-        error: (err) => {
-          this.error.set('An error occurred while deleting project');
+    this.isLoading.set(true);
+    this.projectService.deleteProject(projectId).subscribe({
+      next: (response) => {
+        if (response.status === 'success') {
+          this.snackBar.open('Project deleted successfully', 'Close', {
+            duration: 3000,
+          });
+          this.loadProjects();
+        } else {
+          this.error.set(response.message || 'Failed to delete project');
           this.isLoading.set(false);
-        },
-      });
-    }
+          this.snackBar.open('Failed to delete project', 'Close', {
+            duration: 3000,
+          });
+        }
+      },
+      error: (err) => {
+        this.error.set('An error occurred while deleting project');
+        this.isLoading.set(false);
+        this.snackBar.open('An error occurred while deleting project', 'Close', {
+          duration: 3000,
+        });
+      },
+    });
   }
 
   goToPage(page: number): void {

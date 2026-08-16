@@ -21,22 +21,25 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatProgressSpinnerModule,
     MatCardModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
   templateUrl: './signup.component.html',
-  styleUrl: './signup.component.scss'
+  styleUrl: './signup.component.scss',
 })
 export class SignupComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly signupForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    confirmPassword: ['', [Validators.required]]
-  }, { validators: this.passwordMatchValidator });
+  readonly signupForm: FormGroup = this.fb.group(
+    {
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    { validators: this.passwordMatchValidator },
+  );
 
   readonly isLoading = signal(false);
   readonly hidePassword = signal(true);
@@ -64,7 +67,7 @@ export class SignupComponent {
     const signupData: SignupRequest = {
       name: this.signupForm.value.name,
       email: this.signupForm.value.email,
-      password: this.signupForm.value.password
+      password: this.signupForm.value.password,
     };
 
     this.authService.signup(signupData).subscribe({
@@ -76,20 +79,20 @@ export class SignupComponent {
       },
       error: (error) => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
   togglePasswordVisibility(): void {
-    this.hidePassword.update(hide => !hide);
+    this.hidePassword.update((hide) => !hide);
   }
 
   toggleConfirmPasswordVisibility(): void {
-    this.hideConfirmPassword.update(hide => !hide);
+    this.hideConfirmPassword.update((hide) => !hide);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
       if (control instanceof FormGroup) {

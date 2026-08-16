@@ -22,7 +22,7 @@ export interface JSendResponse<T> {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
   constructor(private httpService: HttpService) {}
