@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProjectService } from '../../services/project.service';
-import { Project, CreateProjectRequest, UpdateProjectRequest } from '../../models/project.model';
+import {
+  Project,
+  CreateProjectRequest,
+  CreateProjectResponse,
+  GetProjectResponse,
+  UpdateProjectRequest,
+} from '../../models/project.model';
 
 @Component({
   selector: 'app-project-form',
@@ -46,9 +52,10 @@ export class ProjectFormComponent implements OnInit {
     this.projectService.getProject(projectId).subscribe({
       next: (response) => {
         if (response.status === 'success' && response.data) {
+          const projectData = response.data.project || response.data;
           this.projectForm.patchValue({
-            name: response.data.name,
-            description: response.data.description,
+            name: projectData.name,
+            description: projectData.description,
           });
         } else {
           this.error.set(response.message || 'Failed to load project');
@@ -87,7 +94,12 @@ export class ProjectFormComponent implements OnInit {
     this.projectService.createProject(data).subscribe({
       next: (response) => {
         if (response.status === 'success' && response.data) {
-          this.router.navigate(['/projects', response.data.id]);
+          // Navigate to the projects list or project detail if ID is available
+          if (response.data.project?.id) {
+            this.router.navigate(['/projects', response.data.project.id]);
+          } else {
+            this.router.navigate(['/projects']);
+          }
         } else {
           this.error.set(response.message || 'Failed to create project');
           this.isSubmitting.set(false);

@@ -5,7 +5,10 @@ import { HttpParams } from '@angular/common/http';
 import {
   Project,
   CreateProjectRequest,
+  CreateProjectResponse,
+  GetProjectResponse,
   UpdateProjectRequest,
+  UpdateProjectResponse,
   ProjectMember,
   AddMemberRequest,
   UpdateMemberRoleRequest,
@@ -28,7 +31,10 @@ import {
 export type {
   Project,
   CreateProjectRequest,
+  CreateProjectResponse,
+  GetProjectResponse,
   UpdateProjectRequest,
+  UpdateProjectResponse,
   ProjectMember,
   AddMemberRequest,
   UpdateMemberRoleRequest,
@@ -79,8 +85,10 @@ export class ProjectService {
     );
   }
 
-  getProject(projectId: string): Observable<JSendResponse<Project>> {
-    return this.httpService.get<JSendResponse<Project>>(`${this.basePath}/projects/${projectId}`);
+  getProject(projectId: string): Observable<JSendResponse<GetProjectResponse>> {
+    return this.httpService.get<JSendResponse<GetProjectResponse>>(
+      `${this.basePath}/projects/${projectId}`,
+    );
   }
 
   getMyProjects(
@@ -107,12 +115,18 @@ export class ProjectService {
     );
   }
 
-  createProject(data: CreateProjectRequest): Observable<JSendResponse<Project>> {
-    return this.httpService.post<JSendResponse<Project>>(`${this.basePath}/projects`, data);
+  createProject(data: CreateProjectRequest): Observable<JSendResponse<CreateProjectResponse>> {
+    return this.httpService.post<JSendResponse<CreateProjectResponse>>(
+      `${this.basePath}/projects`,
+      data,
+    );
   }
 
-  updateProject(projectId: string, data: UpdateProjectRequest): Observable<JSendResponse<Project>> {
-    return this.httpService.put<JSendResponse<Project>>(
+  updateProject(
+    projectId: string,
+    data: UpdateProjectRequest,
+  ): Observable<JSendResponse<UpdateProjectResponse>> {
+    return this.httpService.put<JSendResponse<UpdateProjectResponse>>(
       `${this.basePath}/projects/${projectId}`,
       data,
     );

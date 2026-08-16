@@ -10,8 +10,10 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProjectService } from './services/project.service';
 import { Project, PaginationParams, SearchParams } from './models/project.model';
+import { AuthService } from '../auth/services/auth.service';
 
 @Component({
   selector: 'app-projects',
@@ -34,6 +36,8 @@ import { Project, PaginationParams, SearchParams } from './models/project.model'
 export class ProjectsComponent implements OnInit {
   private readonly projectService = inject(ProjectService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   readonly isLoading = signal(true);
   readonly searchTerm = signal('');
@@ -51,6 +55,8 @@ export class ProjectsComponent implements OnInit {
     const end = Math.min((this.currentPage() + 1) * this.pageSize(), this.totalElements());
     return { start, end };
   });
+  readonly isAdmin = computed(() => this.authService.isAdmin());
+  readonly pageTitle = computed(() => (this.isAdmin() ? 'Projects' : 'My Projects'));
 
   ngOnInit(): void {
     this.loadProjects();
@@ -69,7 +75,11 @@ export class ProjectsComponent implements OnInit {
       search: this.searchTerm() || undefined,
     };
 
-    this.projectService.getProjects(pagination, search).subscribe({
+    const projectCall = this.isAdmin()
+      ? this.projectService.getProjects(pagination, search)
+      : this.projectService.getMyProjects(pagination, search);
+
+    projectCall.subscribe({
       next: (response) => {
         if (response.status === 'success' && response.data) {
           this.projects.set(response.data.content);
@@ -169,5 +179,21 @@ export class ProjectsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString();
+  }
+
+  editProject(projectId: string): void {
+    this.router.navigate(['/projects', projectId, 'edit']);
+  }
+
+  viewProjectDetails(projectId: string): void {
+    this.router.navigate(['/projects', projectId]);
+  }
+
+  manageTeam(projectId: string): void {
+    this.router.navigate(['/projects', projectId], { queryParams: { showMembers: 'true' } });
+  }
+
+  createNewProject(): void {
+    this.router.navigate(['/projects', 'new']);
   }
 }

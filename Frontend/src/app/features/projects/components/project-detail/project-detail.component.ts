@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
-import { Project } from '../../models/project.model';
+import { Project, GetProjectResponse } from '../../models/project.model';
 import { ProjectMembersComponent } from '../project-members/project-members.component';
 import { ProjectInvitationsComponent } from '../project-invitations/project-invitations.component';
 
@@ -29,6 +29,12 @@ export class ProjectDetailComponent implements OnInit {
     const projectId = this.route.snapshot.paramMap.get('id');
     if (projectId) {
       this.loadProject(projectId);
+
+      // Check if we should show members section
+      const showMembers = this.route.snapshot.queryParamMap.get('showMembers');
+      if (showMembers === 'true') {
+        this.showMembers.set(true);
+      }
     } else {
       this.error.set('Project ID not provided');
       this.isLoading.set(false);
@@ -42,7 +48,8 @@ export class ProjectDetailComponent implements OnInit {
     this.projectService.getProject(projectId).subscribe({
       next: (response) => {
         if (response.status === 'success' && response.data) {
-          this.project.set(response.data);
+          const projectData = response.data.project || response.data;
+          this.project.set(projectData);
         } else {
           this.error.set(response.message || 'Failed to load project');
         }
