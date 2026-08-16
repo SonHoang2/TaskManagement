@@ -17,8 +17,8 @@ interface NavItem {
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
   host: {
-    '[class.mobile-open]': 'isMobileOpen()'
-  }
+    '[class.mobile-open]': 'isMobileOpen()',
+  },
 })
 export class SidebarComponent {
   readonly isOpen = input<boolean>(true);
@@ -34,7 +34,7 @@ export class SidebarComponent {
     { path: '/tasks', label: 'Tasks', icon: 'task' },
     { path: '/projects', label: 'Projects', icon: 'folder' },
     { path: '/team', label: 'Team', icon: 'people' },
-    { path: '/settings', label: 'Settings', icon: 'settings' }
+    { path: '/settings', label: 'Settings', icon: 'settings' },
   ];
 
   onToggle() {

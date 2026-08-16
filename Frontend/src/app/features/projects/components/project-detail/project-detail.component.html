@@ -11,7 +11,11 @@
     </div>
   } @else if (project()) {
     <div class="project-header">
-      <button class="btn btn-secondary back-btn" (click)="goBack()" aria-label="Go back to projects">
+      <button
+        class="btn btn-secondary back-btn"
+        (click)="goBack()"
+        aria-label="Go back to projects"
+      >
         ← Back
       </button>
       <div class="project-actions">
@@ -50,16 +54,32 @@
         <div class="project-quick-actions">
           <h2>Quick Actions</h2>
           <div class="action-buttons">
-            <button class="btn btn-primary" (click)="navigateToTasks()" aria-label="View project tasks">
+            <button
+              class="btn btn-primary"
+              (click)="navigateToTasks()"
+              aria-label="View project tasks"
+            >
               View Tasks
             </button>
-            <button class="btn btn-secondary" (click)="navigateToSprints()" aria-label="View project sprints">
+            <button
+              class="btn btn-secondary"
+              (click)="navigateToSprints()"
+              aria-label="View project sprints"
+            >
               View Sprints
             </button>
-            <button class="btn btn-secondary" (click)="toggleMembers()" aria-label="Toggle project members">
+            <button
+              class="btn btn-secondary"
+              (click)="toggleMembers()"
+              aria-label="Toggle project members"
+            >
               Members
             </button>
-            <button class="btn btn-secondary" (click)="toggleInvitations()" aria-label="Toggle project invitations">
+            <button
+              class="btn btn-secondary"
+              (click)="toggleInvitations()"
+              aria-label="Toggle project invitations"
+            >
               Invitations
             </button>
           </div>

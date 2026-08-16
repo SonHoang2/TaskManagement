@@ -29,10 +29,10 @@ interface RecentActivity {
     MatIconModule,
     MatButtonModule,
     MatGridListModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
   readonly isLoading = signal(false);
@@ -43,29 +43,29 @@ export class DashboardComponent {
       value: '24',
       icon: 'task_alt',
       color: 'primary',
-      trend: '+12% from last week'
+      trend: '+12% from last week',
     },
     {
       title: 'Projects',
       value: '8',
       icon: 'folder',
       color: 'accent',
-      trend: '+2 new this month'
+      trend: '+2 new this month',
     },
     {
       title: 'Team Members',
       value: '12',
       icon: 'people',
       color: 'warn',
-      trend: '+3 new members'
+      trend: '+3 new members',
     },
     {
       title: 'Completed',
       value: '18',
       icon: 'check_circle',
       color: 'success',
-      trend: '75% completion rate'
-    }
+      trend: '75% completion rate',
+    },
   ];
 
   readonly recentActivities: RecentActivity[] = [
@@ -74,29 +74,29 @@ export class DashboardComponent {
       title: 'Task Completed',
       description: 'Design review task has been completed',
       time: '2 hours ago',
-      type: 'task'
+      type: 'task',
     },
     {
       id: 2,
       title: 'New Project',
       description: 'Website redesign project has been created',
       time: '5 hours ago',
-      type: 'project'
+      type: 'project',
     },
     {
       id: 3,
       title: 'Team Update',
       description: 'John joined the marketing team',
       time: '1 day ago',
-      type: 'team'
+      type: 'team',
     },
     {
       id: 4,
       title: 'Task Assigned',
       description: 'You have been assigned to API integration',
       time: '2 days ago',
-      type: 'task'
-    }
+      type: 'task',
+    },
   ];
 
   getActivityIcon(type: string): string {

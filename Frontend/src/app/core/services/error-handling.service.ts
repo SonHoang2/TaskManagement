@@ -9,14 +9,14 @@ export interface ApiError {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ErrorHandlingService {
   constructor() {}
 
   handleError(error: HttpErrorResponse): Observable<never> {
     let apiError: ApiError = {
-      message: 'An unexpected error occurred'
+      message: 'An unexpected error occurred',
     };
 
     if (error.error instanceof ErrorEvent) {
@@ -50,12 +50,12 @@ export class ErrorHandlingService {
       return {
         message: error.data.message || error.message || 'An error occurred',
         code: error.data.code,
-        details: error.data
+        details: error.data,
       };
     }
     return {
       message: error?.message || 'An error occurred',
-      details: error
+      details: error,
     };
   }
 

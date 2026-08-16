@@ -31,10 +31,10 @@ import { AuthService } from '../auth/services/auth.service';
     MatDividerModule,
     MatProgressSpinnerModule,
     MatTabsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss'
+  styleUrl: './settings.component.scss',
 })
 export class SettingsComponent {
   private readonly fb = inject(FormBuilder);
@@ -48,7 +48,7 @@ export class SettingsComponent {
     name: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
-    bio: ['']
+    bio: [''],
   });
 
   readonly notificationForm: FormGroup = this.fb.group({
@@ -56,21 +56,24 @@ export class SettingsComponent {
     pushNotifications: [false],
     taskReminders: [true],
     projectUpdates: [true],
-    weeklyDigest: [false]
+    weeklyDigest: [false],
   });
 
   readonly appearanceForm: FormGroup = this.fb.group({
     theme: ['light'],
     language: ['en'],
     fontSize: [14],
-    density: ['comfortable']
+    density: ['comfortable'],
   });
 
-  readonly securityForm: FormGroup = this.fb.group({
-    currentPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
-    confirmPassword: ['', Validators.required]
-  }, { validators: this.passwordMatchValidator });
+  readonly securityForm: FormGroup = this.fb.group(
+    {
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', Validators.required],
+    },
+    { validators: this.passwordMatchValidator },
+  );
 
   passwordMatchValidator(formGroup: FormGroup): { [key: string]: boolean } | null {
     const password = formGroup.get('newPassword');

@@ -1,102 +1,144 @@
 <div class="project-invitations-container">
-    <div class="invitations-header">
-        <h2>Project Invitations</h2>
-        <button class="btn btn-primary" (click)="toggleAddForm()" aria-label="Send new invitation">
-            + Send Invitation
-        </button>
-    </div>
+  <div class="invitations-header">
+    <h2>Project Invitations</h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()" aria-label="Send new invitation">
+      + Send Invitation
+    </button>
+  </div>
 
-    @if (error()) {
+  @if (error()) {
     <div class="error" role="alert">
-        <p>{{ error() }}</p>
+      <p>{{ error() }}</p>
     </div>
-    }
+  }
 
-    @if (showAddForm()) {
+  @if (showAddForm()) {
     <div class="invite-form">
-        <h3>Send New Invitation</h3>
-        <form [formGroup]="inviteForm" (ngSubmit)="onSendInvitation()" novalidate>
-            <div class="form-group">
-                <label for="email">Email Address *</label>
-                <input type="email" id="email" formControlName="email" class="form-control"
-                    placeholder="Enter email address"
-                    [attr.aria-invalid]="inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched ? 'true' : 'false'"
-                    [attr.aria-describedby]="inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched ? 'email-error' : null" />
-                @if (getErrorMessage('email')) {
-                <small id="email-error" class="error-message" role="alert">{{ getErrorMessage('email') }}</small>
-                }
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()" aria-label="Send invitation">
-                    @if (isSubmitting()) {
-                    <span class="spinner-small"></span>
-                    Sending...
-                    } @else {
-                    Send Invitation
-                    }
-                </button>
-                <button type="button" class="btn btn-secondary" (click)="toggleAddForm()" [disabled]="isSubmitting()"
-                    aria-label="Cancel">
-                    Cancel
-                </button>
-            </div>
-        </form>
-    </div>
-    }
-
-    @if (isLoading()) {
-    <div class="loading" role="status" aria-live="polite">
-        <div class="spinner"></div>
-        <p>Loading invitations...</p>
-    </div>
-    } @else if (invitations().length === 0) {
-    <div class="empty-state">
-        <p>No invitations sent for this project</p>
-    </div>
-    } @else {
-    <div class="invitations-list">
-        @for (invitation of invitations(); track invitation.id) {
-        <div class="invitation-card">
-            <div class="invitation-info">
-                <div class="invitation-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                </div>
-                <div class="invitation-details">
-                    <h4>{{ invitation.invitedEmail }}</h4>
-                    <p class="invited-by">Invited by: {{ invitation.invitedByUser?.name || invitation.invitedBy }}</p>
-                    <p class="invitation-dates">
-                        <span>Sent: {{ formatDate(invitation.createdAt) }}</span>
-                        @if (invitation.expiresAt) {
-                        <span>Expires: {{ formatDate(invitation.expiresAt) }}</span>
-                        }
-                        @if (invitation.respondedAt) {
-                        <span>Responded: {{ formatDateTime(invitation.respondedAt) }}</span>
-                        }
-                    </p>
-                </div>
-            </div>
-
-            <div class="invitation-status">
-                <span [class]="'badge ' + getStatusBadgeClass(invitation.status)">
-                    {{ getStatusLabel(invitation.status) }}
-                </span>
-            </div>
-
-            <div class="invitation-actions">
-                @if (isInvitationCancellable(invitation)) {
-                <button class="btn btn-danger btn-sm" (click)="onCancelInvitation(invitation)"
-                    [disabled]="isSubmitting()" aria-label="Cancel invitation">
-                    Cancel
-                </button>
-                }
-            </div>
+      <h3>Send New Invitation</h3>
+      <form [formGroup]="inviteForm" (ngSubmit)="onSendInvitation()" novalidate>
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="Enter email address"
+            [attr.aria-invalid]="
+              inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched
+                ? 'true'
+                : 'false'
+            "
+            [attr.aria-describedby]="
+              inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched
+                ? 'email-error'
+                : null
+            "
+          />
+          @if (getErrorMessage('email')) {
+            <small id="email-error" class="error-message" role="alert">{{
+              getErrorMessage('email')
+            }}</small>
+          }
         </div>
-        }
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSubmitting()"
+            aria-label="Send invitation"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner-small"></span>
+              Sending...
+            } @else {
+              Send Invitation
+            }
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="toggleAddForm()"
+            [disabled]="isSubmitting()"
+            aria-label="Cancel"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
-    }
+  }
+
+  @if (isLoading()) {
+    <div class="loading" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Loading invitations...</p>
+    </div>
+  } @else if (invitations().length === 0) {
+    <div class="empty-state">
+      <p>No invitations sent for this project</p>
+    </div>
+  } @else {
+    <div class="invitations-list">
+      @for (invitation of invitations(); track invitation.id) {
+        <div class="invitation-card">
+          <div class="invitation-info">
+            <div class="invitation-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                ></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+            <div class="invitation-details">
+              <h4>{{ invitation.invitedEmail }}</h4>
+              <p class="invited-by">
+                Invited by: {{ invitation.invitedByUser?.name || invitation.invitedBy }}
+              </p>
+              <p class="invitation-dates">
+                <span>Sent: {{ formatDate(invitation.createdAt) }}</span>
+                @if (invitation.expiresAt) {
+                  <span>Expires: {{ formatDate(invitation.expiresAt) }}</span>
+                }
+                @if (invitation.respondedAt) {
+                  <span>Responded: {{ formatDateTime(invitation.respondedAt) }}</span>
+                }
+              </p>
+            </div>
+          </div>
+
+          <div class="invitation-status">
+            <span [class]="'badge ' + getStatusBadgeClass(invitation.status)">
+              {{ getStatusLabel(invitation.status) }}
+            </span>
+          </div>
+
+          <div class="invitation-actions">
+            @if (isInvitationCancellable(invitation)) {
+              <button
+                class="btn btn-danger btn-sm"
+                (click)="onCancelInvitation(invitation)"
+                [disabled]="isSubmitting()"
+                aria-label="Cancel invitation"
+              >
+                Cancel
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>

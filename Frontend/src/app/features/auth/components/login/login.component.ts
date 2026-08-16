@@ -21,10 +21,10 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatProgressSpinnerModule,
     MatCardModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
@@ -34,7 +34,7 @@ export class LoginComponent {
 
   readonly loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   readonly isLoading = signal(false);
@@ -42,7 +42,7 @@ export class LoginComponent {
   readonly returnUrl = signal('/dashboard');
 
   constructor() {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       this.returnUrl.set(params['returnUrl'] || '/dashboard');
     });
   }
@@ -57,7 +57,7 @@ export class LoginComponent {
 
     const loginData: LoginRequest = {
       email: this.loginForm.value.email,
-      password: this.loginForm.value.password
+      password: this.loginForm.value.password,
     };
 
     this.authService.login(loginData).subscribe({
@@ -69,16 +69,16 @@ export class LoginComponent {
       },
       error: (error) => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
   togglePasswordVisibility(): void {
-    this.hidePassword.update(hide => !hide);
+    this.hidePassword.update((hide) => !hide);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
       if (control instanceof FormGroup) {

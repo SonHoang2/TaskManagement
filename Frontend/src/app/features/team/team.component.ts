@@ -38,10 +38,10 @@ interface TeamMember {
     MatProgressSpinnerModule,
     MatTabsModule,
     MatDividerModule,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './team.component.html',
-  styleUrl: './team.component.scss'
+  styleUrl: './team.component.scss',
 })
 export class TeamComponent {
   readonly isLoading = signal(false);
@@ -59,7 +59,7 @@ export class TeamComponent {
       status: 'active',
       tasksAssigned: 8,
       projects: ['Website Redesign', 'API Integration'],
-      joinedDate: '2023-01-15'
+      joinedDate: '2023-01-15',
     },
     {
       id: 2,
@@ -71,7 +71,7 @@ export class TeamComponent {
       status: 'active',
       tasksAssigned: 12,
       projects: ['Mobile App Development', 'Marketing Campaign'],
-      joinedDate: '2023-03-20'
+      joinedDate: '2023-03-20',
     },
     {
       id: 3,
@@ -83,7 +83,7 @@ export class TeamComponent {
       status: 'active',
       tasksAssigned: 6,
       projects: ['Website Redesign'],
-      joinedDate: '2023-05-10'
+      joinedDate: '2023-05-10',
     },
     {
       id: 4,
@@ -95,7 +95,7 @@ export class TeamComponent {
       status: 'active',
       tasksAssigned: 4,
       projects: ['API Integration'],
-      joinedDate: '2023-06-01'
+      joinedDate: '2023-06-01',
     },
     {
       id: 5,
@@ -107,21 +107,24 @@ export class TeamComponent {
       status: 'pending',
       tasksAssigned: 0,
       projects: [],
-      joinedDate: '2024-08-01'
-    }
+      joinedDate: '2024-08-01',
+    },
   ]);
 
   readonly filteredMembers = computed(() => {
-    return this.teamMembers().filter(member => {
-      const matchesSearch = member.name.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                           member.email.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                           member.role.toLowerCase().includes(this.searchTerm().toLowerCase());
+    return this.teamMembers().filter((member) => {
+      const matchesSearch =
+        member.name.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
+        member.email.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
+        member.role.toLowerCase().includes(this.searchTerm().toLowerCase());
       return matchesSearch;
     });
   });
 
-  readonly activeMembers = computed(() => this.teamMembers().filter(m => m.status === 'active'));
-  readonly pendingMembers = computed(() => this.teamMembers().filter(m => m.status === 'pending'));
+  readonly activeMembers = computed(() => this.teamMembers().filter((m) => m.status === 'active'));
+  readonly pendingMembers = computed(() =>
+    this.teamMembers().filter((m) => m.status === 'pending'),
+  );
 
   getStatusColor(status: string): string {
     switch (status) {
@@ -155,14 +158,14 @@ export class TeamComponent {
   }
 
   removeMember(memberId: number) {
-    const updatedMembers = this.teamMembers().filter(member => member.id !== memberId);
+    const updatedMembers = this.teamMembers().filter((member) => member.id !== memberId);
     this.teamMembers.set(updatedMembers);
   }
 
   getTeamStats() {
     const total = this.teamMembers().length;
-    const active = this.teamMembers().filter(m => m.status === 'active').length;
-    const pending = this.teamMembers().filter(m => m.status === 'pending').length;
+    const active = this.teamMembers().filter((m) => m.status === 'active').length;
+    const pending = this.teamMembers().filter((m) => m.status === 'pending').length;
     return { total, active, pending };
   }
 }

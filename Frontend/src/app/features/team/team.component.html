@@ -28,7 +28,12 @@
   <div class="search-bar">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search team members</mat-label>
-      <input matInput [value]="searchTerm()" (input)="onSearchChange($event.target.value)" placeholder="Search by name, email, or role">
+      <input
+        matInput
+        [value]="searchTerm()"
+        (input)="onSearchChange($event.target.value)"
+        placeholder="Search by name, email, or role"
+      />
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
   </div>

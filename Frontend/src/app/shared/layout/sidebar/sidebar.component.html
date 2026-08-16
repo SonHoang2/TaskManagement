@@ -2,15 +2,19 @@
   <nav class="sidebar-nav">
     <mat-nav-list>
       @for (item of navItems; track item.path) {
-      <a mat-list-item [routerLink]="item.path" routerLinkActive="active" (click)="onNavigate()"
-        [attr.aria-label]="item.label">
-        <mat-icon matListItemIcon class="material-symbols-outlined">{{ item.icon }}</mat-icon>
-        @if (isOpen()) {
-        <span matListItemTitle>{{ item.label }}</span>
-        }
-      </a>
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          (click)="onNavigate()"
+          [attr.aria-label]="item.label"
+        >
+          <mat-icon matListItemIcon class="material-symbols-outlined">{{ item.icon }}</mat-icon>
+          @if (isOpen()) {
+            <span matListItemTitle>{{ item.label }}</span>
+          }
+        </a>
       }
     </mat-nav-list>
   </nav>
-
 </aside>
