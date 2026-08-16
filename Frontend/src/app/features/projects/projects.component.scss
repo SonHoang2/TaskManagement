@@ -37,34 +37,6 @@
   }
 }
 
-.stats-bar {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  padding: 16px 24px;
-  background: var(--mat-sys-surface);
-  border-radius: 12px;
-  border: 1px solid var(--mat-sys-outline-variant);
-
-  .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .stat-label {
-      font-size: 14px;
-      color: var(--mat-sys-on-surface-variant);
-      font-weight: 500;
-    }
-
-    .stat-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-  }
-}
-
 .filters-bar {
   display: flex;
   gap: 16px;
@@ -88,6 +60,29 @@
   min-height: 400px;
 }
 
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+
+  .error-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--mat-sys-error);
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 16px;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0 0 16px 0;
+  }
+}
+
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -97,7 +92,9 @@
 .project-card {
   border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-4px);
@@ -107,20 +104,9 @@
 
 .project-card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
-  padding: 16px;
   color: white;
-
-  .project-status {
-    .status-chip {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      font-size: 12px;
-      font-weight: 500;
-      height: 24px;
-    }
-  }
 
   .menu-btn {
     color: white;
@@ -238,7 +224,7 @@
   padding-top: 16px;
   border-top: 1px solid var(--mat-sys-outline-variant);
 
-  .due-date {
+  .date-info {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -280,6 +266,84 @@
   }
 }
 
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+
+  button[mat-icon-button] {
+    color: var(--mat-sys-on-surface-variant);
+
+    &:not([disabled]):hover {
+      background: var(--mat-sys-surface-container-high);
+    }
+  }
+
+  .page-input-wrapper,
+  .page-size-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .page-divider {
+    color: var(--mat-sys-on-surface);
+    font-weight: 500;
+  }
+
+  .results-info {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 500;
+    padding: 0 8px;
+  }
+
+  .page-input-field,
+  .page-size-field {
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      padding: 0 10px;
+    }
+
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding: 6px 0;
+      min-height: 0;
+    }
+
+    ::ng-deep .mdc-notched-outline__notch {
+      border-left: none; // vì không còn label để "notch"
+    }
+  }
+
+  .page-input-field {
+    width: 64px;
+
+    input {
+      text-align: center;
+      -moz-appearance: textfield;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+  }
+
+  .page-size-field {
+    width: 76px;
+  }
+}
+
 @media (max-width: 1024px) {
   .projects-header {
     flex-direction: column;
@@ -290,10 +354,6 @@
       width: 100%;
       justify-content: center;
     }
-  }
-
-  .stats-bar {
-    flex-wrap: wrap;
   }
 
   .filters-bar {
@@ -310,6 +370,30 @@
   }
 }
 
+.project-card-content {
+  padding: 20px;
+  position: relative;
+}
+
+.project-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+  margin: 0 8px 8px 0;
+  padding-right: 32px; // chừa chỗ cho menu button khỏi đè lên chữ dài
+}
+
+.menu-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--mat-sys-on-surface-variant);
+
+  &:hover {
+    background: var(--mat-sys-surface-container-high);
+  }
+}
+
 @media (max-width: 768px) {
   .projects-container {
     padding: 16px;
@@ -321,10 +405,5 @@
         font-size: 24px;
       }
     }
-  }
-
-  .stats-bar {
-    flex-direction: column;
-    gap: 12px;
   }
 }

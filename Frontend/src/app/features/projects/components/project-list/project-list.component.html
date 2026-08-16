@@ -14,14 +14,6 @@
             </div>
 
             <div class="form-group">
-                <select formControlName="status" class="form-control" aria-label="Filter by status">
-                    <option value="">All Status</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="ARCHIVED">Archived</option>
-                </select>
-            </div>
-
-            <div class="form-group">
                 <select [value]="currentSort()" (change)="onSortChange($any($event.target).value)" class="form-control"
                     aria-label="Sort by">
                     @for (option of sortOptions; track option.value) {
