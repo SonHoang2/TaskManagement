@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { ProjectService } from '../../services/project.service';
-import { Project, PaginationParams, SearchParams } from '../../models/project.model';
+import { Project, SearchParams } from '../../models/project.model';
+import { PaginationParams } from '../../../../shared/models/common.model';
 
 @Component({
   selector: 'app-project-list',

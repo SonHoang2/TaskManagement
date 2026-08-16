@@ -1,0 +1,44 @@
+<div class="kanban-board-container">
+  <div class="kanban-header">
+    <h2>Kanban Board</h2>
+    <button mat-flat-button color="primary" (click)="onCreateTask()" class="add-task-btn">
+      <mat-icon>add</mat-icon>
+      <span>New Task</span>
+    </button>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+  } @else {
+  <div class="kanban-columns" cdkDropListGroup>
+    @for (column of columns(); track column.id) {
+    <div class="kanban-column" cdkDropList [cdkDropListData]="column.tasks" [id]="column.id"
+      (cdkDropListDropped)="onDrop($event)">
+      <div class="column-header" [style.border-top-color]="column.color">
+        <div class="column-title">
+          <span class="column-name">{{ column.title }}</span>
+          <span class="task-count">{{ column.tasks.length }}</span>
+        </div>
+      </div>
+      <div class="column-tasks">
+        @if (column.tasks.length === 0) {
+        <div class="empty-column">
+          <mat-icon>inbox</mat-icon>
+          <span>No tasks</span>
+        </div>
+        } @else {
+        @for (task of column.tasks; track task.id) {
+        <div class="task-wrapper" cdkDrag>
+          <app-task-card [task]="task" [showDragHandle]="true" (edit)="onEditTask($event)"
+            (viewDetails)="onViewTaskDetails($event)" (delete)="onDeleteTask($event)"></app-task-card>
+        </div>
+        }
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

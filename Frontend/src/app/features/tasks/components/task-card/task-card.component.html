@@ -1,0 +1,63 @@
+<mat-card class="task-card" [class.dragging]="isDragging()">
+  <div class="task-card-content">
+    @if (showDragHandle()) {
+      <div class="drag-handle" title="Drag to move">
+        <mat-icon>drag_handle</mat-icon>
+      </div>
+    }
+    <button
+      mat-icon-button
+      class="menu-btn"
+      [matMenuTriggerFor]="menu"
+      aria-label="Task menu"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="onEdit()">
+        <mat-icon>edit</mat-icon>
+        <span>Edit</span>
+      </button>
+      <button mat-menu-item (click)="onViewDetails()">
+        <mat-icon>visibility</mat-icon>
+        <span>View Details</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="onDelete()" class="delete-action">
+        <mat-icon>delete</mat-icon>
+        <span>Delete</span>
+      </button>
+    </mat-menu>
+
+    <h3 class="task-title">{{ task().title }}</h3>
+    @if (task().description) {
+      <p class="task-description">{{ task().description }}</p>
+    }
+
+    <div class="task-chips">
+      <mat-chip [color]="getStatusColor(task().status)" class="status-chip">
+        {{ formatStatus(task().status) }}
+      </mat-chip>
+      <mat-chip [color]="getPriorityColor(task().priority)" class="priority-chip">
+        {{ formatPriority(task().priority) }}
+      </mat-chip>
+    </div>
+
+    <div class="task-footer">
+      @if (task().dueDate) {
+        <div class="date-info">
+          <mat-icon>calendar_today</mat-icon>
+          <span>Due: {{ formatDate(task().dueDate!) }}</span>
+        </div>
+      }
+      @if (task().assignee) {
+        <div class="assignee-info">
+          <div class="assignee-avatar">
+            {{ task().assignee!.name.charAt(0).toUpperCase() }}
+          </div>
+          <span>{{ task().assignee!.name }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</mat-card>

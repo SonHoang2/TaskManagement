@@ -1,6 +1,34 @@
 export { ProjectsComponent } from './projects.component';
 export { ProjectService } from './services/project.service';
-export * from './models/project.model';
+
+// Export project-specific types only
+export type {
+  Project,
+  CreateProjectRequest,
+  CreateProjectResponse,
+  GetProjectResponse,
+  UpdateProjectRequest,
+  UpdateProjectResponse,
+  ProjectMember,
+  AddMemberRequest,
+  UpdateMemberRoleRequest,
+  ProjectInvitation,
+  CreateInvitationRequest,
+  InvitationResponse,
+  ProjectLabel,
+  CreateLabelRequest,
+  UpdateLabelRequest,
+  InviteMemberRequest,
+  DecideInvitationRequest,
+  SearchParams,
+} from './models/project.model';
+
+// Re-export shared types from shared module
+export type {
+  PaginationParams,
+  PaginatedResponse,
+  JSendResponse,
+} from '../../shared/models/common.model';
 
 // Components
 export { ProjectListComponent } from './components/project-list/project-list.component';

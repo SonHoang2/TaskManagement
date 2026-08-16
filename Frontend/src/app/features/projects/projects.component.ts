@@ -12,8 +12,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProjectService } from './services/project.service';
-import { Project, PaginationParams, SearchParams } from './models/project.model';
+import { Project, SearchParams } from './models/project.model';
 import { AuthService } from '../auth/services/auth.service';
+import { PaginationParams } from '../../shared/models/common.model';
 
 @Component({
   selector: 'app-projects',

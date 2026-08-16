@@ -1,0 +1,85 @@
+.task-form-container {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+
+  h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 4px;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.half-width {
+  flex: 1;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.cancel-btn {
+  color: #666;
+}
+
+.cancel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+mat-form-field {
+  .mat-mdc-form-field-subscript-wrapper {
+    margin-top: 0.25rem;
+  }
+}
+
+.mat-mdc-form-field {
+  font-size: 0.875rem;
+}

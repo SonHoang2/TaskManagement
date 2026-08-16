@@ -18,14 +18,16 @@ import {
   ProjectLabel,
   CreateLabelRequest,
   UpdateLabelRequest,
-  PaginationParams,
-  SearchParams,
-  PaginatedResponse,
-  JSendResponse,
-  Task,
   InviteMemberRequest,
   DecideInvitationRequest,
+  SearchParams,
 } from '../models/project.model';
+import type {
+  PaginationParams,
+  PaginatedResponse,
+  JSendResponse,
+} from '../../../shared/models/common.model';
+import type { Task } from '../../tasks/models/task.model';
 
 // Re-export types for convenience
 export type {
@@ -44,13 +46,10 @@ export type {
   ProjectLabel,
   CreateLabelRequest,
   UpdateLabelRequest,
-  PaginationParams,
-  SearchParams,
-  PaginatedResponse,
-  JSendResponse,
-  Task,
   InviteMemberRequest,
   DecideInvitationRequest,
+  SearchParams,
+  Task,
 };
 
 @Injectable({

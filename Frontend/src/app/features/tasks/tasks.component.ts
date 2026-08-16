@@ -1,11 +1,10 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,16 +12,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  status: 'todo' | 'in-progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  dueDate: string;
-  assignee: string;
-}
+import { TaskService } from './services/task.service';
+import { TaskFormComponent } from './components/task-form';
+import { TaskDetailComponent } from './components/task-detail';
+import type { Task, TaskSearchParams } from './models/task.model';
+import type { PaginationParams } from '../../shared/models/common.model';
 
 @Component({
   selector: 'app-tasks',
@@ -31,113 +25,90 @@ interface Task {
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatTableModule,
-    MatCheckboxModule,
     MatMenuModule,
-    MatPaginatorModule,
     MatInputModule,
     MatSelectModule,
     MatFormFieldModule,
     MatChipsModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    MatDialogModule,
     FormsModule,
   ],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.scss',
 })
-export class TasksComponent {
+export class TasksComponent implements OnInit {
+  private readonly taskService = inject(TaskService);
+  private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
+
   readonly isLoading = signal(false);
   readonly searchTerm = signal('');
-  readonly statusFilter = signal('all');
-  readonly priorityFilter = signal('all');
+  readonly currentPage = signal(0);
+  readonly pageSize = signal(10);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
 
-  readonly displayedColumns: string[] = [
-    'select',
-    'title',
-    'status',
-    'priority',
-    'dueDate',
-    'assignee',
-    'actions',
-  ];
-  readonly tasks = signal<Task[]>([
-    {
-      id: 1,
-      title: 'Design system review',
-      description: 'Review and update the design system components',
-      status: 'in-progress',
-      priority: 'high',
-      dueDate: '2024-08-20',
-      assignee: 'John Doe',
-    },
-    {
-      id: 2,
-      title: 'API integration',
-      description: 'Integrate the backend API with the frontend',
-      status: 'todo',
-      priority: 'high',
-      dueDate: '2024-08-22',
-      assignee: 'Jane Smith',
-    },
-    {
-      id: 3,
-      title: 'Unit tests',
-      description: 'Write unit tests for core components',
-      status: 'todo',
-      priority: 'medium',
-      dueDate: '2024-08-25',
-      assignee: 'Bob Johnson',
-    },
-    {
-      id: 4,
-      title: 'Documentation',
-      description: 'Update project documentation',
-      status: 'completed',
-      priority: 'low',
-      dueDate: '2024-08-18',
-      assignee: 'Alice Williams',
-    },
-    {
-      id: 5,
-      title: 'Performance optimization',
-      description: 'Optimize application performance',
-      status: 'in-progress',
-      priority: 'medium',
-      dueDate: '2024-08-28',
-      assignee: 'Charlie Brown',
-    },
-  ]);
+  readonly tasks = signal<Task[]>([]);
 
-  readonly selectedTasks = signal<Set<number>>(new Set());
+  readonly resultsRange = computed(() => {
+    const start = this.currentPage() * this.pageSize() + 1;
+    const end = Math.min((this.currentPage() + 1) * this.pageSize(), this.totalElements());
+    return { start, end };
+  });
 
-  readonly filteredTasks = computed(() => {
-    return this.tasks().filter((task) => {
-      const matchesSearch =
-        task.title.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-        task.description.toLowerCase().includes(this.searchTerm().toLowerCase());
-      const matchesStatus = this.statusFilter() === 'all' || task.status === this.statusFilter();
-      const matchesPriority =
-        this.priorityFilter() === 'all' || task.priority === this.priorityFilter();
-      return matchesSearch && matchesStatus && matchesPriority;
+  ngOnInit(): void {
+    this.loadTasks();
+  }
+
+  loadTasks(): void {
+    this.isLoading.set(true);
+    const pagination: PaginationParams = {
+      page: this.currentPage(),
+      size: this.pageSize(),
+    };
+
+    const search: TaskSearchParams = {};
+    if (this.searchTerm()) {
+      search.search = this.searchTerm();
+    }
+
+    this.taskService.getTasks(pagination, search).subscribe({
+      next: (response) => {
+        console.log('Tasks response:', response);
+        if (response.status === 'success' && response.data?.page) {
+          const { page } = response.data;
+          this.tasks.set(page.content);
+          this.totalElements.set(page.totalElements);
+          this.totalPages.set(page.totalPages);
+          console.log('Tasks loaded:', page.content.length);
+        } else {
+          console.log('Response status:', response.status);
+          console.log('Response message:', response.message);
+          // Handle case where response might be successful but no data
+          if (response.status === 'success') {
+            this.tasks.set([]);
+            this.totalElements.set(0);
+            this.totalPages.set(0);
+          }
+        }
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading tasks:', error);
+        this.isLoading.set(false);
+      },
     });
-  });
-
-  readonly taskStats = computed(() => {
-    const total = this.tasks().length;
-    const completed = this.tasks().filter((t) => t.status === 'completed').length;
-    const inProgress = this.tasks().filter((t) => t.status === 'in-progress').length;
-    const todo = this.tasks().filter((t) => t.status === 'todo').length;
-    return { total, completed, inProgress, todo };
-  });
+  }
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'completed':
+      case 'DONE':
         return 'primary';
-      case 'in-progress':
+      case 'IN_PROGRESS':
         return 'accent';
-      case 'todo':
+      case 'TODO':
         return 'warn';
       default:
         return '';
@@ -146,59 +117,152 @@ export class TasksComponent {
 
   getPriorityColor(priority: string): string {
     switch (priority) {
-      case 'high':
+      case 'HIGH':
         return 'warn';
-      case 'medium':
+      case 'MEDIUM':
         return 'accent';
-      case 'low':
+      case 'LOW':
         return 'primary';
       default:
         return '';
     }
   }
 
-  toggleTaskSelection(taskId: number) {
-    const selected = new Set(this.selectedTasks());
-    if (selected.has(taskId)) {
-      selected.delete(taskId);
-    } else {
-      selected.add(taskId);
-    }
-    this.selectedTasks.set(selected);
-  }
-
-  isAllSelected() {
-    return (
-      this.filteredTasks().length > 0 && this.selectedTasks().size === this.filteredTasks().length
-    );
-  }
-
-  toggleAllSelection() {
-    if (this.isAllSelected()) {
-      this.selectedTasks.set(new Set());
-    } else {
-      this.selectedTasks.set(new Set(this.filteredTasks().map((task) => task.id)));
+  formatStatus(status: string): string {
+    switch (status) {
+      case 'TODO':
+        return 'To Do';
+      case 'IN_PROGRESS':
+        return 'In Progress';
+      case 'DONE':
+        return 'Completed';
+      default:
+        return status;
     }
   }
 
-  isTaskSelected(taskId: number): boolean {
-    return this.selectedTasks().has(taskId);
+  formatPriority(priority: string): string {
+    switch (priority) {
+      case 'LOW':
+        return 'Low';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'HIGH':
+        return 'High';
+      default:
+        return priority;
+    }
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   onSearchChange(value: string) {
     this.searchTerm.set(value);
+    this.currentPage.set(0);
+    this.loadTasks();
   }
 
-  onStatusFilterChange(value: string) {
-    this.statusFilter.set(value);
+  clearFilters(): void {
+    this.searchTerm.set('');
+    this.currentPage.set(0);
+    this.loadTasks();
   }
 
-  onPriorityFilterChange(value: string) {
-    this.priorityFilter.set(value);
+  deleteTask(taskId: string) {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+
+    this.taskService.deleteTask(taskId).subscribe({
+      next: () => {
+        this.tasks.set(this.tasks().filter((task) => task.id !== taskId));
+        this.totalElements.update((total) => total - 1);
+      },
+      error: (error) => {
+        console.error('Error deleting task:', error);
+      },
+    });
   }
 
-  deleteTask(taskId: number) {
-    const updatedTasks = this.tasks().filter((task) => task.id !== taskId);
-    this.tasks.set(updatedTasks);
+  createTask(): void {
+    const projectId = this.route.snapshot.paramMap.get('projectId') || this.tasks()[0]?.projectId;
+    if (!projectId) {
+      console.error('Cannot create task: projectId is unavailable');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(TaskFormComponent, {
+      width: '600px',
+      data: { projectId },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.taskService.createTask(result).subscribe({
+        next: (response) => {
+          if (response.status === 'success') this.loadTasks();
+        },
+        error: (error) => console.error('Error creating task:', error),
+      });
+    });
+  }
+
+  editTask(task: Task): void {
+    const dialogRef = this.dialog.open(TaskFormComponent, {
+      width: '600px',
+      data: { task, projectId: task.projectId },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.taskService.updateTask(task.id, result).subscribe({
+        next: (response) => {
+          if (response.status === 'success') this.loadTasks();
+        },
+        error: (error) => console.error('Error updating task:', error),
+      });
+    });
+  }
+
+  viewTaskDetails(task: Task): void {
+    const dialogRef = this.dialog.open(TaskDetailComponent, {
+      width: '900px',
+      maxHeight: '90vh',
+      data: { taskId: task.id, currentUserId: task.assigneeId || '' },
+    });
+
+    dialogRef.componentRef?.setInput('taskId', task.id);
+    dialogRef.componentRef?.setInput('currentUserId', task.assigneeId || '');
+    dialogRef.afterClosed().subscribe(() => this.loadTasks());
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadTasks();
+    }
+  }
+
+  onPageInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const pageNumber = parseInt(input.value, 10);
+
+    if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= this.totalPages()) {
+      this.currentPage.set(pageNumber - 1);
+      this.loadTasks();
+    } else {
+      input.value = (this.currentPage() + 1).toString();
+    }
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(0);
+    this.loadTasks();
   }
 }

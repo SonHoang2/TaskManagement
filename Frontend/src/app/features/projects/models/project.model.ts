@@ -97,55 +97,14 @@ export interface UpdateLabelRequest {
   color?: string;
 }
 
-export interface PaginationParams {
-  page: number;
-  size: number;
-  sort?: string;
-  direction?: 'ASC' | 'DESC';
-}
-
-export interface SearchParams {
-  search?: string;
-}
-
-export interface PaginatedResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
-}
-
-export interface JSendResponse<T> {
-  status: 'success' | 'error' | 'fail';
-  data?: T;
-  message?: string;
-}
-
-export interface Task {
-  id: string;
-  projectId: string;
-  title: string;
-  description?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  assigneeId?: string;
-  assignee?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface InviteMemberRequest {
   userId: string;
 }
 
 export interface DecideInvitationRequest {
   decision: 'ACCEPT' | 'REJECT';
+}
+
+export interface SearchParams {
+  search?: string;
 }

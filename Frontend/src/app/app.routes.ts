@@ -30,6 +30,13 @@ export const routes: Routes = [
           import('./features/tasks/tasks.component').then((m) => m.TasksComponent),
       },
       {
+        path: 'projects/:projectId/kanban',
+        loadComponent: () =>
+          import('./features/tasks/components/kanban-board/kanban-board.component').then(
+            (m) => m.KanbanBoardComponent,
+          ),
+      },
+      {
         path: 'projects',
         loadComponent: () =>
           import('./features/projects/projects.component').then((m) => m.ProjectsComponent),
