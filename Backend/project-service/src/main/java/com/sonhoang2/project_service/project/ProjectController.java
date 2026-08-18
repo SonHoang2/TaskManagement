@@ -6,6 +6,7 @@ import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
 import com.sonhoang2.project_service.project.dto.ListProjectRequest;
+import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
@@ -150,6 +151,28 @@ public class ProjectController {
 
         return ResponseEntity.ok(JSendResponse.success(
                 Map.of("page", projectService.getProjectTasks(id, userId, pageable))
+        ));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<JSendResponse<Map<String, ProjectResponse>>> updateProject(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateProjectRequest request,
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("project", projectService.update(id, request, userId))
+        ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<JSendResponse<Map<String, String>>> deleteProject(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        projectService.delete(id, userId);
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("message", "Project deleted successfully")
         ));
     }
 }
