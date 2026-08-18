@@ -12,6 +12,7 @@ import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
 import com.sonhoang2.project_service.project.dto.ListProjectRequest;
+import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.MemberInfo;
 import com.sonhoang2.project_service.project.dto.OwnerInfo;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
@@ -362,6 +363,44 @@ public class ProjectServiceImpl implements ProjectService {
         );
 
         return response.data().get("page");
+    }
+
+    @Override
+    public ProjectResponse update(UUID id, UpdateProjectRequest request, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project with id " + id + " not found"));
+
+        // Verify that the requesting user is a member
+        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(id, userId)
+                .orElseThrow(() -> new AccessDeniedException("You are not a member of this project"));
+
+        // Verify that the requesting user is owner or admin
+        if (membership.getRole() != ProjectMemberRole.OWNER && membership.getRole() != ProjectMemberRole.ADMIN) {
+            throw new AccessDeniedException("Only owner or admin can update the project");
+        }
+
+        project.setName(request.getName());
+        project.setDescription(request.getDescription());
+
+        Project updatedProject = projectRepository.save(project);
+        return toProjectResponse(updatedProject);
+    }
+
+    @Override
+    public void delete(UUID id, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project with id " + id + " not found"));
+
+        // Verify that the requesting user is a member
+        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(id, userId)
+                .orElseThrow(() -> new AccessDeniedException("You are not a member of this project"));
+
+        // Verify that the requesting user is owner or admin
+        if (membership.getRole() != ProjectMemberRole.OWNER && membership.getRole() != ProjectMemberRole.ADMIN) {
+            throw new AccessDeniedException("Only owner or admin can delete the project");
+        }
+
+        projectRepository.delete(project);
     }
 
     private String buildSortParam(Sort sort) {

@@ -5,6 +5,7 @@ import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
 import com.sonhoang2.project_service.project.dto.ListProjectRequest;
+import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
@@ -35,4 +36,8 @@ public interface ProjectService {
     PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable, UUID userId, ListProjectRequest request);
 
     PageResponse<Map<String, Object>> getProjectTasks(UUID projectId, UUID userId, Pageable pageable);
+
+    ProjectResponse update(UUID id, UpdateProjectRequest request, UUID userId);
+
+    void delete(UUID id, UUID userId);
 }
