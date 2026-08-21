@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/notification-service/notifications/:id"
+url: "{{url}}/notification-service/api/v1/notifications/:id"
 method: GET
 pathVariables:
   id: "{{notificationId}}"

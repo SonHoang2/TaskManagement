@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/user-service/users/:id"
+url: "{{url}}/user-service/api/v1/users/:id"
 method: PUT
 pathVariables:
   id: "{{userId}}"

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/debug/leak-size"
+url: "{{url}}/task-service/api/v1/debug/leak-size"
 method: GET
 body:
   type: json

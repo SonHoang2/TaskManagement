@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/project-service/projects/invitations/me"
+url: "{{url}}/project-service/api/v1/projects/invitations/me"
 method: GET
 scripts:
   - type: afterResponse

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/user-service/auth/login"
+url: "{{url}}/user-service/api/v1/auth/login"
 method: POST
 queryParams:
   - key: size

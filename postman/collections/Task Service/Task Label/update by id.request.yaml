@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/task-labels/:id"
+url: "{{url}}/task-service/api/v1/task-labels/:id"
 method: PATCH
 pathVariables:
   id: d4f75714-d7cc-44ff-8d98-cbb8c17917f2

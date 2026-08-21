@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/sprint-service/task-sprints?taskId={{taskId}}&sprintId={{sprintId}}&page=0&size=10"
+url: "{{url}}/sprint-service/api/v1/task-sprints?taskId={{taskId}}&sprintId={{sprintId}}&page=0&size=10"
 method: GET
 queryParams:
   - key: taskId

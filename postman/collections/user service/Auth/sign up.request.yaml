@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/user-service/auth/signup"
+url: "{{url}}/user-service/api/v1/auth/signup"
 method: POST
 body:
   type: json

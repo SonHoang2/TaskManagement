@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/tasks/project/{{projectId}}/stats"
+url: "{{url}}/task-service/api/v1/tasks/project/{{projectId}}/stats"
 method: GET
 queryParams:
   - key: size

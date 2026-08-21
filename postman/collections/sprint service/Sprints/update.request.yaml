@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/sprint-service/sprints/:id"
+url: "{{url}}/sprint-service/api/v1/sprints/:id"
 method: PATCH
 pathVariables:
   id: "{{sprintId}}"

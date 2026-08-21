@@ -1,4 +1,4 @@
 $kind: http-request
-url: "{{url}}/project-service/labels"
+url: "{{url}}/project-service/api/v1/labels"
 method: GET
 order: 2000

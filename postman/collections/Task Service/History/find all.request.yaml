@@ -1,4 +1,4 @@
 $kind: http-request
-url: "{{url}}/task-service/task-histories"
+url: "{{url}}/task-service/api/v1/task-histories"
 method: GET
 order: 5000

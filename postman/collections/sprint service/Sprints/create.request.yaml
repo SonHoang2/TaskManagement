@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/sprint-service/sprints"
+url: "{{url}}/sprint-service/api/v1/sprints"
 method: POST
 body:
   type: json
