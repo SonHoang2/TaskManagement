@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/project-service/projects/invites/:id"
+url: "{{url}}/project-service/api/v1/projects/invites/:id"
 method: PATCH
 pathVariables:
   id: "{{invitationId}}"

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/project-service/labels"
+url: "{{url}}/project-service/api/v1/labels"
 method: POST
 body:
   type: json

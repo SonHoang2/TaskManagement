@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/task-labels"
+url: "{{url}}/task-service/api/v1/task-labels"
 method: POST
 body:
   type: json

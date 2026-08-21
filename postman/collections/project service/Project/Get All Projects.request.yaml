@@ -1,6 +1,6 @@
 $kind: http-request
 name: Get All Projects
-url: "{{url}}/project-service/projects?size=1&sortBy=membercount&sortDirection=desc&search=beacon delta haven prism"
+url: "{{url}}/project-service/api/v1/projects?size=1&sortBy=membercount&sortDirection=desc&search=beacon delta haven prism"
 method: GET
 queryParams:
   - key: size

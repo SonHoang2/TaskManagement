@@ -32,7 +32,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/auth/**")
+                .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/api/v1/auth/**")
                         .permitAll()
                         .anyExchange()
                         .authenticated())

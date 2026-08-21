@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/task-comments/:id"
+url: "{{url}}/task-service/api/v1/task-comments/:id"
 method: PATCH
 pathVariables:
   id: 1d9260c7-492f-49f2-a9e1-4cc9884762b2

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/task-comments"
+url: "{{url}}/task-service/api/v1/task-comments"
 method: POST
 body:
   type: json

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/project-service/labels/:id"
+url: "{{url}}/project-service/api/v1/labels/:id"
 method: GET
 pathVariables:
   id: 500a04ad-59ec-45a1-8bfd-db5910e0292f

@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/task-service/tasks/:id"
+url: "{{url}}/task-service/api/v1/tasks/:id"
 method: PATCH
 pathVariables:
   id: "{{taskId}}"

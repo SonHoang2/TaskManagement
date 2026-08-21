@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/project-service/projects/me?page=0&size=20"
+url: "{{url}}/project-service/api/v1/projects/me?page=0&size=20"
 method: GET
 queryParams:
   - key: page

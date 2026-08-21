@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{url}}/dashboard-service/dashboard"
+url: "{{url}}/dashboard-service/api/v1/dashboard"
 method: GET
 headers:
   X-User-Id: "{{userId}}"
