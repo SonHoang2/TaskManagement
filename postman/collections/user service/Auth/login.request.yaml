@@ -1,4 +1,5 @@
 $kind: http-request
+name: login
 url: "{{url}}/user-service/api/v1/auth/login"
 method: POST
 queryParams:
@@ -28,30 +29,27 @@ auth:
 scripts:
   - type: afterResponse
     code: |-
-      // parse response JSON
+      // Parse response JSON
       const res = pm.response.json();
 
-      // lấy các thông tin từ response
-      const token = res?.data?.auth?.accessToken;
-      const userId = res?.data?.auth?.userId;
+      // Lấy các thông tin từ response
+      const token = res?.data?.accessToken;
+      const tokenType = res?.data?.tokenType || "Bearer";
+      const userId = res?.data?.user?.id;
 
       if (token) {
-          // lưu vào environment variable
+          // Lưu accessToken và tokenType vào environment variable
           pm.environment.set("accessToken", token);
-
-          // optional: lưu luôn token type nếu cần
-          const tokenType = res?.data?.auth?.tokenType || "Bearer";
           pm.environment.set("tokenType", tokenType);
+          console.log("Token saved:", token);
 
-          // lưu userId vào environment variable
+          // Lưu userId vào environment variable
           if (userId) {
               pm.environment.set("userId", userId);
               console.log("User ID saved:", userId);
           } else {
-              console.warn("Không tìm thấy userId trong auth object");
+              console.warn("Không tìm thấy userId trong data.user object");
           }
-
-          console.log("Token saved:", token);
       } else {
           console.error("Không tìm thấy accessToken trong response");
       }
