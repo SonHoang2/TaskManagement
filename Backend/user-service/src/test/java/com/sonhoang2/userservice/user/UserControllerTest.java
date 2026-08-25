@@ -2,8 +2,8 @@ package com.sonhoang2.userservice.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.userservice.common.config.SecurityConfig;
-import com.sonhoang2.userservice.common.dto.PageResponse;
-import com.sonhoang2.userservice.common.exception.ResourceNotFoundException;
+import com.sonhoang2.common.dto.PageResponse;
+import com.sonhoang2.common.exception.ResourceNotFoundException;
 import com.sonhoang2.userservice.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.userservice.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.userservice.user.dto.UserResponse;
@@ -87,7 +87,7 @@ class UserControllerTest {
     void create_Success() throws Exception {
         when(userService.create(any(AdminCreateUserRequest.class))).thenReturn(userResponse);
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/api/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -103,7 +103,7 @@ class UserControllerTest {
     void create_ValidationError() throws Exception {
         createRequest.setEmail(""); // Invalid email
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/api/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isBadRequest());
@@ -126,7 +126,7 @@ class UserControllerTest {
 
         when(userService.findAll(eq(null), any(Pageable.class))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/users")
+        mockMvc.perform(get("/api/v1/users")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -153,7 +153,7 @@ class UserControllerTest {
 
         when(userService.findAll(eq("test"), any(Pageable.class))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/users")
+        mockMvc.perform(get("/api/v1/users")
                         .param("keyword", "test")
                         .param("page", "0")
                         .param("size", "10"))
@@ -167,7 +167,7 @@ class UserControllerTest {
     void findById_Success() throws Exception {
         when(userService.findById(userId)).thenReturn(userResponse);
 
-        mockMvc.perform(get("/users/{id}", userId))
+        mockMvc.perform(get("/api/v1/users/{id}", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.user.id").value(userId.toString()))
@@ -181,7 +181,7 @@ class UserControllerTest {
         when(userService.findById(userId))
                 .thenThrow(new ResourceNotFoundException("User with id " + userId + " not found"));
 
-        mockMvc.perform(get("/users/{id}", userId))
+        mockMvc.perform(get("/api/v1/users/{id}", userId))
                 .andExpect(status().isNotFound());
     }
 
@@ -200,7 +200,7 @@ class UserControllerTest {
 
         when(userService.update(eq(userId), any(AdminUpdateUserRequest.class))).thenReturn(updatedResponse);
 
-        mockMvc.perform(patch("/users/{id}", userId)
+        mockMvc.perform(patch("/api/v1/users/{id}", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
@@ -215,7 +215,7 @@ class UserControllerTest {
     void update_ValidationError() throws Exception {
         updateRequest.setEmail("invalid-email"); // Invalid email format
 
-        mockMvc.perform(patch("/users/{id}", userId)
+        mockMvc.perform(patch("/api/v1/users/{id}", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isBadRequest());
@@ -224,7 +224,7 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void delete_Success() throws Exception {
-        mockMvc.perform(delete("/users/{id}", userId))
+        mockMvc.perform(delete("/api/v1/users/{id}", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
     }
@@ -235,7 +235,7 @@ class UserControllerTest {
         org.mockito.Mockito.doThrow(new ResourceNotFoundException("User with id " + userId + " not found"))
                 .when(userService).delete(userId);
 
-        mockMvc.perform(delete("/users/{id}", userId))
+        mockMvc.perform(delete("/api/v1/users/{id}", userId))
                 .andExpect(status().isNotFound());
     }
 }
