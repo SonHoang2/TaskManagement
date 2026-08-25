@@ -1,7 +1,7 @@
 package com.sonhoang2.userservice.user;
 
 import com.sonhoang2.userservice.auth.dto.RegisterRequest;
-import com.sonhoang2.userservice.common.dto.PageResponse;
+import com.sonhoang2.common.dto.PageResponse;
 import com.sonhoang2.userservice.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.userservice.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.userservice.user.dto.UserResponse;

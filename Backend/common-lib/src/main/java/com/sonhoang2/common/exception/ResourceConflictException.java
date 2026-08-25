@@ -1,4 +1,4 @@
-package com.sonhoang2.userservice.common.exception;
+package com.sonhoang2.common.exception;
 
 public class ResourceConflictException extends RuntimeException {
 
@@ -6,4 +6,3 @@ public class ResourceConflictException extends RuntimeException {
         super(message);
     }
 }
-

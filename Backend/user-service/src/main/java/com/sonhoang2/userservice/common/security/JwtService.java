@@ -27,7 +27,6 @@ public class JwtService {
         this.jwtExpirationMs = jwtExpirationMs;
     }
 
-    // Modified: accepts email and userId, adds userId claim
     public String generateToken(String email, UUID userId) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusMillis(jwtExpirationMs);
@@ -41,7 +40,6 @@ public class JwtService {
                 .compact();
     }
 
-    // New method to extract userId from token
     public UUID extractUserId(String token) {
         Claims claims = extractAllClaims(token);
         String userIdStr = claims.get("userId", String.class);

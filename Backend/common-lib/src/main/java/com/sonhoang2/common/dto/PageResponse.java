@@ -1,4 +1,4 @@
-package com.sonhoang2.userservice.common.dto;
+package com.sonhoang2.common.dto;
 
 import java.util.List;
 
@@ -13,4 +13,3 @@ public record PageResponse<T>(
         int numberOfElements
 ) {
 }
-

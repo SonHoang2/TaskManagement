@@ -1,4 +1,4 @@
-package com.sonhoang2.userservice.common.dto;
+package com.sonhoang2.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,4 +22,3 @@ public record JSendResponse<T>(
         return new JSendResponse<>("error", data, message, code);
     }
 }
-
