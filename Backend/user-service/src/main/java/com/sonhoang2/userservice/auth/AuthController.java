@@ -3,7 +3,7 @@ package com.sonhoang2.userservice.auth;
 import com.sonhoang2.userservice.auth.dto.LoginRequest;
 import com.sonhoang2.userservice.auth.dto.LoginResponse;
 import com.sonhoang2.userservice.auth.dto.RegisterRequest;
-import com.sonhoang2.userservice.common.dto.JSendResponse;
+import com.sonhoang2.common.dto.JSendResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

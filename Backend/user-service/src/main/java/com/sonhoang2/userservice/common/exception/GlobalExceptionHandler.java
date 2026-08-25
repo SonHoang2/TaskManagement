@@ -1,6 +1,8 @@
 package com.sonhoang2.userservice.common.exception;
 
-import com.sonhoang2.userservice.common.dto.JSendResponse;
+import com.sonhoang2.common.dto.JSendResponse;
+import com.sonhoang2.common.exception.ResourceConflictException;
+import com.sonhoang2.common.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;

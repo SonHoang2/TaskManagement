@@ -1,7 +1,7 @@
 package com.sonhoang2.userservice.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sonhoang2.userservice.common.dto.JSendResponse;
+import com.sonhoang2.common.dto.JSendResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

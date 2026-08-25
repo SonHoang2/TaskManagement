@@ -1,6 +1,6 @@
 package com.sonhoang2.userservice.user.dto;
 
-import com.sonhoang2.userservice.common.dto.BaseUserRequest;
+import com.sonhoang2.common.dto.BaseUserRequest;
 import com.sonhoang2.userservice.user.entity.UserRole;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
