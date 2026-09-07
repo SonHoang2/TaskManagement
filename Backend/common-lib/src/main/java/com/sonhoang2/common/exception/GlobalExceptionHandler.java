@@ -1,7 +1,6 @@
-package com.sonhoang2.project_service.common.exception;
+package com.sonhoang2.common.exception;
 
-import com.sonhoang2.project_service.common.dto.JSendResponse;
-import com.sonhoang2.common.exception.RateLimitExceededException;
+import com.sonhoang2.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -185,4 +184,3 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(JSendResponse.error(message, status.value(), data));
     }
 }
-

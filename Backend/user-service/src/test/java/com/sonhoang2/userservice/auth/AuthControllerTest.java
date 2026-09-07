@@ -5,7 +5,7 @@ import com.sonhoang2.userservice.auth.dto.LoginRequest;
 import com.sonhoang2.userservice.auth.dto.LoginResponse;
 import com.sonhoang2.userservice.auth.dto.RegisterRequest;
 import com.sonhoang2.userservice.common.config.SecurityConfig;
-import com.sonhoang2.userservice.common.exception.GlobalExceptionHandler;
+import com.sonhoang2.common.exception.GlobalExceptionHandler;
 import com.sonhoang2.common.exception.ResourceConflictException;
 import com.sonhoang2.userservice.user.dto.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
