@@ -7,6 +7,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -28,10 +29,14 @@ public class DashboardService {
     private final CircuitBreaker sprintServiceCircuitBreaker;
     private final ObjectMapper objectMapper;
 
-    private static final String PROJECT_SERVICE_URL = "http://project-service";
-    private static final String TASK_SERVICE_URL = "http://task-service";
-    private static final String USER_SERVICE_URL = "http://user-service";
-    private static final String SPRINT_SERVICE_URL = "http://sprint-service";
+    @Value("${services.project-service.url:http://project-service}")
+    private String projectServiceUrl;
+    @Value("${services.task-service.url:http://task-service}")
+    private String taskServiceUrl;
+    @Value("${services.user-service.url:http://user-service}")
+    private String userServiceUrl;
+    @Value("${services.sprint-service.url:http://sprint-service}")
+    private String sprintServiceUrl;
 
     public Mono<DashboardResponse> getDashboard(UUID userId) {
         log.info("Fetching dashboard data for user: {}", userId);
@@ -89,7 +94,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalProjects(UUID userId) {
         return webClient.get()
-                .uri(PROJECT_SERVICE_URL + "/projects")
+                .uri(projectServiceUrl + "/projects")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -104,7 +109,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalTasks() {
         return webClient.get()
-                .uri(TASK_SERVICE_URL + "/tasks")
+                .uri(taskServiceUrl + "/tasks")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -117,7 +122,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalUsers() {
         return webClient.get()
-                .uri(USER_SERVICE_URL + "/users")
+                .uri(userServiceUrl + "/users")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -130,7 +135,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchActiveSprints() {
         return webClient.get()
-                .uri(SPRINT_SERVICE_URL + "/sprints")
+                .uri(sprintServiceUrl + "/sprints")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -143,7 +148,7 @@ public class DashboardService {
 
     private Mono<List<ProjectSummary>> fetchRecentProjects(UUID userId) {
         return webClient.get()
-                .uri(PROJECT_SERVICE_URL + "/projects?size=20")
+                .uri(projectServiceUrl + "/projects?size=20")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -157,7 +162,7 @@ public class DashboardService {
 
     private Mono<TaskDistribution> fetchTaskDistribution(UUID userId) {
         return webClient.get()
-                .uri(TASK_SERVICE_URL + "/tasks/distribution")
+                .uri(taskServiceUrl + "/tasks/distribution")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTaskDistribution)

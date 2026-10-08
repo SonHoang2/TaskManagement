@@ -107,42 +107,23 @@ services:
         limits:
           memory: 256M
 
-  service-registry:
-    build: ./service-registry
-    container_name: service-registry
-    ports:
-      - "8761:8761"
-    environment:
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=${EUREKA_INSTANCE_PREFER_IP_ADDRESS}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-    depends_on:
-      - rabbitmq
-    logging:
-      driver: "json-file"
-      options:
-        labels: "service"
-    labels:
-      service: "service-registry"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 256M
-
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     ports:
       - "8765:8765"
     environment:
+      - USER_SERVICE_URL=http://user-service:5001
+      - PROJECT_SERVICE_URL=http://project-service:5002
+      - TASK_SERVICE_URL=http://task-service:5003
+      - SPRINT_SERVICE_URL=http://sprint-service:5004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5005
+      - DASHBOARD_SERVICE_URL=http://dashboard-service:8086
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - JWT_SECRET=${JWT_SECRET}
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -159,7 +140,9 @@ services:
           memory: 512M
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: user-service
     ports:
       - "5001:5001"
@@ -169,11 +152,9 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -190,20 +171,21 @@ services:
           memory: 512M
 
   task-service:
-    build: ./task-service
+    build:
+      context: .
+      dockerfile: task-service/Dockerfile
     container_name: task-service
     ports:
       - "5003:5003"
     environment:
+      - SERVICES_PROJECT_SERVICE_URL=http://project-service:5002
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_NAME=${TASK_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -220,20 +202,22 @@ services:
           memory: 512M
 
   project-service:
-    build: ./project-service
+    build:
+      context: .
+      dockerfile: project-service/Dockerfile
     container_name: project-service
     ports:
       - "5002:5002"
     environment:
+      - SERVICES_TASK_SERVICE_URL=http://task-service:5003
+      - SERVICES_USER_SERVICE_URL=http://user-service:5001
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_NAME=${PROJECT_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -250,7 +234,9 @@ services:
           memory: 512M
 
   sprint-service:
-    build: ./sprint-service
+    build:
+      context: .
+      dockerfile: sprint-service/Dockerfile
     container_name: sprint-service
     ports:
       - "5004:5004"
@@ -259,11 +245,9 @@ services:
       - DB_NAME=${SPRINT_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -280,7 +264,9 @@ services:
           memory: 512M
 
   notification-service:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     container_name: notification-service
     ports:
       - "5005:5005"
@@ -289,11 +275,9 @@ services:
       - DB_NAME=${NOTIFICATION_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - postgres
       - redis
@@ -315,12 +299,14 @@ services:
     ports:
       - "8086:8086"
     environment:
+      - SERVICES_PROJECT_SERVICE_URL=http://project-service:5002
+      - SERVICES_TASK_SERVICE_URL=http://task-service:5003
+      - SERVICES_USER_SERVICE_URL=http://user-service:5001
+      - SERVICES_SPRINT_SERVICE_URL=http://sprint-service:5004
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      - service-registry
       - rabbitmq
       - redis
     logging:

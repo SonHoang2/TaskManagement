@@ -1,0 +1,364 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: api-gateway}
+  template:
+    metadata:
+      labels: {app: api-gateway}
+    spec:
+      containers:
+      - name: api-gateway
+        image: taskmgmt/api-gateway:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8765
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
+        readinessProbe:
+          tcpSocket: {port: 8765}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 8765}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: taskmgmt
+spec:
+  selector: {app: api-gateway}
+  ports:
+  - port: 80
+    targetPort: 8765
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: user-service}
+  template:
+    metadata:
+      labels: {app: user-service}
+    spec:
+      containers:
+      - name: user-service
+        image: taskmgmt/user-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5001
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: DB_NAME
+          value: user_db
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
+        readinessProbe:
+          tcpSocket: {port: 5001}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 5001}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: taskmgmt
+spec:
+  selector: {app: user-service}
+  ports:
+  - port: 80
+    targetPort: 5001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: project-service}
+  template:
+    metadata:
+      labels: {app: project-service}
+    spec:
+      containers:
+      - name: project-service
+        image: taskmgmt/project-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5002
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: DB_NAME
+          value: project_db
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        readinessProbe:
+          tcpSocket: {port: 5002}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 5002}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: project-service
+  namespace: taskmgmt
+spec:
+  selector: {app: project-service}
+  ports:
+  - port: 80
+    targetPort: 5002
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: task-service}
+  template:
+    metadata:
+      labels: {app: task-service}
+    spec:
+      containers:
+      - name: task-service
+        image: taskmgmt/task-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5003
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: DB_NAME
+          value: task_db
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        readinessProbe:
+          tcpSocket: {port: 5003}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 5003}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-service
+  namespace: taskmgmt
+spec:
+  selector: {app: task-service}
+  ports:
+  - port: 80
+    targetPort: 5003
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sprint-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: sprint-service}
+  template:
+    metadata:
+      labels: {app: sprint-service}
+    spec:
+      containers:
+      - name: sprint-service
+        image: taskmgmt/sprint-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5004
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: DB_NAME
+          value: sprint_db
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        readinessProbe:
+          tcpSocket: {port: 5004}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 5004}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sprint-service
+  namespace: taskmgmt
+spec:
+  selector: {app: sprint-service}
+  ports:
+  - port: 80
+    targetPort: 5004
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: notification-service}
+  template:
+    metadata:
+      labels: {app: notification-service}
+    spec:
+      containers:
+      - name: notification-service
+        image: taskmgmt/notification-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5005
+        envFrom:
+        - configMapRef: {name: app-config}
+        env:
+        - name: DB_NAME
+          value: notification_db
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        readinessProbe:
+          tcpSocket: {port: 5005}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 5005}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: taskmgmt
+spec:
+  selector: {app: notification-service}
+  ports:
+  - port: 80
+    targetPort: 5005
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-service
+  namespace: taskmgmt
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: dashboard-service}
+  template:
+    metadata:
+      labels: {app: dashboard-service}
+    spec:
+      containers:
+      - name: dashboard-service
+        image: taskmgmt/dashboard-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8086
+        envFrom:
+        - configMapRef: {name: app-config}
+        readinessProbe:
+          tcpSocket: {port: 8086}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: {port: 8086}
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: taskmgmt
+spec:
+  selector: {app: dashboard-service}
+  ports:
+  - port: 80
+    targetPort: 8086

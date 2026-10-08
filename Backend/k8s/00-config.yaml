@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taskmgmt
+---
+# Non-secret config shared by all apps. Service discovery = k8s Service DNS (port 80 -> container port).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: taskmgmt
+data:
+  SPRING_PROFILES_ACTIVE: docker
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:4200
+  LOGGING_LEVEL_SPRING_SECURITY: INFO
+  LOGGING_LEVEL_SPRING_WEB: INFO
+  # gateway routes (/<service>/** -> service)
+  USER_SERVICE_URL: http://user-service
+  PROJECT_SERVICE_URL: http://project-service
+  TASK_SERVICE_URL: http://task-service
+  SPRINT_SERVICE_URL: http://sprint-service
+  NOTIFICATION_SERVICE_URL: http://notification-service
+  DASHBOARD_SERVICE_URL: http://dashboard-service

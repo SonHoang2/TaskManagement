@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: postgres, namespace: taskmgmt}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector: {matchLabels: {app: postgres}}
+  template:
+    metadata: {labels: {app: postgres}}
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports: [{containerPort: 5432}]
+        env:
+        - {name: POSTGRES_DB, value: postgres}
+        - name: POSTGRES_USER
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_USERNAME}}
+        - name: POSTGRES_PASSWORD
+          valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
+        - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+        readinessProbe:
+          exec: {command: [pg_isready, -U, postgres]}
+          periodSeconds: 5
+        volumeMounts:
+        - {name: data, mountPath: /var/lib/postgresql/data}
+        - {name: init, mountPath: /docker-entrypoint-initdb.d}
+      volumes:
+      - name: init
+        configMap: {name: postgres-init}
+  volumeClaimTemplates:
+  - metadata: {name: data}
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources: {requests: {storage: 5Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: postgres, namespace: taskmgmt}
+spec:
+  selector: {app: postgres}
+  ports: [{port: 5432}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: redis, namespace: taskmgmt}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: redis}}
+  template:
+    metadata: {labels: {app: redis}}
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports: [{containerPort: 6379}]
+        readinessProbe:
+          exec: {command: [redis-cli, ping]}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis, namespace: taskmgmt}
+spec:
+  selector: {app: redis}
+  ports: [{port: 6379}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: rabbitmq, namespace: taskmgmt}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: rabbitmq}}
+  template:
+    metadata: {labels: {app: rabbitmq}}
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.13-management
+        ports: [{containerPort: 5672}, {containerPort: 15672}]
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        readinessProbe:
+          exec: {command: [rabbitmq-diagnostics, -q, ping]}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: {name: rabbitmq, namespace: taskmgmt}
+spec:
+  selector: {app: rabbitmq}
+  ports:
+  - {name: amqp, port: 5672}
+  - {name: management, port: 15672}
