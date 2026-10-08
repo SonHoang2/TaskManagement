@@ -11,6 +11,8 @@ spec:
       containers:
       - name: postgres
         image: postgres:15-alpine
+        resources:
+          limits: {cpu: 1, memory: 512Mi}
         ports: [{containerPort: 5432}]
         env:
         - {name: POSTGRES_DB, value: postgres}
@@ -45,6 +47,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: {name: redis, namespace: taskmgmt}
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector: {matchLabels: {app: redis}}
   template:
@@ -53,6 +56,8 @@ spec:
       containers:
       - name: redis
         image: redis:7-alpine
+        resources:
+          limits: {cpu: 200m, memory: 128Mi}
         ports: [{containerPort: 6379}]
         readinessProbe:
           exec: {command: [redis-cli, ping]}
@@ -68,6 +73,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata: {name: rabbitmq, namespace: taskmgmt}
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector: {matchLabels: {app: rabbitmq}}
   template:
@@ -76,6 +82,8 @@ spec:
       containers:
       - name: rabbitmq
         image: rabbitmq:3.13-management
+        resources:
+          limits: {cpu: 500m, memory: 512Mi}
         ports: [{containerPort: 5672}, {containerPort: 15672}]
         env:
         - name: RABBITMQ_DEFAULT_USER
