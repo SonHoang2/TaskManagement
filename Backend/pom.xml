@@ -15,7 +15,6 @@
     <modules>
         <module>common-lib</module>
         <module>api-gateway</module>
-        <module>service-registry</module>
         <module>user-service</module>
         <module>project-service</module>
         <module>task-service</module>

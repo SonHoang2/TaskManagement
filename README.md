@@ -11,7 +11,7 @@ The Task Management Platform is designed to help teams organize and track their 
 - **Task Tracking**: Comprehensive task management with comments, attachments, and change history
 - **Sprint Planning**: Organize tasks into sprints for agile development workflows
 - **Event-driven Notifications**: Asynchronous notification system using RabbitMQ for reliable message delivery
-- **Service Discovery**: Dynamic service registration and discovery with Eureka
+- **Service Discovery**: Kubernetes Services (DNS) — no Eureka
 - **Centralized Logging**: Log aggregation with Loki and visualization with Grafana
 - **API Gateway**: Single entry point with routing and load balancing
 
@@ -20,7 +20,6 @@ The Task Management Platform is designed to help teams organize and track their 
 This project follows a microservices architecture with the following components:
 
 - **API Gateway** - Single entry point for all client requests with routing and authentication
-- **Service Registry** - Eureka server for service discovery and registration
 - **User Service** - Authentication, user management, and JWT token generation
 - **Project Service** - Project management, member invitations, and label management
 - **Task Service** - Task management with comments, attachments, history, and labels
@@ -61,7 +60,7 @@ This project follows a microservices architecture with the following components:
 - User notification preferences
 
 ### Infrastructure
-- Service discovery with Eureka
+- Service discovery via Kubernetes Services
 - API Gateway for centralized routing
 - Centralized logging with Loki
 - Log visualization with Grafana
@@ -77,7 +76,6 @@ This project follows a microservices architecture with the following components:
 - **Spring Data JPA** - Database abstraction
 - **Spring Security** - Authentication and authorization
 - **Spring Cloud Gateway** - API Gateway
-- **Spring Cloud Netflix Eureka** - Service discovery
 - **Spring Cloud OpenFeign** - Declarative REST client
 - **Spring AMQP** - RabbitMQ integration
 
@@ -154,7 +152,6 @@ cd user-service
 | Service | Port | Description |
 |---------|------|-------------|
 | api-gateway | 8765 | API Gateway for routing requests |
-| service-registry | 8761 | Eureka Service Registry |
 | user-service | 5001 | User authentication and management |
 | project-service | 5002 | Project and label management |
 | task-service | 5003 | Task management with comments, attachments, history |
@@ -187,13 +184,7 @@ All APIs return responses in **JSend format**:
 
 ### Running the Services
 
-1. **Start Service Registry:**
-```bash
-cd service-registry
-./mvnw spring-boot:run
-```
-
-2. **Start API Gateway:**
+1. **Start API Gateway:**
 ```bash
 cd api-gateway
 ./mvnw spring-boot:run
@@ -228,7 +219,7 @@ Each service has its own `application.properties` or `application.yml` file in `
 
 - Database connection (URL, username, password)
 - JWT secret key (for user-service, api-gateway)
-- Service registry URL (default: `http://localhost:8761/eureka`)
+- Downstream URLs: `USER_SERVICE_URL`, `TASK_SERVICE_URL`, ... (gateway) and `SERVICES_<NAME>_SERVICE_URL` (Feign/dashboard); default to k8s Service DNS, e.g. `http://user-service`
 
 ## Development
 
@@ -242,16 +233,20 @@ Each service has its own `application.properties` or `application.yml` file in `
 ./mvnw test
 ```
 
-### Service Discovery
+### Kubernetes
 
-Once all services are running, you can view the registered services at:
+```bash
+cd Backend
+cp k8s/secret.example.yaml k8s/secret.yaml   # edit values
+./k8s/build-and-deploy.sh kind               # or minikube
+kubectl port-forward -n taskmgmt svc/api-gateway 8765:80
 ```
-http://localhost:8761
-```
+
+Each service is exposed as a k8s Service on port 80, so `http://user-service` resolves in-cluster.
 
 ## API Gateway Routes
 
-The API Gateway automatically creates routes based on service names registered in Eureka. Services are accessible via:
+The API Gateway routes `/{service-name}/**` to the matching Kubernetes Service (static routes in `application.properties`). Services are accessible via:
 
 ```
 http://localhost:8765/{service-name}/{endpoint}

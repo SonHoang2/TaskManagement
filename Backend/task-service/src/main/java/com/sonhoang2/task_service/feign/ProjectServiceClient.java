@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.Map;
 import java.util.UUID;
 
-@FeignClient(name = "project-service")
+@FeignClient(name = "project-service", url = "${services.project-service.url:http://project-service}")
 public interface ProjectServiceClient {
 
     @GetMapping("/projects/{id}")
