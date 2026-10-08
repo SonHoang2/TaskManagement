@@ -5,6 +5,7 @@ metadata:
   name: api-gateway
   namespace: taskmgmt
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector:
     matchLabels: {app: api-gateway}
@@ -23,17 +24,20 @@ spec:
         env:
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
+        startupProbe:
+          tcpSocket: {port: 8765}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 8765}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 8765}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -52,6 +56,7 @@ metadata:
   name: user-service
   namespace: taskmgmt
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector:
     matchLabels: {app: user-service}
@@ -76,17 +81,20 @@ spec:
           valueFrom: {secretKeyRef: {name: app-secrets, key: DB_PASSWORD}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
+        startupProbe:
+          tcpSocket: {port: 5001}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 5001}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 5001}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -105,6 +113,7 @@ metadata:
   name: project-service
   namespace: taskmgmt
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector:
     matchLabels: {app: project-service}
@@ -131,17 +140,20 @@ spec:
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        startupProbe:
+          tcpSocket: {port: 5002}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 5002}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 5002}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -160,6 +172,7 @@ metadata:
   name: task-service
   namespace: taskmgmt
 spec:
+  strategy: {type: Recreate}
   replicas: 1
   selector:
     matchLabels: {app: task-service}
@@ -186,17 +199,20 @@ spec:
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        startupProbe:
+          tcpSocket: {port: 5003}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 5003}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 5003}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -215,7 +231,8 @@ metadata:
   name: sprint-service
   namespace: taskmgmt
 spec:
-  replicas: 1
+  strategy: {type: Recreate}
+  replicas: 0
   selector:
     matchLabels: {app: sprint-service}
   template:
@@ -241,17 +258,20 @@ spec:
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        startupProbe:
+          tcpSocket: {port: 5004}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 5004}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 5004}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -270,7 +290,8 @@ metadata:
   name: notification-service
   namespace: taskmgmt
 spec:
-  replicas: 1
+  strategy: {type: Recreate}
+  replicas: 0
   selector:
     matchLabels: {app: notification-service}
   template:
@@ -296,17 +317,20 @@ spec:
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
+        startupProbe:
+          tcpSocket: {port: 5005}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 5005}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 5005}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -325,7 +349,8 @@ metadata:
   name: dashboard-service
   namespace: taskmgmt
 spec:
-  replicas: 1
+  strategy: {type: Recreate}
+  replicas: 0
   selector:
     matchLabels: {app: dashboard-service}
   template:
@@ -340,17 +365,20 @@ spec:
         - containerPort: 8086
         envFrom:
         - configMapRef: {name: app-config}
+        startupProbe:
+          tcpSocket: {port: 8086}
+          periodSeconds: 10
+          failureThreshold: 30
         readinessProbe:
           tcpSocket: {port: 8086}
-          initialDelaySeconds: 20
           periodSeconds: 5
         livenessProbe:
           tcpSocket: {port: 8086}
-          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 6
         resources:
           requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
+          limits: {cpu: 500m, memory: 450Mi}
 ---
 apiVersion: v1
 kind: Service

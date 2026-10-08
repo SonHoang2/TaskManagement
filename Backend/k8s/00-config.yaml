@@ -27,3 +27,8 @@ data:
   SPRINT_SERVICE_URL: http://sprint-service
   NOTIFICATION_SERVICE_URL: http://notification-service
   DASHBOARD_SERVICE_URL: http://dashboard-service
+  # keep JVMs small: one node runs everything
+  JAVA_TOOL_OPTIONS: -XX:+UseSerialGC -Xms64m -Xmx256m -XX:TieredStopAtLevel=1 -XX:CICompilerCount=2 -Xss512k
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY: INFO
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: INFO
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: INFO
