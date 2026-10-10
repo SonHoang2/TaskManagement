@@ -1,0 +1,28 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: api-gateway, namespace: taskmgmt}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: api-gateway}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: user-service, namespace: taskmgmt}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: user-service}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: project-service, namespace: taskmgmt}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: project-service}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: task-service, namespace: taskmgmt}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app: task-service}}

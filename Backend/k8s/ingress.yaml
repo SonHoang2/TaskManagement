@@ -1,0 +1,18 @@
+# Needs ingress-nginx (see README). Browser -> http://taskmgmt.local -> api-gateway
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway
+  namespace: taskmgmt
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: taskmgmt.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: {name: api-gateway, port: {number: 80}}

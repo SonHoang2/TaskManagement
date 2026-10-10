@@ -5,14 +5,17 @@ metadata:
   name: api-gateway
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
-  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  # replicas is owned by the HPA (hpa.yaml)
   selector:
     matchLabels: {app: api-gateway}
   template:
     metadata:
       labels: {app: api-gateway}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: api-gateway
         image: taskmgmt/api-gateway:latest
@@ -25,16 +28,20 @@ spec:
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
         startupProbe:
-          tcpSocket: {port: 8765}
+          httpGet: {path: /actuator/health/liveness, port: 8765}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 8765}
+          httpGet: {path: /actuator/health/readiness, port: 8765}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 8765}
+          httpGet: {path: /actuator/health/liveness, port: 8765}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -56,14 +63,17 @@ metadata:
   name: user-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
-  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  # replicas is owned by the HPA (hpa.yaml)
   selector:
     matchLabels: {app: user-service}
   template:
     metadata:
       labels: {app: user-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: user-service
         image: taskmgmt/user-service:latest
@@ -82,16 +92,20 @@ spec:
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
         startupProbe:
-          tcpSocket: {port: 5001}
+          httpGet: {path: /actuator/health/liveness, port: 5001}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 5001}
+          httpGet: {path: /actuator/health/readiness, port: 5001}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 5001}
+          httpGet: {path: /actuator/health/liveness, port: 5001}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -113,14 +127,17 @@ metadata:
   name: project-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
-  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  # replicas is owned by the HPA (hpa.yaml)
   selector:
     matchLabels: {app: project-service}
   template:
     metadata:
       labels: {app: project-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: project-service
         image: taskmgmt/project-service:latest
@@ -141,16 +158,20 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          tcpSocket: {port: 5002}
+          httpGet: {path: /actuator/health/liveness, port: 5002}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 5002}
+          httpGet: {path: /actuator/health/readiness, port: 5002}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 5002}
+          httpGet: {path: /actuator/health/liveness, port: 5002}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -172,14 +193,17 @@ metadata:
   name: task-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
-  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  # replicas is owned by the HPA (hpa.yaml)
   selector:
     matchLabels: {app: task-service}
   template:
     metadata:
       labels: {app: task-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: task-service
         image: taskmgmt/task-service:latest
@@ -200,16 +224,20 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          tcpSocket: {port: 5003}
+          httpGet: {path: /actuator/health/liveness, port: 5003}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 5003}
+          httpGet: {path: /actuator/health/readiness, port: 5003}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 5003}
+          httpGet: {path: /actuator/health/liveness, port: 5003}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -231,7 +259,9 @@ metadata:
   name: sprint-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
   replicas: 0
   selector:
     matchLabels: {app: sprint-service}
@@ -239,6 +269,7 @@ spec:
     metadata:
       labels: {app: sprint-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: sprint-service
         image: taskmgmt/sprint-service:latest
@@ -259,16 +290,20 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          tcpSocket: {port: 5004}
+          httpGet: {path: /actuator/health/liveness, port: 5004}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 5004}
+          httpGet: {path: /actuator/health/readiness, port: 5004}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 5004}
+          httpGet: {path: /actuator/health/liveness, port: 5004}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -290,7 +325,9 @@ metadata:
   name: notification-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
   replicas: 0
   selector:
     matchLabels: {app: notification-service}
@@ -298,6 +335,7 @@ spec:
     metadata:
       labels: {app: notification-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: notification-service
         image: taskmgmt/notification-service:latest
@@ -318,16 +356,20 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          tcpSocket: {port: 5005}
+          httpGet: {path: /actuator/health/liveness, port: 5005}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 5005}
+          httpGet: {path: /actuator/health/readiness, port: 5005}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 5005}
+          httpGet: {path: /actuator/health/liveness, port: 5005}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
@@ -349,7 +391,9 @@ metadata:
   name: dashboard-service
   namespace: taskmgmt
 spec:
-  strategy: {type: Recreate}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
   replicas: 0
   selector:
     matchLabels: {app: dashboard-service}
@@ -357,6 +401,7 @@ spec:
     metadata:
       labels: {app: dashboard-service}
     spec:
+      terminationGracePeriodSeconds: 40
       containers:
       - name: dashboard-service
         image: taskmgmt/dashboard-service:latest
@@ -366,16 +411,20 @@ spec:
         envFrom:
         - configMapRef: {name: app-config}
         startupProbe:
-          tcpSocket: {port: 8086}
+          httpGet: {path: /actuator/health/liveness, port: 8086}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          tcpSocket: {port: 8086}
+          httpGet: {path: /actuator/health/readiness, port: 8086}
           periodSeconds: 5
+          failureThreshold: 3
         livenessProbe:
-          tcpSocket: {port: 8086}
+          httpGet: {path: /actuator/health/liveness, port: 8086}
           periodSeconds: 10
           failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
         resources:
           requests: {cpu: 100m, memory: 256Mi}
           limits: {cpu: 500m, memory: 450Mi}
