@@ -38,6 +38,10 @@ jobs:
           SPRING_RABBITMQ_USERNAME: ${{ secrets.SPRING_RABBITMQ_USERNAME }}
           SPRING_RABBITMQ_PASSWORD: ${{ secrets.SPRING_RABBITMQ_PASSWORD }}
         run: |
+          # a missing GitHub secret expands to "" silently; fail here instead of crash-looping pods
+          for v in DB_USERNAME DB_PASSWORD JWT_SECRET SPRING_RABBITMQ_USERNAME SPRING_RABBITMQ_PASSWORD; do
+            [ -n "${!v}" ] || { echo "::error::GitHub secret $v is not set"; exit 1; }
+          done
           TAG="${SHA::8}"
           REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
           kubectl apply -f k8s/00-config.yaml
@@ -52,6 +56,9 @@ jobs:
           kubectl apply -f k8s/infra.yaml -f k8s/pdb.yaml -f k8s/hpa.yaml -f k8s/ingress.yaml
           # apps.yaml keeps local names (taskmgmt/<svc>:latest) for kind; rewrite to the GHCR image of this commit
           sed "s|image: taskmgmt/\([a-z-]*\):latest|image: $REGISTRY/taskmgmt-\1:$TAG|" k8s/apps.yaml | kubectl apply -f -
+          # always start a fresh rollout: picks up changed secrets/config (env is read at pod start) and
+          # clears a stale "exceeded its progress deadline" left by a previous failed run of the same image
+          kubectl rollout restart deployment/api-gateway deployment/user-service deployment/project-service deployment/task-service -n taskmgmt
 
       - name: Wait for rollout
         run: |

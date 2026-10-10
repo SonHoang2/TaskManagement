@@ -25,15 +25,22 @@ echo "==> ingress-nginx (k3s servicelb exposes it on the VM's port 80)"
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/cloud/deploy.yaml
 
 echo "==> GitHub Actions runner"
-if [ ! -d ~/actions-runner ]; then
-  VER=$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest | grep -m1 '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
-  mkdir ~/actions-runner && cd ~/actions-runner
+mkdir -p ~/actions-runner && cd ~/actions-runner
+# each step checks its own result, so a re-run resumes where a failed run stopped
+if [ ! -f config.sh ]; then
+  # .../releases/latest redirects to .../releases/tag/vX.Y.Z (no pipe: grep -m1 + pipefail kills curl with error 23)
+  LATEST=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/actions/runner/releases/latest)
+  VER=${LATEST##*/v}
   curl -fsSL -o runner.tar.gz "https://github.com/actions/runner/releases/download/v${VER}/actions-runner-linux-x64-${VER}.tar.gz"
   tar xzf runner.tar.gz && rm runner.tar.gz
   sudo ./bin/installdependencies.sh
-  ./config.sh --unattended --url "$REPO_URL" --token "$RUNNER_TOKEN" --labels taskmgmt-local --name "$(hostname)" --replace
-  sudo ./svc.sh install "$USER"
-  sudo ./svc.sh start
 fi
+if [ ! -f .runner ]; then
+  ./config.sh --unattended --url "$REPO_URL" --token "$RUNNER_TOKEN" --labels taskmgmt-local --name "$(hostname)" --replace
+fi
+if [ ! -f .service ]; then
+  sudo ./svc.sh install "$USER"
+fi
+sudo ./svc.sh start
 
 echo "Done. VM IP: $(hostname -I | awk '{print $1}')  -> add '<ip> taskmgmt.local' to /etc/hosts on your host."
