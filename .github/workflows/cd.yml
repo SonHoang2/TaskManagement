@@ -1,0 +1,60 @@
+name: CD
+
+# Rolls out the images CI pushed to GHCR onto k3s in the Ubuntu Server VM (self-hosted runner).
+# Only after CI passed on a push to master. Never trigger on pull_request: the repo is public
+# and fork PRs would run code on the VM.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: [self-hosted, taskmgmt-local]
+    defaults:
+      run:
+        working-directory: Backend
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - name: Deploy
+        env:
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SPRING_RABBITMQ_USERNAME: ${{ secrets.SPRING_RABBITMQ_USERNAME }}
+          SPRING_RABBITMQ_PASSWORD: ${{ secrets.SPRING_RABBITMQ_PASSWORD }}
+        run: |
+          TAG="${SHA::8}"
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          kubectl apply -f k8s/00-config.yaml
+          kubectl create secret generic app-secrets -n taskmgmt \
+            --from-literal=DB_USERNAME="$DB_USERNAME" \
+            --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+            --from-literal=JWT_SECRET="$JWT_SECRET" \
+            --from-literal=SPRING_RABBITMQ_USERNAME="$SPRING_RABBITMQ_USERNAME" \
+            --from-literal=SPRING_RABBITMQ_PASSWORD="$SPRING_RABBITMQ_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create configmap postgres-init -n taskmgmt --from-file=init-db.sql --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f k8s/infra.yaml -f k8s/pdb.yaml -f k8s/hpa.yaml -f k8s/ingress.yaml
+          # apps.yaml keeps local names (taskmgmt/<svc>:latest) for kind; rewrite to the GHCR image of this commit
+          sed "s|image: taskmgmt/\([a-z-]*\):latest|image: $REGISTRY/taskmgmt-\1:$TAG|" k8s/apps.yaml | kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          for d in api-gateway user-service project-service task-service; do
+            kubectl rollout status deployment/$d -n taskmgmt --timeout=300s
+          done
