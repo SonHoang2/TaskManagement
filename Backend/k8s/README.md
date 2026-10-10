@@ -20,7 +20,10 @@ Cấu trúc thư mục `k8s/`:
 - `00-config.yaml`: namespace + ConfigMap
 - `secret.yaml` (tự tạo từ `secret.example.yaml`, đã gitignore): mật khẩu, JWT
 - `infra.yaml`: postgres, redis, rabbitmq
-- `apps.yaml`: 7 service Spring Boot
+- `apps.yaml`: 7 service Spring Boot (RollingUpdate, probe qua Actuator, graceful shutdown)
+- `hpa.yaml`: autoscale 2–4 pod theo CPU cho gateway/user/project/task
+- `pdb.yaml`: PodDisruptionBudget (`minAvailable: 1`) để drain node không làm sập service
+- `ingress.yaml`: `http://taskmgmt.local` -> api-gateway
 - `build-and-deploy.sh`: build image + nạp vào kind + apply
 
 ## 1. Cài đặt (một lần)
@@ -39,9 +42,33 @@ kubectl describe node | grep -A1 "memory:" | head -3
 ## 2. Tạo cluster (một lần)
 
 ```bash
-kind create cluster --name taskmgmt
+cat <<EOF | kind create cluster --name taskmgmt --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - {containerPort: 80, hostPort: 80, protocol: TCP}
+EOF
 kubectl get nodes          # phải thấy 1 node Ready
 kind get clusters          # liệt kê cluster
+```
+
+### 2b. Addon cho Ingress và HPA (một lần)
+
+```bash
+# Ingress controller
+kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
+# metrics-server (kind cần --kubelet-insecure-tls)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl patch deploy metrics-server -n kube-system --type=json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+echo "127.0.0.1 taskmgmt.local" | sudo tee -a /etc/hosts
 ```
 
 ## 3. Cấu hình secret
@@ -85,6 +112,10 @@ Cách đọc cột:
 Spring Boot khởi động chậm: chờ 1-3 phút, 7 JVM cùng lên sẽ nặng máy.
 
 ## 6. Truy cập ứng dụng
+
+Qua Ingress (sau bước 2b): `curl http://taskmgmt.local/actuator/health`, frontend gọi `http://taskmgmt.local`.
+
+Hoặc port-forward trực tiếp:
 
 ```bash
 kubectl port-forward -n taskmgmt svc/api-gateway 8765:80
@@ -163,6 +194,17 @@ Xem tài nguyên (kind không có `kubectl top`):
 docker stats --no-stream taskmgmt-control-plane
 kubectl describe node | sed -n '/Allocated resources/,/Events/p'
 ```
+
+### Kiểm chứng rolling update / HPA
+
+```bash
+kubectl get hpa -n taskmgmt -w                           # TARGETS phải hiện % thay vì <unknown>
+kubectl rollout restart deploy/user-service -n taskmgmt
+kubectl rollout status deploy/user-service -n taskmgmt   # pod mới Ready rồi pod cũ mới tắt, không downtime
+# tạo tải để xem scale up:
+kubectl run load -n taskmgmt --rm -it --image=busybox -- sh -c 'while true; do wget -q -O- http://api-gateway/actuator/health; done'
+```
+Lưu ý: sprint/notification/dashboard vẫn `replicas: 0` (tiết kiệm RAM) nên chưa có HPA.
 
 ## 9. Dọn dẹp / reset
 

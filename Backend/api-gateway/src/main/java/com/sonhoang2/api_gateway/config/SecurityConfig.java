@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/api/v1/auth/**")
                         .permitAll()
+                        .pathMatchers(HttpMethod.GET, "/actuator/health/**")
+                        .permitAll()
                         .anyExchange()
                         .authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
