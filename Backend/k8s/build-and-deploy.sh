@@ -24,4 +24,6 @@ kubectl apply -f k8s/secret.yaml -f k8s/infra.yaml -f k8s/apps.yaml
 kubectl apply -f k8s/pdb.yaml
 # HPA/Ingress need metrics-server / ingress-nginx (README); skip quietly if the CRDs/controller are missing
 kubectl apply -f k8s/hpa.yaml -f k8s/ingress.yaml || echo 'WARN: hpa/ingress not applied, see k8s/README.md'
+./k8s/deploy-observability.sh
+echo "Grafana: kubectl port-forward -n taskmgmt svc/grafana 3000:80 (admin/admin first time)"
 echo "Gateway: kubectl port-forward -n taskmgmt svc/api-gateway 8765:80"

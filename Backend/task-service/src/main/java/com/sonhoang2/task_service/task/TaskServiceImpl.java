@@ -68,7 +68,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task task = modelMapper.map(request, Task.class);
 
-        leakHolder.hold(task);
+        // leakHolder.hold(task);
         return toResponse(taskRepository.save(task));
     }
 
