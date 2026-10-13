@@ -24,6 +24,7 @@ Cấu trúc thư mục `k8s/`:
 - `hpa.yaml`: autoscale 2–4 pod theo CPU cho gateway/user/project/task
 - `pdb.yaml`: PodDisruptionBudget (`minAvailable: 1`) để drain node không làm sập service
 - `ingress.yaml`: `http://taskmgmt.local` -> api-gateway
+- `observability.yaml` + `deploy-observability.sh`: Prometheus, Alertmanager, Grafana (mục 12)
 - `build-and-deploy.sh`: build image + nạp vào kind + apply
 
 ## 1. Cài đặt (một lần)
@@ -238,3 +239,37 @@ kind delete cluster --name taskmgmt
 ## 11. Chạy local không dùng k8s
 
 Dùng biến môi trường trỏ về localhost, ví dụ `USER_SERVICE_URL=http://localhost:5001` cho gateway và `SERVICES_TASK_SERVICE_URL=http://localhost:5003` cho Feign. Hoặc dùng `docker compose up` (đã có sẵn các biến này).
+
+## 12. Giám sát: Prometheus, Alertmanager, Grafana
+
+Luồng dữ liệu:
+```
+Spring Boot (Micrometer) --/actuator/prometheus:9090--> Prometheus --rules--> Alertmanager --> (Slack/webhook)
+                                                            \--> Grafana (dashboard)
+```
+- **Micrometer** đo sẵn request, JVM, DB pool; `micrometer-registry-prometheus` xuất ra định dạng text mà Prometheus đọc.
+- **Cổng 9090 riêng** cho Actuator (`MANAGEMENT_SERVER_PORT`): không đi qua Service/Ingress nên người dùng ngoài không đọc được metrics; probe cũng dùng cổng này.
+- **Prometheus tự tìm pod** có annotation `prometheus.io/scrape: "true"` (đặt trong `apps.yaml`) và scrape từng pod, nên mỗi replica của HPA có series riêng. Label `service` lấy từ label `app` của pod.
+- **RED** = Rate (req/s), Errors (tỉ lệ 5xx), Duration (p95/p99): ba chỉ số cốt lõi của một service. Dashboard `TaskManagement - RED & JVM` có thêm phần USE cho JVM, CPU, DB pool.
+- **Alert** (`observability/prometheus/rules/taskmgmt.rules.yml`): `TargetDown`, `ApiGatewayNoInstances`, `FrequentRestarts`, `HighErrorBudgetBurnFast/Slow` (SLO 99.5%, cảnh báo theo tốc độ đốt error budget), `HighLatencyP95`, `JvmHeapHigh`, `HighCpuUsage`, `DbConnectionPoolSaturated`. Alertmanager gom nhóm, chống lặp, và để alert `critical` chặn các `warning` cùng service.
+
+Triển khai (đã tự chạy trong `build-and-deploy.sh` và workflow CD):
+```bash
+./k8s/deploy-observability.sh
+```
+Mở giao diện (chạy mỗi lệnh ở một terminal):
+```bash
+kubectl port-forward -n taskmgmt svc/grafana 3000:80          # http://localhost:3000  (admin/admin, đổi ở lần đầu)
+kubectl port-forward -n taskmgmt svc/prometheus 9090:9090     # Status > Targets, Alerts
+kubectl port-forward -n taskmgmt svc/alertmanager 9093:9093
+```
+Đặt mật khẩu Grafana (tuỳ chọn): `kubectl create secret generic grafana-admin -n taskmgmt --from-literal=password=... && kubectl rollout restart deploy/grafana -n taskmgmt`.
+
+Thử alert:
+```bash
+kubectl scale deploy/user-service -n taskmgmt --replicas=0   # ~2 phút sau: TargetDown (nhớ HPA sẽ kéo lại, tạm xoá hpa user-service nếu cần)
+k6 run load-tests/task-service/create-task-load-test.js       # xem Rate/Duration trên dashboard
+```
+Đổi rule hoặc dashboard: sửa file trong `observability/`, chạy lại `deploy-observability.sh` (pod tự restart nhờ checksum). Với docker compose thì `docker compose up -d prometheus alertmanager grafana` (Prometheus: `localhost:9090`, Alertmanager: `localhost:9093`).
+
+Lưu ý: dữ liệu Prometheus lưu 7 ngày/1GB trên PVC `prometheus-data`; Loki chưa có trên k8s nên Grafana k8s chưa có log (compose thì có).

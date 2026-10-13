@@ -2,6 +2,7 @@ package com.sonhoang2.api_gateway.config;
 
 import com.sonhoang2.api_gateway.security.CustomAuthenticationEntryPoint;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,7 +35,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/api/v1/auth/**")
                         .permitAll()
-                        .pathMatchers(HttpMethod.GET, "/actuator/health/**")
+                        // health + prometheus live on the separate management port (cluster-internal only);
+                        // EndpointRequest matches only that port, so /actuator stays 401 on the public port
+                        .matchers(EndpointRequest.toAnyEndpoint())
                         .permitAll()
                         .anyExchange()
                         .authenticated())

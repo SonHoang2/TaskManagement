@@ -14,6 +14,10 @@ spec:
   template:
     metadata:
       labels: {app: api-gateway}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -28,15 +32,15 @@ spec:
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 8765}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 8765}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 8765}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -72,6 +76,10 @@ spec:
   template:
     metadata:
       labels: {app: user-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -92,15 +100,15 @@ spec:
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: app-secrets, key: JWT_SECRET}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5001}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 5001}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5001}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -136,6 +144,10 @@ spec:
   template:
     metadata:
       labels: {app: project-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -158,15 +170,15 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5002}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 5002}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5002}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -202,6 +214,10 @@ spec:
   template:
     metadata:
       labels: {app: task-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -224,15 +240,15 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5003}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 5003}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5003}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -268,6 +284,10 @@ spec:
   template:
     metadata:
       labels: {app: sprint-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -290,15 +310,15 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5004}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 5004}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5004}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -334,6 +354,10 @@ spec:
   template:
     metadata:
       labels: {app: notification-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -356,15 +380,15 @@ spec:
         - name: SPRING_RABBITMQ_PASSWORD
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_PASSWORD}}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5005}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 5005}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 5005}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:
@@ -400,6 +424,10 @@ spec:
   template:
     metadata:
       labels: {app: dashboard-service}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /actuator/prometheus
     spec:
       terminationGracePeriodSeconds: 40
       containers:
@@ -411,15 +439,15 @@ spec:
         envFrom:
         - configMapRef: {name: app-config}
         startupProbe:
-          httpGet: {path: /actuator/health/liveness, port: 8086}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 30
         readinessProbe:
-          httpGet: {path: /actuator/health/readiness, port: 8086}
+          httpGet: {path: /actuator/health/readiness, port: 9090}
           periodSeconds: 5
           failureThreshold: 3
         livenessProbe:
-          httpGet: {path: /actuator/health/liveness, port: 8086}
+          httpGet: {path: /actuator/health/liveness, port: 9090}
           periodSeconds: 10
           failureThreshold: 6
         lifecycle:

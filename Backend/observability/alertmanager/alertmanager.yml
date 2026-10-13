@@ -1,0 +1,29 @@
+# Alertmanager: groups, deduplicates and routes alerts coming from Prometheus.
+# Receivers below have no integration yet, so alerts only show up in the Alertmanager UI.
+# To get notified, add a config to a receiver, e.g.:
+#   slack_configs:
+#     - api_url: https://hooks.slack.com/services/XXX   # keep the URL in api_url_file, not in git
+#       channel: '#alerts'
+#       send_resolved: true
+#   webhook_configs:
+#     - url: http://my-bot/alerts
+route:
+  receiver: default
+  group_by: [alertname, service]
+  group_wait: 30s        # wait to batch alerts that fire together
+  group_interval: 5m     # min gap between notifications for the same group
+  repeat_interval: 4h    # re-notify while still firing
+  routes:
+    - matchers: [severity="critical"]
+      receiver: critical
+      repeat_interval: 1h
+
+receivers:
+  - name: default
+  - name: critical
+
+# While a service has a critical alert, mute its warnings (one page instead of three).
+inhibit_rules:
+  - source_matchers: [severity="critical"]
+    target_matchers: [severity="warning"]
+    equal: [service]

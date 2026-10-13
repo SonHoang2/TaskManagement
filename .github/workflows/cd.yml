@@ -65,3 +65,7 @@ jobs:
           for d in api-gateway user-service project-service task-service; do
             kubectl rollout status deployment/$d -n taskmgmt --timeout=300s
           done
+
+      # metrics stack (Prometheus, Alertmanager, Grafana); after the apps so a monitoring problem never blocks a release
+      - name: Deploy observability
+        run: ./k8s/deploy-observability.sh

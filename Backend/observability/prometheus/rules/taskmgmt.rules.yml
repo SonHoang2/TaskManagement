@@ -1,0 +1,121 @@
+# Shared by docker-compose (mounted) and k8s (ConfigMap `prometheus-rules`, see k8s/deploy-observability.sh).
+# SLO assumed for every service: 99.5% of requests are not 5xx (error budget = 0.5%).
+groups:
+  # Recording rules: precomputed RED metrics, used by alerts below and cheap to graph.
+  # Actuator scrapes are excluded so Prometheus does not measure itself.
+  - name: taskmgmt.recording
+    rules:
+      - record: service:http_requests:rate5m
+        expr: sum by (service) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[5m]))
+
+      - record: service:http_error_ratio:rate5m
+        expr: |
+          sum by (service) (rate(http_server_requests_seconds_count{status=~"5..",uri!~"/actuator.*"}[5m]))
+          / sum by (service) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[5m]))
+      - record: service:http_error_ratio:rate30m
+        expr: |
+          sum by (service) (rate(http_server_requests_seconds_count{status=~"5..",uri!~"/actuator.*"}[30m]))
+          / sum by (service) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[30m]))
+      - record: service:http_error_ratio:rate1h
+        expr: |
+          sum by (service) (rate(http_server_requests_seconds_count{status=~"5..",uri!~"/actuator.*"}[1h]))
+          / sum by (service) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[1h]))
+      - record: service:http_error_ratio:rate6h
+        expr: |
+          sum by (service) (rate(http_server_requests_seconds_count{status=~"5..",uri!~"/actuator.*"}[6h]))
+          / sum by (service) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[6h]))
+
+      - record: service:http_request_duration_seconds:p95_5m
+        expr: |
+          histogram_quantile(0.95,
+            sum by (service, le) (rate(http_server_requests_seconds_bucket{uri!~"/actuator.*"}[5m])))
+      - record: service:http_request_duration_seconds:p99_5m
+        expr: |
+          histogram_quantile(0.99,
+            sum by (service, le) (rate(http_server_requests_seconds_bucket{uri!~"/actuator.*"}[5m])))
+
+  - name: taskmgmt.availability
+    rules:
+      - alert: TargetDown
+        expr: up{job="taskmgmt-apps"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.service }} instance {{ $labels.pod }} {{ $labels.instance }} is not scrapeable"
+          description: "Prometheus cannot reach /actuator/prometheus for 2m: the pod is down, crash-looping, or stuck."
+
+      - alert: ApiGatewayNoInstances
+        expr: absent(up{job="taskmgmt-apps",service="api-gateway"} == 1)
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "No api-gateway instance is up: the whole API is unreachable"
+
+      - alert: FrequentRestarts
+        expr: changes(process_start_time_seconds[30m]) >= 3
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} ({{ $labels.pod }} {{ $labels.instance }}) restarted {{ $value }} times in 30m"
+          description: "Likely crash loop or OOMKill. Check `kubectl describe pod` (Last State) and the logs in Loki."
+
+  # Multi-window, multi-burn-rate alerts (Google SRE workbook). Burn rate 1 = spending the 0.5% error
+  # budget exactly over the SLO window; 14.4 = budget gone in ~2 days, 6 = gone in ~5 days.
+  - name: taskmgmt.slo
+    rules:
+      - alert: HighErrorBudgetBurnFast
+        expr: |
+          (service:http_error_ratio:rate5m > (14.4 * 0.005) and service:http_error_ratio:rate1h > (14.4 * 0.005))
+          and service:http_requests:rate5m > 0.05
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.service }}: {{ $value | humanizePercentage }} of requests fail with 5xx"
+          description: "Error ratio is above 7.2% over both 5m and 1h: the 99.5% SLO error budget is burning ~14x too fast."
+
+      - alert: HighErrorBudgetBurnSlow
+        expr: |
+          (service:http_error_ratio:rate30m > (6 * 0.005) and service:http_error_ratio:rate6h > (6 * 0.005))
+          and service:http_requests:rate5m > 0.05
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }}: sustained 5xx rate ({{ $value | humanizePercentage }} over 30m)"
+          description: "Error ratio above 3% over both 30m and 6h: a slow leak that will exhaust the error budget."
+
+  - name: taskmgmt.latency
+    rules:
+      - alert: HighLatencyP95
+        expr: service:http_request_duration_seconds:p95_5m > 1
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} p95 latency is {{ $value | humanizeDuration }}"
+          description: "p95 above 1s for 10m. Look at the slowest endpoints panel and DB pool saturation."
+
+  - name: taskmgmt.saturation
+    rules:
+      - alert: JvmHeapHigh
+        expr: |
+          sum by (service, pod, instance) (jvm_memory_used_bytes{area="heap"})
+          / sum by (service, pod, instance) (jvm_memory_max_bytes{area="heap"} > 0) > 0.9
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} ({{ $labels.pod }} {{ $labels.instance }}) heap {{ $value | humanizePercentage }} full"
+          description: "Heap above 90% for 10m (Xmx is small on purpose). Risk of OutOfMemoryError / GC thrash."
+
+      - alert: HighCpuUsage
+        expr: process_cpu_usage > 0.85
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }} ({{ $labels.pod }} {{ $labels.instance }}) CPU at {{ $value | humanizePercentage }}"
+          description: "CPU above 85% for 10m. The HPA scales at 70% but is capped at 4 replicas."
+
+      - alert: DbConnectionPoolSaturated
+        expr: hikaricp_connections_pending > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.service }}: threads are waiting for a DB connection"
+          description: "HikariCP has pending connection requests for 5m: pool too small or slow queries."
