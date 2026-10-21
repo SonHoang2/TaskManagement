@@ -1,0 +1,6 @@
+apiVersion: v2
+name: taskmgmt
+description: Task management microservices (gateway + user/project/task/sprint/notification/dashboard)
+type: application
+version: 0.1.0
+appVersion: "latest"

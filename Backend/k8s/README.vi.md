@@ -19,13 +19,11 @@
 Luồng gọi: `trình duyệt -> port-forward :8765 -> Service api-gateway -> pod api-gateway -> Service user-service -> pod user-service`.
 
 Cấu trúc thư mục `k8s/`:
-- `00-config.yaml`: namespace + ConfigMap
+- `00-config.yaml`: namespace
 - `secret.yaml` (tự tạo từ `secret.example.yaml`, đã gitignore): mật khẩu, JWT
 - `infra.yaml`: postgres, redis, rabbitmq
-- `apps.yaml`: 7 service Spring Boot (RollingUpdate, probe qua Actuator, graceful shutdown)
-- `hpa.yaml`: autoscale 2–4 pod theo CPU cho gateway/user/project/task
-- `pdb.yaml`: PodDisruptionBudget (`minAvailable: 1`) để drain node không làm sập service
-- `ingress.yaml`: `http://taskmgmt.local` -> api-gateway
+- `helm/taskmgmt/`: Helm chart cho các app: ConfigMap, 7 service Spring Boot (RollingUpdate, probe Actuator, graceful shutdown), HPA 2–4 pod theo CPU, PDB `minAvailable: 1`, Ingress `http://taskmgmt.local` -> api-gateway. Mọi thông số nằm trong `values.yaml`
+- `helm-adopt.sh`: chạy một lần để Helm nhận các resource đã tạo bằng `kubectl apply` (không downtime)
 - `observability.yaml` + `deploy-observability.sh`: Prometheus, Alertmanager, Grafana (mục 12)
 - `build-and-deploy.sh`: build image + nạp vào kind + apply
 
@@ -172,7 +170,8 @@ Lỗi thường gặp:
 
 Áp dụng thay đổi YAML:
 ```bash
-kubectl apply -f k8s/00-config.yaml -f k8s/infra.yaml -f k8s/apps.yaml
+kubectl apply -f k8s/00-config.yaml -f k8s/infra.yaml
+helm upgrade --install taskmgmt k8s/helm/taskmgmt -n taskmgmt   # apps, config, HPA, PDB, Ingress
 ```
 Sửa secret/configmap xong **phải restart pod** thì mới nhận giá trị mới:
 ```bash
@@ -233,9 +232,9 @@ kind delete cluster --name taskmgmt
 
 ## 10. Thêm service mới
 
-1. Viết Dockerfile; thêm service vào `apps.yaml` (copy một khối Deployment + Service có sẵn, đổi tên và cổng).
+1. Viết Dockerfile; thêm một dòng vào `services:` trong `helm/taskmgmt/values.yaml` (tên, `port`, và `db`/`jwt`/`rabbit` nếu cần).
 2. Service k8s mở cổng 80 và trỏ vào cổng container, nên service khác gọi `http://<tên-service>`.
-3. Muốn đi qua gateway: thêm route trong `api-gateway/src/main/resources/application.properties` và biến `<TÊN>_SERVICE_URL` trong `00-config.yaml`.
+3. Muốn đi qua gateway: thêm route trong `api-gateway/src/main/resources/application.properties` và biến `<TÊN>_SERVICE_URL` trong `config:` của `helm/taskmgmt/values.yaml`.
 4. Muốn gọi từ service khác bằng Feign: `@FeignClient(name = "x", url = "${services.x.url:http://x}")`.
 
 ## 11. Chạy local không dùng k8s
@@ -251,7 +250,7 @@ Spring Boot (Micrometer) --/actuator/prometheus:9090--> Prometheus --rules--> Al
 ```
 - **Micrometer** đo sẵn request, JVM, DB pool; `micrometer-registry-prometheus` xuất ra định dạng text mà Prometheus đọc.
 - **Cổng 9090 riêng** cho Actuator (`MANAGEMENT_SERVER_PORT`): không đi qua Service/Ingress nên người dùng ngoài không đọc được metrics; probe cũng dùng cổng này.
-- **Prometheus tự tìm pod** có annotation `prometheus.io/scrape: "true"` (đặt trong `apps.yaml`) và scrape từng pod, nên mỗi replica của HPA có series riêng. Label `service` lấy từ label `app` của pod.
+- **Prometheus tự tìm pod** có annotation `prometheus.io/scrape: "true"` (đặt trong template của chart) và scrape từng pod, nên mỗi replica của HPA có series riêng. Label `service` lấy từ label `app` của pod.
 - **RED** = Rate (req/s), Errors (tỉ lệ 5xx), Duration (p95/p99): ba chỉ số cốt lõi của một service. Dashboard `TaskManagement - RED & JVM` có thêm phần USE cho JVM, CPU, DB pool.
 - **Alert** (`observability/prometheus/rules/taskmgmt.rules.yml`): `TargetDown`, `ApiGatewayNoInstances`, `FrequentRestarts`, `HighErrorBudgetBurnFast/Slow` (SLO 99.5%, cảnh báo theo tốc độ đốt error budget), `HighLatencyP95`, `JvmHeapHigh`, `HighCpuUsage`, `DbConnectionPoolSaturated`. Alertmanager gom nhóm, chống lặp, và để alert `critical` chặn các `warning` cùng service.
 

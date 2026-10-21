@@ -30,6 +30,9 @@ jobs:
         with:
           ref: ${{ env.SHA }}
 
+      - name: Install Helm
+        run: command -v helm >/dev/null || curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
       - name: Deploy
         env:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
@@ -53,9 +56,11 @@ jobs:
             --from-literal=SPRING_RABBITMQ_PASSWORD="$SPRING_RABBITMQ_PASSWORD" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl create configmap postgres-init -n taskmgmt --from-file=init-db.sql --dry-run=client -o yaml | kubectl apply -f -
-          kubectl apply -f k8s/infra.yaml -f k8s/pdb.yaml -f k8s/hpa.yaml -f k8s/ingress.yaml
-          # apps.yaml keeps local names (taskmgmt/<svc>:latest) for kind; rewrite to the GHCR image of this commit
-          sed "s|image: taskmgmt/\([a-z-]*\):latest|image: $REGISTRY/taskmgmt-\1:$TAG|" k8s/apps.yaml | kubectl apply -f -
+          kubectl apply -f k8s/infra.yaml
+          # apps + config + HPA + PDB + Ingress are the Helm chart; images are the GHCR ones of this commit
+          HELM_ARGS=(--set image.registry="$REGISTRY" --set image.prefix=taskmgmt- --set image.tag="$TAG")
+          ./k8s/helm-adopt.sh taskmgmt taskmgmt "${HELM_ARGS[@]}"
+          helm upgrade --install taskmgmt k8s/helm/taskmgmt -n taskmgmt "${HELM_ARGS[@]}"
           # always start a fresh rollout: picks up changed secrets/config (env is read at pod start) and
           # clears a stale "exceeded its progress deadline" left by a previous failed run of the same image
           kubectl rollout restart deployment/api-gateway deployment/user-service deployment/project-service deployment/task-service -n taskmgmt

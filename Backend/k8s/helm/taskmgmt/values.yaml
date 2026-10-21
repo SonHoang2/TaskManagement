@@ -1,0 +1,73 @@
+# Registry prefix + tag. Local kind default matches build-and-deploy.sh (taskmgmt/<svc>:latest).
+# CD overrides: --set image.registry=ghcr.io/<owner> --set image.prefix=taskmgmt- --set image.tag=<sha8>
+image:
+  registry: taskmgmt
+  prefix: ""
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Name of the Secret holding DB/JWT/RabbitMQ credentials. Not created by this chart (CD / secret.yaml own it).
+secretName: app-secrets
+
+# Non-secret config shared by all apps (rendered into ConfigMap app-config). Values are always strings.
+config:
+  SPRING_PROFILES_ACTIVE: docker
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:4200
+  LOGGING_LEVEL_SPRING_SECURITY: INFO
+  LOGGING_LEVEL_SPRING_WEB: INFO
+  USER_SERVICE_URL: http://user-service
+  PROJECT_SERVICE_URL: http://project-service
+  TASK_SERVICE_URL: http://task-service
+  SPRINT_SERVICE_URL: http://sprint-service
+  NOTIFICATION_SERVICE_URL: http://notification-service
+  DASHBOARD_SERVICE_URL: http://dashboard-service
+  # keep JVMs small: one node runs everything
+  JAVA_TOOL_OPTIONS: -XX:+UseSerialGC -Xms64m -Xmx256m -XX:TieredStopAtLevel=1 -XX:CICompilerCount=2 -Xss512k
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY: INFO
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: INFO
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: INFO
+  # actuator on its own port: reachable only inside the cluster (Prometheus scrapes pod IPs)
+  MANAGEMENT_SERVER_PORT: "9090"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus
+  MANAGEMENT_METRICS_DISTRIBUTION_SLO_HTTP_SERVER_REQUESTS: 50ms,100ms,250ms,500ms,1s,2500ms,5s
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  SERVER_SHUTDOWN: graceful
+  SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 25s
+
+# Defaults applied to every service (override per service below).
+defaults:
+  actuatorPort: 9090
+  terminationGracePeriodSeconds: 40
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: 500m, memory: 450Mi}
+  hpa:
+    minReplicas: 2
+    maxReplicas: 4
+    cpuUtilization: 70
+
+# port: container port | db: DB_NAME (omit = no DB) | rabbit/jwt: inject those secret keys
+# replicas: fixed replica count (omit when hpa/pdb own scaling) | hpa/pdb: create the object
+services:
+  api-gateway:          {port: 8765, jwt: true,  hpa: true, pdb: true}
+  user-service:         {port: 5001, db: user_db,         jwt: true,  hpa: true, pdb: true}
+  project-service:      {port: 5002, db: project_db,      rabbit: true, hpa: true, pdb: true}
+  task-service:         {port: 5003, db: task_db,         rabbit: true, hpa: true, pdb: true}
+  sprint-service:       {port: 5004, db: sprint_db,       rabbit: true, replicas: 0}
+  notification-service: {port: 5005, db: notification_db, rabbit: true, replicas: 0}
+  dashboard-service:    {port: 8086, replicas: 0}
+
+# Needs ingress-nginx. Browser -> http://taskmgmt.local -> api-gateway
+ingress:
+  enabled: true
+  className: nginx
+  host: taskmgmt.local
+  service: api-gateway
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
