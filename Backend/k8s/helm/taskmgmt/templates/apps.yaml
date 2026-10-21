@@ -1,0 +1,90 @@
+{{- range $name, $svc := .Values.services }}
+{{- $d := $.Values.defaults }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "taskmgmt.labels" $ | nindent 4 }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  {{- if hasKey $svc "replicas" }}
+  replicas: {{ $svc.replicas }}
+  {{- end }}
+  selector:
+    matchLabels: {app: {{ $name }}}
+  template:
+    metadata:
+      labels: {app: {{ $name }}}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ $d.actuatorPort | quote }}
+        prometheus.io/path: /actuator/prometheus
+        # roll pods when the shared config changes (env is read at pod start)
+        checksum/config: {{ toYaml $.Values.config | sha256sum | trunc 16 }}
+    spec:
+      terminationGracePeriodSeconds: {{ $d.terminationGracePeriodSeconds }}
+      containers:
+      - name: {{ $name }}
+        image: {{ include "taskmgmt.image" (dict "root" $ "name" $name) }}
+        imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ $svc.port }}
+        envFrom:
+        - configMapRef: {name: app-config}
+        {{- if or $svc.db $svc.jwt $svc.rabbit }}
+        env:
+        {{- if $svc.db }}
+        - name: DB_NAME
+          value: {{ $svc.db }}
+        - name: DB_USERNAME
+          valueFrom: {secretKeyRef: {name: {{ $.Values.secretName }}, key: DB_USERNAME}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: {{ $.Values.secretName }}, key: DB_PASSWORD}}
+        {{- end }}
+        {{- if $svc.jwt }}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: {{ $.Values.secretName }}, key: JWT_SECRET}}
+        {{- end }}
+        {{- if $svc.rabbit }}
+        - name: SPRING_RABBITMQ_USERNAME
+          valueFrom: {secretKeyRef: {name: {{ $.Values.secretName }}, key: SPRING_RABBITMQ_USERNAME}}
+        - name: SPRING_RABBITMQ_PASSWORD
+          valueFrom: {secretKeyRef: {name: {{ $.Values.secretName }}, key: SPRING_RABBITMQ_PASSWORD}}
+        {{- end }}
+        {{- end }}
+        startupProbe:
+          httpGet: {path: /actuator/health/liveness, port: {{ $d.actuatorPort }}}
+          periodSeconds: 10
+          failureThreshold: 30
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: {{ $d.actuatorPort }}}
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: {{ $d.actuatorPort }}}
+          periodSeconds: 10
+          failureThreshold: 6
+        lifecycle:
+          preStop:
+            sleep: {seconds: 5}
+        resources:
+          {{- toYaml (default $d.resources $svc.resources) | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "taskmgmt.labels" $ | nindent 4 }}
+spec:
+  selector: {app: {{ $name }}}
+  ports:
+  - port: 80
+    targetPort: {{ $svc.port }}
+{{- end }}

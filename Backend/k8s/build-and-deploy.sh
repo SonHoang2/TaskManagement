@@ -20,10 +20,10 @@ done
 
 kubectl apply -f k8s/00-config.yaml
 kubectl create configmap postgres-init -n taskmgmt --from-file=init-db.sql --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f k8s/secret.yaml -f k8s/infra.yaml -f k8s/apps.yaml
-kubectl apply -f k8s/pdb.yaml
-# HPA/Ingress need metrics-server / ingress-nginx (README); skip quietly if the CRDs/controller are missing
-kubectl apply -f k8s/hpa.yaml -f k8s/ingress.yaml || echo 'WARN: hpa/ingress not applied, see k8s/README.md'
+kubectl apply -f k8s/secret.yaml -f k8s/infra.yaml
+# apps, config, HPA, PDB, Ingress = the Helm chart (HPA/Ingress need metrics-server / ingress-nginx, see README)
+./k8s/helm-adopt.sh
+helm upgrade --install taskmgmt k8s/helm/taskmgmt -n taskmgmt
 ./k8s/deploy-observability.sh
 echo "Grafana: kubectl port-forward -n taskmgmt svc/grafana 3000:80 (admin/admin first time)"
 echo "Gateway: kubectl port-forward -n taskmgmt svc/api-gateway 8765:80"

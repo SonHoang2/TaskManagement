@@ -1,0 +1,25 @@
+# Needs metrics-server. Scales on CPU relative to the pod's CPU request.
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.hpa }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "taskmgmt.labels" $ | nindent 4 }}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: {{ $name }}}
+  minReplicas: {{ $.Values.defaults.hpa.minReplicas }}
+  maxReplicas: {{ $.Values.defaults.hpa.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: {type: Utilization, averageUtilization: {{ $.Values.defaults.hpa.cpuUtilization }}}
+  behavior:
+    scaleUp: {stabilizationWindowSeconds: 0}
+    scaleDown: {stabilizationWindowSeconds: 120}
+{{- end }}
+{{- end }}

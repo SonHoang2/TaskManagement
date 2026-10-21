@@ -19,13 +19,11 @@
 Request flow: `browser -> port-forward :8765 -> api-gateway Service -> api-gateway pod -> user-service Service -> user-service pod`.
 
 Layout of the `k8s/` folder:
-- `00-config.yaml`: namespace + ConfigMap
+- `00-config.yaml`: namespace
 - `secret.yaml` (create it yourself from `secret.example.yaml`, git-ignored): passwords, JWT
 - `infra.yaml`: postgres, redis, rabbitmq
-- `apps.yaml`: the 7 Spring Boot services (RollingUpdate, Actuator probes, graceful shutdown)
-- `hpa.yaml`: CPU-based autoscaling, 2–4 pods for gateway/user/project/task
-- `pdb.yaml`: PodDisruptionBudget (`minAvailable: 1`) so draining a node does not take a service down
-- `ingress.yaml`: `http://taskmgmt.local` -> api-gateway
+- `helm/taskmgmt/`: Helm chart for the apps: ConfigMap, the 7 Spring Boot services (RollingUpdate, Actuator probes, graceful shutdown), CPU-based HPA 2–4 pods, PDB `minAvailable: 1`, Ingress `http://taskmgmt.local` -> api-gateway. All knobs live in `values.yaml`
+- `helm-adopt.sh`: one-time script that hands resources created earlier by `kubectl apply` over to Helm (no downtime)
 - `observability.yaml` + `deploy-observability.sh`: Prometheus, Alertmanager, Grafana (section 12)
 - `build-and-deploy.sh`: build images + load into kind + apply
 
@@ -172,7 +170,8 @@ Common problems:
 
 Apply YAML changes:
 ```bash
-kubectl apply -f k8s/00-config.yaml -f k8s/infra.yaml -f k8s/apps.yaml
+kubectl apply -f k8s/00-config.yaml -f k8s/infra.yaml
+helm upgrade --install taskmgmt k8s/helm/taskmgmt -n taskmgmt   # apps, config, HPA, PDB, Ingress
 ```
 After editing a secret/configmap you **must restart the pods** for them to pick up the new values:
 ```bash
@@ -233,9 +232,9 @@ kind delete cluster --name taskmgmt
 
 ## 10. Adding a new service
 
-1. Write a Dockerfile; add the service to `apps.yaml` (copy an existing Deployment + Service block, change the name and port).
+1. Write a Dockerfile; add one line under `services:` in `helm/taskmgmt/values.yaml` (name, `port`, and `db`/`jwt`/`rabbit` if needed).
 2. The k8s Service exposes port 80 and forwards to the container port, so other services call `http://<service-name>`.
-3. To route it through the gateway: add a route in `api-gateway/src/main/resources/application.properties` and a `<NAME>_SERVICE_URL` variable in `00-config.yaml`.
+3. To route it through the gateway: add a route in `api-gateway/src/main/resources/application.properties` and a `<NAME>_SERVICE_URL` variable under `config:` in `values.yaml`.
 4. To call it from another service with Feign: `@FeignClient(name = "x", url = "${services.x.url:http://x}")`.
 
 ## 11. Running locally without k8s
@@ -251,7 +250,7 @@ Spring Boot (Micrometer) --/actuator/prometheus:9090--> Prometheus --rules--> Al
 ```
 - **Micrometer** measures requests, JVM and DB pool out of the box; `micrometer-registry-prometheus` exposes them in the text format Prometheus reads.
 - **A dedicated port 9090** for Actuator (`MANAGEMENT_SERVER_PORT`): it does not go through the Service/Ingress, so outside users cannot read the metrics; the probes use this port too.
-- **Prometheus discovers pods itself** via the `prometheus.io/scrape: "true"` annotation (set in `apps.yaml`) and scrapes each pod, so every HPA replica gets its own series. The `service` label comes from the pod's `app` label.
+- **Prometheus discovers pods itself** via the `prometheus.io/scrape: "true"` annotation (set in the chart template) and scrapes each pod, so every HPA replica gets its own series. The `service` label comes from the pod's `app` label.
 - **RED** = Rate (req/s), Errors (5xx ratio), Duration (p95/p99): the three core metrics of a service. The `TaskManagement - RED & JVM` dashboard also has a USE section for JVM, CPU and DB pool.
 - **Alerts** (`observability/prometheus/rules/taskmgmt.rules.yml`): `TargetDown`, `ApiGatewayNoInstances`, `FrequentRestarts`, `HighErrorBudgetBurnFast/Slow` (99.5% SLO, alerting on error-budget burn rate), `HighLatencyP95`, `JvmHeapHigh`, `HighCpuUsage`, `DbConnectionPoolSaturated`. Alertmanager groups and de-duplicates alerts, and lets a `critical` alert inhibit `warning` alerts of the same service.
 

@@ -44,7 +44,7 @@ data:
       - job_name: alertmanager
         static_configs:
           - targets: ['alertmanager:9093']
-      # Discover pods in this namespace that opt in with the prometheus.io/* annotations (see apps.yaml).
+      # Discover pods in this namespace that opt in with the prometheus.io/* annotations (see helm/taskmgmt/templates/apps.yaml).
       # Scraping pod IPs directly (not the Service) gives one series per replica, which HPA needs.
       - job_name: taskmgmt-apps
         kubernetes_sd_configs:
