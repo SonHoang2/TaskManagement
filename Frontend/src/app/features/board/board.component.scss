@@ -61,6 +61,13 @@
       transition: transform 0.2s var(--ease);
     }
   }
+  &__title-skeleton {
+    width: 90px;
+    height: 18px;
+  }
+  &__card-skeleton {
+    height: 92px;
+  }
   &__empty {
     display: grid;
     place-items: center;

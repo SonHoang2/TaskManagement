@@ -19,54 +19,7 @@ interface Item {
 @Component({
   selector: 'app-command-palette',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="palette" (keydown)="onKey($event)">
-      <div class="palette__search">
-        <span class="i">search</span>
-        <input
-          #q
-          class="palette__input"
-          placeholder="Search tasks and projects, or type a command…"
-          [value]="query()"
-          (input)="query.set(q.value); active.set(0)"
-          aria-label="Search"
-        />
-        <kbd>Esc</kbd>
-      </div>
-      <div class="palette__results" role="listbox">
-        @for (item of results(); track item.id; let i = $index) {
-          @if (i === 0 || results()[i - 1].group !== item.group) {
-            <div class="menu-heading">{{ item.group }}</div>
-          }
-          <button
-            type="button"
-            class="palette__item"
-            role="option"
-            [class.active]="i === active()"
-            [attr.aria-selected]="i === active()"
-            (mouseenter)="active.set(i)"
-            (click)="select(item)"
-          >
-            @if (item.color) {
-              <span class="palette__dot" [style.background]="item.color"></span>
-            } @else {
-              <span class="i">{{ item.icon }}</span>
-            }
-            <span class="grow truncate">{{ item.label }}</span>
-            @if (item.hint) {
-              <span class="subtle small truncate palette__hint">{{ item.hint }}</span>
-            }
-          </button>
-        } @empty {
-          <div class="palette__empty">No results for “{{ query() }}”.</div>
-        }
-      </div>
-      <div class="palette__foot">
-        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-        <span><kbd>↵</kbd> open</span>
-      </div>
-    </div>
-  `,
+  templateUrl: './command-palette.component.html',
 })
 export class CommandPaletteComponent {
   private readonly ref = inject(MatDialogRef<CommandPaletteComponent>);

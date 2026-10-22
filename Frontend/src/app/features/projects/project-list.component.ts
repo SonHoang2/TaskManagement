@@ -6,7 +6,7 @@ import { Subject, debounceTime, startWith, switchMap, tap, catchError, of } from
 import { Page, ProjectSummary } from '../../core/models';
 import { ProjectSort, ProjectsService } from '../../core/services/projects.service';
 import { ToastService } from '../../core/ui/toast.service';
-import { colorFor } from '../../core/utils/format';
+import { colorFor, percent } from '../../core/utils/format';
 import { AvatarComponent, AvatarStackComponent } from '../../shared/components/avatar.component';
 import { RoleBadgeComponent } from '../../shared/components/badges';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
@@ -91,7 +91,7 @@ export class ProjectListComponent {
   }
 
   protected pct(p: ProjectSummary): number {
-    return p.taskStats?.total ? Math.round((p.taskStats.done / p.taskStats.total) * 100) : 0;
+    return percent(p.taskStats?.done ?? 0, p.taskStats?.total ?? 0);
   }
 
   protected memberIds(p: ProjectSummary): string[] {

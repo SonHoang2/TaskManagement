@@ -1,0 +1,42 @@
+.invite {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+  h3 {
+    font-size: 15px;
+  }
+  &__meta {
+    gap: 6px;
+    margin-top: 2px;
+  }
+}
+.invite__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  text-transform: uppercase;
+  &--sm {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+}
+.history-heading {
+  margin-top: 32px;
+}
+.history-row {
+  cursor: default;
+  &__time {
+    width: 80px;
+    text-align: right;
+  }
+}

@@ -83,6 +83,21 @@
 .td__section {
   margin-top: 28px;
 }
+.td__loading {
+  margin-top: 16px;
+}
+.td__empty {
+  padding: 8px 0;
+}
+.td__placeholder {
+  padding: 24px;
+}
+.edit-actions {
+  margin-top: 8px;
+  &--end {
+    justify-content: flex-end;
+  }
+}
 .td__label {
   display: flex;
   align-items: center;
@@ -300,9 +315,11 @@
   align-items: center;
 }
 .label-dot {
+  --c: #64748b;
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  background: var(--c);
 }
 
 .side-meta {

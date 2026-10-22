@@ -10,60 +10,7 @@ import { ToastService } from '../../core/ui/toast.service';
   selector: 'app-project-form',
   imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <form class="dialog" [formGroup]="form" (ngSubmit)="save()">
-      <div class="dialog__header">
-        <div class="grow">
-          <h2 class="dialog__title">{{ data.project ? 'Edit project' : 'Create a project' }}</h2>
-          <p class="muted small">Projects hold your team's tasks, sprints and labels.</p>
-        </div>
-        <button
-          class="btn btn--ghost btn--icon btn--sm"
-          type="button"
-          (click)="ref.close()"
-          aria-label="Close"
-        >
-          <span class="i">close</span>
-        </button>
-      </div>
-      <div class="dialog__body stack" style="gap: 16px">
-        <div class="field">
-          <label for="pf-name">Name</label>
-          <input
-            id="pf-name"
-            class="input"
-            formControlName="name"
-            placeholder="e.g. Website redesign"
-            maxlength="200"
-            cdkFocusInitial
-          />
-          @if (form.controls.name.touched && form.controls.name.invalid) {
-            <span class="field__error">Give your project a name.</span>
-          }
-        </div>
-        <div class="field">
-          <label for="pf-desc">Description <span class="subtle">(optional)</span></label>
-          <textarea
-            id="pf-desc"
-            class="textarea"
-            formControlName="description"
-            rows="3"
-            maxlength="2000"
-            placeholder="What is this project about?"
-          ></textarea>
-        </div>
-      </div>
-      <div class="dialog__footer">
-        <button class="btn btn--ghost" type="button" (click)="ref.close()">Cancel</button>
-        <button class="btn btn--primary" type="submit" [disabled]="saving()">
-          @if (saving()) {
-            <span class="spinner"></span>
-          }
-          {{ data.project ? 'Save' : 'Create project' }}
-        </button>
-      </div>
-    </form>
-  `,
+  templateUrl: './project-form.dialog.html',
 })
 export class ProjectFormDialog {
   protected readonly data = inject<{ project?: Project }>(MAT_DIALOG_DATA);

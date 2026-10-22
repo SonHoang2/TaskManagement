@@ -54,11 +54,31 @@
     padding-top: 12px;
     border-top: 1px solid var(--border);
   }
+  &__owner {
+    gap: 4px;
+  }
 }
 
-.loading-dim {
-  opacity: 0.6;
-  transition: opacity 0.2s;
+.pcard-skeleton {
+  height: 190px;
+  border-radius: var(--radius-lg);
+}
+
+.project-cell {
+  &__text {
+    min-width: 0;
+  }
+  &__name,
+  &__desc {
+    max-width: 320px;
+  }
+}
+
+.progress-cell {
+  min-width: 140px;
+  &__label {
+    margin-top: 4px;
+  }
 }
 
 .pager {

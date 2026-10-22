@@ -4,7 +4,14 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PlatformDashboard, TaskDetail, TaskStatus } from '../../core/models';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
-import { STATUS_META, colorFor, compareTasks, daysUntil, greeting } from '../../core/utils/format';
+import {
+  STATUS_META,
+  colorFor,
+  compareTasks,
+  daysUntil,
+  greeting,
+  percent,
+} from '../../core/utils/format';
 import { AvatarStackComponent } from '../../shared/components/avatar.component';
 import { DueDateComponent, PriorityBadgeComponent } from '../../shared/components/badges';
 import {
@@ -37,6 +44,7 @@ export class DashboardComponent {
 
   protected readonly statusMeta = STATUS_META;
   protected readonly colorFor = colorFor;
+  protected readonly pct = percent;
   protected readonly greeting = greeting();
   protected readonly today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -90,7 +98,7 @@ export class DashboardComponent {
       total,
       rows,
       segments,
-      donePct: total ? Math.round((count('DONE') / total) * 100) : 0,
+      donePct: percent(count('DONE'), total),
     };
   });
 
@@ -115,10 +123,6 @@ export class DashboardComponent {
 
   protected projectName(id: string): string {
     return this.ws.project(id)?.name ?? '';
-  }
-
-  protected pct(done: number, total: number): number {
-    return total ? Math.round((done / total) * 100) : 0;
   }
 
   protected memberIds(ids: { id: string }[] | null | undefined): string[] {

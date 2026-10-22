@@ -1,0 +1,52 @@
+.n-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+  &:last-of-type {
+    border-bottom: 0;
+  }
+  &:hover {
+    background: var(--hover);
+    .n-row__actions {
+      opacity: 1;
+    }
+  }
+  &--unread {
+    background: color-mix(in srgb, var(--primary-soft) 45%, transparent);
+    .n-row__text {
+      font-weight: 600;
+    }
+  }
+  &__text {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  &__actions {
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  @media (hover: none) {
+    &__actions {
+      opacity: 1;
+    }
+  }
+}
+
+// Base look and tone variants come from styles/_overlays.scss; the page list
+// only uses a larger icon than the notification menu.
+.notif__icon {
+  width: 36px;
+  height: 36px;
+}
+
+.load-more {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}

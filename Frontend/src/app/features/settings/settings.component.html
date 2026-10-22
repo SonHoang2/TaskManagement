@@ -1,0 +1,164 @@
+<div class="page page--narrow">
+  <div class="page-header">
+    <div class="page-header__text">
+      <h1>Settings</h1>
+      <p>Manage your profile, security and appearance.</p>
+    </div>
+  </div>
+
+  <div class="settings">
+    <section class="settings__row">
+      <div class="settings__intro">
+        <h3>Profile</h3>
+        <p class="muted small">How teammates see you across projects.</p>
+      </div>
+      <form class="card" [formGroup]="profile" (ngSubmit)="saveProfile()">
+        <div class="card__body stack stack--lg">
+          <div class="row profile-summary">
+            <app-avatar
+              [userId]="auth.userId()"
+              [name]="profile.controls.fullName.value || auth.user()?.fullName"
+              [url]="avatarPreview() || null"
+              size="xl"
+            />
+            <div>
+              <strong>{{ auth.user()?.fullName }}</strong>
+              <div class="subtle small">Member since {{ auth.user()?.createdAt | shortDate }}</div>
+              <span class="pill profile-summary__role" [class.pill--warning]="auth.isAdmin()">{{
+                auth.isAdmin() ? 'Admin' : 'User'
+              }}</span>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="st-name">Full name</label>
+              <input id="st-name" class="input" formControlName="fullName" maxlength="120" />
+            </div>
+            <div class="field">
+              <label for="st-email">Email</label>
+              <input id="st-email" class="input" type="email" formControlName="email" />
+              @if (profile.controls.email.touched && profile.controls.email.invalid) {
+                <span class="field__error">Enter a valid email.</span>
+              }
+            </div>
+            <div class="field full">
+              <label for="st-avatar">Avatar URL</label>
+              <input
+                id="st-avatar"
+                class="input"
+                formControlName="avatarUrl"
+                placeholder="https://…/me.png"
+                maxlength="500"
+              />
+              <span class="field__hint"
+                >Paste a link to a square image. Leave empty to use your initials.</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="card__footer">
+          <button
+            class="btn btn--ghost"
+            type="button"
+            (click)="resetProfile()"
+            [disabled]="profile.pristine"
+          >
+            Reset
+          </button>
+          <button
+            class="btn btn--primary"
+            type="submit"
+            [disabled]="profile.pristine || savingProfile()"
+          >
+            @if (savingProfile()) {
+              <span class="spinner"></span>
+            }
+            Save profile
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="settings__row">
+      <div class="settings__intro">
+        <h3>Password</h3>
+        <p class="muted small">Use at least 8 characters.</p>
+      </div>
+      <form class="card" [formGroup]="security" (ngSubmit)="savePassword()">
+        <div class="card__body form-grid">
+          <div class="field">
+            <label for="st-pw">New password</label>
+            <input
+              id="st-pw"
+              class="input"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+            @if (security.controls.password.touched && security.controls.password.invalid) {
+              <span class="field__error">At least 8 characters.</span>
+            }
+          </div>
+          <div class="field">
+            <label for="st-pw2">Confirm password</label>
+            <input
+              id="st-pw2"
+              class="input"
+              type="password"
+              formControlName="confirm"
+              autocomplete="new-password"
+            />
+            @if (security.controls.confirm.touched && security.hasError('mismatch')) {
+              <span class="field__error">Passwords don't match.</span>
+            }
+          </div>
+        </div>
+        <div class="card__footer">
+          <button class="btn btn--primary" type="submit" [disabled]="savingPassword()">
+            Update password
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="settings__row">
+      <div class="settings__intro">
+        <h3>Appearance</h3>
+        <p class="muted small">Choose a theme, or follow your system.</p>
+      </div>
+      <div class="card card__body themes">
+        @for (opt of themes; track opt.value) {
+          <button
+            type="button"
+            class="theme-opt"
+            [class.on]="theme.pref() === opt.value"
+            (click)="theme.set(opt.value)"
+          >
+            <span class="theme-opt__preview theme-opt__preview--{{ opt.value }}"
+              ><span></span><span></span
+            ></span>
+            <span class="row"
+              ><span class="i">{{ opt.icon }}</span
+              >{{ opt.label }}</span
+            >
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="settings__row">
+      <div class="settings__intro">
+        <h3>Session</h3>
+        <p class="muted small">Sign out of TaskFlow on this device.</p>
+      </div>
+      <div class="card card__body row session-card">
+        <span class="muted"
+          >Signed in as <strong>{{ auth.user()?.email }}</strong></span
+        >
+        <button class="btn" type="button" (click)="logout()">
+          <span class="i">logout</span>Sign out
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

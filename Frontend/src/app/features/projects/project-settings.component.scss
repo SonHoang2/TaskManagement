@@ -1,0 +1,15 @@
+.project-settings {
+  max-width: 760px;
+  gap: 20px;
+}
+
+.danger-zone {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  .card__header h2 {
+    color: var(--danger);
+  }
+  &__body {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}

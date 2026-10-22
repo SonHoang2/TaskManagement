@@ -6,7 +6,7 @@
     </div>
   </div>
 
-  <nav class="tabs" style="margin-bottom: 20px">
+  <nav class="tabs team-tabs">
     <button type="button" [class.active]="tab() === 'team'" (click)="tab.set('team')">
       <span class="i">diversity_3</span>My teammates
       <span class="count">{{ teammates().length }}</span>
@@ -32,7 +32,7 @@
     @if (loadingTeam()) {
       <div class="grid-cards">
         @for (i of [1, 2, 3, 4]; track i) {
-          <div class="skeleton" style="height: 170px; border-radius: 14px"></div>
+          <div class="skeleton person-skeleton"></div>
         }
       </div>
     } @else {
@@ -78,7 +78,7 @@
             </div>
           </article>
         } @empty {
-          <div class="card" style="grid-column: 1 / -1">
+          <div class="card full">
             <app-empty-state
               icon="group_add"
               title="No teammates yet"
@@ -112,7 +112,7 @@
       } @else if (!directory()?.content?.length) {
         <app-empty-state icon="person_search" title="No people found" [compact]="true" />
       } @else {
-        <div class="table-wrap" [style.opacity]="loadingDir() ? 0.6 : 1">
+        <div class="table-wrap" [class.loading-dim]="loadingDir()">
           <table class="table">
             <thead>
               <tr>
@@ -133,7 +133,7 @@
                         [url]="u.avatarUrl"
                         size="sm"
                       />
-                      <span style="font-weight: 550">{{ u.fullName }}</span>
+                      <span class="medium">{{ u.fullName }}</span>
                       @if (isMe(u.id)) {
                         <span class="pill pill--primary">You</span>
                       }
@@ -152,7 +152,7 @@
           </table>
         </div>
         @if (directory()!.totalPages > 1) {
-          <div class="card__footer" style="justify-content: center; align-items: center; gap: 14px">
+          <div class="card__footer pager">
             <button
               class="btn btn--sm"
               type="button"

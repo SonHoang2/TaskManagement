@@ -9,6 +9,7 @@ import { TasksService } from '../../core/services/tasks.service';
 import { UsersService } from '../../core/services/users.service';
 import { WorkspaceService } from '../../core/services/workspace.service';
 import { ToastService } from '../../core/ui/toast.service';
+import { percent } from '../../core/utils/format';
 
 /** State for one open project, shared by its tabs (board, list, sprints…). */
 @Injectable()
@@ -45,7 +46,7 @@ export class ProjectContext {
       todo: t.filter((x) => x.status === 'TODO').length,
       inProgress: t.filter((x) => x.status === 'IN_PROGRESS').length,
       done,
-      pct: t.length ? Math.round((done / t.length) * 100) : 0,
+      pct: percent(done, t.length),
     };
   });
 

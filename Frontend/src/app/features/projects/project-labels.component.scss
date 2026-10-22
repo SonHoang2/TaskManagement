@@ -1,0 +1,48 @@
+.label-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.label-form .input {
+  min-width: 180px;
+}
+.preview {
+  min-width: 72px;
+}
+.swatches {
+  display: flex;
+  gap: 4px;
+}
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+  padding: 0;
+  &.on {
+    box-shadow: 0 0 0 2px var(--text);
+  }
+}
+.labels {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px 8px 20px;
+  }
+  li + li {
+    border-top: 1px solid var(--border);
+  }
+  li.editing {
+    background: var(--primary-soft);
+  }
+}
