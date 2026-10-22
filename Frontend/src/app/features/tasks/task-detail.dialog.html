@@ -76,7 +76,7 @@
               (keydown.escape)="$event.stopPropagation(); editingDesc.set(false)"
               placeholder="Add a more detailed description…"
             ></textarea>
-            <div class="row" style="margin-top: 8px">
+            <div class="row edit-actions">
               <button class="btn btn--primary btn--sm" type="button" (click)="saveDesc()">
                 Save
               </button>
@@ -187,7 +187,7 @@
           </div>
 
           @if (loading()) {
-            <app-skeleton [count]="2" [height]="48" style="margin-top: 16px" />
+            <app-skeleton class="td__loading" [count]="2" [height]="48" />
           } @else if (tab() === 'comments') {
             <div class="comments">
               @for (c of comments(); track c.id) {
@@ -224,7 +224,7 @@
                         [ngModel]="commentEditDraft()"
                         (ngModelChange)="commentEditDraft.set($event)"
                       ></textarea>
-                      <div class="row" style="margin-top: 6px">
+                      <div class="row edit-actions">
                         <button
                           class="btn btn--primary btn--sm"
                           type="button"
@@ -246,9 +246,7 @@
                   </div>
                 </div>
               } @empty {
-                <p class="subtle small" style="padding: 8px 0">
-                  No comments yet. Start the conversation.
-                </p>
+                <p class="subtle small td__empty">No comments yet. Start the conversation.</p>
               }
 
               <div class="comment comment--new">
@@ -262,7 +260,7 @@
                     (ngModelChange)="commentDraft.set($event)"
                     (keydown)="onCommentKey($event)"
                   ></textarea>
-                  <div class="row" style="margin-top: 8px; justify-content: flex-end">
+                  <div class="row edit-actions edit-actions--end">
                     <button
                       class="btn btn--primary btn--sm"
                       type="button"
@@ -295,7 +293,7 @@
                   </div>
                 </li>
               } @empty {
-                <p class="subtle small" style="padding: 8px 0">No recorded activity yet.</p>
+                <p class="subtle small td__empty">No recorded activity yet.</p>
               }
             </ol>
           }
@@ -391,7 +389,7 @@
           <span class="prop__label">Labels</span>
           <div class="labels">
             @for (l of appliedLabels(); track l.id) {
-              <span class="label-chip" [style.--c]="l.color || '#64748b'">{{ l.name }}</span>
+              <span class="label-chip" [style.--c]="l.color">{{ l.name }}</span>
             }
             @if (labels().length) {
               <button class="btn btn--ghost btn--sm" type="button" [matMenuTriggerFor]="labelMenu">
@@ -406,12 +404,13 @@
               <button
                 class="menu-item"
                 mat-menu-item
+                [class.selected]="taskLabelIds().has(l.id)"
                 (click)="$event.stopPropagation(); toggleLabel(l)"
               >
-                <span class="label-dot" [style.background]="l.color || '#64748b'"></span>
+                <span class="label-dot" [style.--c]="l.color"></span>
                 <span class="grow">{{ l.name }}</span>
                 @if (taskLabelIds().has(l.id)) {
-                  <span class="i" style="color: var(--primary)">check</span>
+                  <span class="i">check</span>
                 }
               </button>
             }
@@ -435,9 +434,8 @@
       </aside>
     </div>
   } @else {
-    <div style="padding: 24px">
+    <div class="td__placeholder stack stack--lg">
       <app-skeleton [count]="1" [height]="36" />
-      <div style="height: 16px"></div>
       <app-skeleton [count]="3" [height]="64" />
     </div>
   }

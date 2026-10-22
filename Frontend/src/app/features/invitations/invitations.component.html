@@ -1,0 +1,93 @@
+<div class="page page--narrow">
+  <div class="page-header">
+    <div class="page-header__text">
+      <h1>Invitations</h1>
+      <p>Projects you've been invited to join.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <app-skeleton [count]="3" [height]="76" />
+  } @else {
+    <div class="section-title">
+      <h2>Pending</h2>
+      <span class="count count--primary">{{ pending().length }}</span>
+    </div>
+    <div class="stack">
+      @for (inv of pending(); track inv.id) {
+        <article class="card invite">
+          <span class="invite__icon" [style.background]="colorFor(inv.projectId)">{{
+            projectName(inv.projectId).charAt(0)
+          }}</span>
+          <div class="grow">
+            <h3 class="truncate">{{ projectName(inv.projectId) }}</h3>
+            <div class="row subtle small invite__meta">
+              <app-avatar [userId]="inv.invitedById" size="xs" />
+              <span
+                ><strong class="muted">{{ users.name(inv.invitedById) }}</strong> invited you ·
+                {{ inv.createdAt | ago }}</span
+              >
+            </div>
+          </div>
+          <button
+            class="btn btn--ghost"
+            type="button"
+            (click)="decide(inv, 'REJECT')"
+            [disabled]="busy() === inv.id"
+          >
+            Decline
+          </button>
+          <button
+            class="btn btn--primary"
+            type="button"
+            (click)="decide(inv, 'ACCEPT')"
+            [disabled]="busy() === inv.id"
+          >
+            @if (busy() === inv.id) {
+              <span class="spinner"></span>
+            } @else {
+              <span class="i">check</span>
+            }
+            Accept
+          </button>
+        </article>
+      } @empty {
+        <div class="card">
+          <app-empty-state
+            icon="mark_email_read"
+            title="No pending invitations"
+            text="When someone invites you to a project it'll appear here."
+            [compact]="true"
+          />
+        </div>
+      }
+    </div>
+
+    @if (history().length) {
+      <div class="section-title history-heading"><h2>History</h2></div>
+      <div class="card">
+        @for (inv of history(); track inv.id) {
+          <div class="task-row history-row">
+            <span
+              class="invite__icon invite__icon--sm"
+              [style.background]="colorFor(inv.projectId)"
+              >{{ projectName(inv.projectId).charAt(0) }}</span
+            >
+            <span class="task-row__title">{{ projectName(inv.projectId) }}</span>
+            <span class="subtle small hide-sm">from {{ users.name(inv.invitedById) }}</span>
+            <span
+              class="pill"
+              [class.pill--done]="inv.status === 'ACCEPTED'"
+              [class.pill--danger]="inv.status === 'REJECTED'"
+            >
+              {{ inv.status === 'ACCEPTED' ? 'Accepted' : 'Declined' }}
+            </span>
+            <span class="subtle small history-row__time">{{
+              inv.respondedAt || inv.createdAt | ago
+            }}</span>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

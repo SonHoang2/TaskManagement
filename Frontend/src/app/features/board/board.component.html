@@ -80,11 +80,11 @@
       @for (s of statuses; track s) {
         <div class="column">
           <div class="column__head">
-            <div class="skeleton" style="width: 90px; height: 18px"></div>
+            <div class="skeleton column__title-skeleton"></div>
           </div>
           <div class="column__body">
             @for (i of [1, 2, 3]; track i) {
-              <div class="skeleton" style="height: 92px"></div>
+              <div class="skeleton column__card-skeleton"></div>
             }
           </div>
         </div>
@@ -142,9 +142,7 @@
                   <div class="tcard__labels">
                     @for (tl of t.labels; track tl.labelId) {
                       @if (labelOf(tl.labelId); as l) {
-                        <span class="label-chip" [style.--c]="l.color || '#64748b'">{{
-                          l.name
-                        }}</span>
+                        <span class="label-chip" [style.--c]="l.color">{{ l.name }}</span>
                       }
                     }
                   </div>

@@ -79,6 +79,12 @@ export function initials(name: string | null | undefined): string {
   return (first + last).toUpperCase();
 }
 
+// ---------- Numbers ----------
+/** Whole-number percentage of `part` in `total`; 0 when `total` is 0. */
+export function percent(part: number, total: number): number {
+  return total ? Math.round((part / total) * 100) : 0;
+}
+
 // ---------- Dates ----------
 const DAY = 86_400_000;
 
@@ -91,13 +97,17 @@ function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
+/** Date -> `YYYY-MM-DD` in local time. */
+export function localDay(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /** ISO instant -> `YYYY-MM-DD` in local time, for `<input type="date">`. */
 export function toDateInput(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return isNaN(d.getTime()) ? '' : localDay(d);
 }
 
 /** `YYYY-MM-DD` (local) -> ISO instant at local midnight, or null. */

@@ -1,0 +1,26 @@
+.gdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.tone-todo {
+  color: var(--todo);
+}
+.tone-progress {
+  color: var(--progress);
+}
+.tone-done {
+  color: var(--done);
+}
+.tone-danger {
+  color: var(--danger);
+}
+.tone-warning {
+  color: var(--warning);
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+.segmented .count {
+  margin-left: 2px;
+}

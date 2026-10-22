@@ -56,7 +56,7 @@
   @if (loading() && !data()) {
     <div class="grid-cards">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-        <div class="skeleton" style="height: 190px; border-radius: 14px"></div>
+        <div class="skeleton pcard-skeleton"></div>
       }
     </div>
   } @else if (!data()?.content?.length) {
@@ -132,7 +132,7 @@
                   >{{ p.memberCount }} {{ p.memberCount === 1 ? 'member' : 'members' }}</span
                 >
                 <span class="spacer"></span>
-                <span class="row small subtle" style="gap: 4px">
+                <span class="row small subtle pcard__owner">
                   <app-avatar
                     [userId]="p.owner.id"
                     [name]="p.owner.fullName"
@@ -168,11 +168,11 @@
                         [style.background]="colorFor(p.id)"
                         >{{ p.name.charAt(0) }}</span
                       >
-                      <div style="min-width: 0">
-                        <div class="truncate" style="font-weight: 600; max-width: 320px">
+                      <div class="project-cell__text">
+                        <div class="truncate semibold project-cell__name">
                           {{ p.name }}
                         </div>
-                        <div class="truncate subtle small" style="max-width: 320px">
+                        <div class="truncate subtle small project-cell__desc">
                           {{ p.description }}
                         </div>
                       </div>
@@ -183,11 +183,11 @@
                       <app-role [value]="p.myRole" />
                     }
                   </td>
-                  <td style="min-width: 140px">
+                  <td class="progress-cell">
                     <div class="progress">
                       <span class="progress__done" [style.width.%]="pct(p)"></span>
                     </div>
-                    <div class="subtle small" style="margin-top: 4px">
+                    <div class="subtle small progress-cell__label">
                       {{ p.taskStats.done }}/{{ p.taskStats.total }} · {{ pct(p) }}%
                     </div>
                   </td>

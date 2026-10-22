@@ -1,3 +1,12 @@
+.team-tabs {
+  margin-bottom: 20px;
+}
+
+.person-skeleton {
+  height: 170px;
+  border-radius: var(--radius-lg);
+}
+
 .person {
   display: flex;
   flex-direction: column;
@@ -73,4 +82,10 @@
     border-radius: 3px;
     flex-shrink: 0;
   }
+}
+
+.pager {
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
 }

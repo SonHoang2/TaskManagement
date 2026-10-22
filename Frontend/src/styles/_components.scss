@@ -296,6 +296,9 @@ html[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
       font-size: 15px;
     }
   }
+  &__icon {
+    color: var(--primary);
+  }
   &__body {
     padding: 20px;
   }
@@ -814,6 +817,10 @@ kbd,
   &__body {
     padding: 12px 24px 20px;
     overflow-y: auto;
+  }
+  // Form-level error shown under the fields.
+  &__error {
+    margin-top: 12px;
   }
   &__footer {
     display: flex;

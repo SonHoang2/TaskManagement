@@ -11,78 +11,8 @@ import { ProjectContext } from './project-context';
   selector: 'app-project-settings',
   imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="page stack" style="padding-top: 24px; max-width: 760px; gap: 20px">
-      @if (!ctx.canManage() && ctx.myRole()) {
-        <div class="alert alert--info">
-          <span class="i">info</span>Only the project owner or an admin can change these settings.
-        </div>
-      }
-
-      <form class="card" [formGroup]="form" (ngSubmit)="save()">
-        <header class="card__header"><h2>General</h2></header>
-        <div class="card__body stack" style="gap: 16px">
-          <div class="field">
-            <label for="ps-name">Project name</label>
-            <input id="ps-name" class="input" formControlName="name" maxlength="200" />
-            @if (form.controls.name.touched && form.controls.name.invalid) {
-              <span class="field__error">Name is required.</span>
-            }
-          </div>
-          <div class="field">
-            <label for="ps-desc">Description</label>
-            <textarea
-              id="ps-desc"
-              class="textarea"
-              formControlName="description"
-              rows="4"
-              maxlength="2000"
-            ></textarea>
-          </div>
-        </div>
-        <footer class="card__footer">
-          <button
-            class="btn btn--primary"
-            type="submit"
-            [disabled]="!ctx.canManage() || form.pristine || saving()"
-          >
-            @if (saving()) {
-              <span class="spinner"></span>
-            }
-            Save changes
-          </button>
-        </footer>
-      </form>
-
-      <section class="card danger-zone">
-        <header class="card__header"><h2>Danger zone</h2></header>
-        <div class="card__body row" style="gap: 16px; flex-wrap: wrap">
-          <div class="grow">
-            <strong>Delete this project</strong>
-            <p class="muted small">
-              Removes the project and its memberships. This cannot be undone.
-            </p>
-          </div>
-          <button
-            class="btn btn--danger"
-            type="button"
-            (click)="remove()"
-            [disabled]="!ctx.canManage()"
-          >
-            <span class="i">delete_forever</span>Delete project
-          </button>
-        </div>
-      </section>
-    </div>
-  `,
-  styles: `
-    .danger-zone {
-      border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
-      .card__header h2 {
-        color: var(--danger);
-      }
-    }
-  `,
+  templateUrl: './project-settings.component.html',
+  styleUrl: './project-settings.component.scss',
 })
 export class ProjectSettingsComponent {
   protected readonly ctx = inject(ProjectContext);

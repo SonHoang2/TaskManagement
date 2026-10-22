@@ -1,0 +1,81 @@
+<div class="page page--tab page--narrow">
+  <section class="card">
+    <header class="card__header">
+      <div class="grow">
+        <h2>Labels</h2>
+        <p class="subtle small">Group and filter tasks — e.g. bug, design, backend.</p>
+      </div>
+    </header>
+
+    <form class="label-form" (ngSubmit)="save()">
+      <span class="label-chip preview" [style.--c]="color()">{{ name().trim() || 'Preview' }}</span>
+      <input
+        class="input input--sm grow"
+        name="name"
+        placeholder="Label name"
+        maxlength="50"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+      />
+      <div class="swatches" role="radiogroup" aria-label="Color">
+        @for (c of colors; track c) {
+          <button
+            type="button"
+            class="swatch"
+            [class.on]="c === color()"
+            [style.background]="c"
+            (click)="color.set(c)"
+            [attr.aria-label]="c"
+            role="radio"
+            [attr.aria-checked]="c === color()"
+          ></button>
+        }
+      </div>
+      <button
+        class="btn btn--primary btn--sm"
+        type="submit"
+        [disabled]="!name().trim() || saving()"
+      >
+        {{ editing() ? 'Save' : 'Add label' }}
+      </button>
+      @if (editing()) {
+        <button class="btn btn--ghost btn--sm" type="button" (click)="reset()">Cancel</button>
+      }
+    </form>
+
+    @if (sorted().length) {
+      <ul class="labels">
+        @for (l of sorted(); track l.id) {
+          <li [class.editing]="editing()?.id === l.id">
+            <span class="label-chip" [style.--c]="l.color">{{ l.name }}</span>
+            <span class="subtle small">{{ usage().get(l.id) ?? 0 }} tasks</span>
+            <span class="spacer"></span>
+            <button
+              class="btn btn--ghost btn--icon btn--sm"
+              type="button"
+              (click)="edit(l)"
+              aria-label="Edit label"
+            >
+              <span class="i">edit</span>
+            </button>
+            <button
+              class="btn btn--danger-ghost btn--icon btn--sm"
+              type="button"
+              (click)="remove(l)"
+              aria-label="Delete label"
+            >
+              <span class="i">delete</span>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <app-empty-state
+        icon="sell"
+        title="No labels yet"
+        text="Create your first label above."
+        [compact]="true"
+      />
+    }
+  </section>
+</div>

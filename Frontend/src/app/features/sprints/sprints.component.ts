@@ -14,7 +14,7 @@ import { Sprint, SprintStatus, TaskDetail } from '../../core/models';
 import { SprintsService } from '../../core/services/sprints.service';
 import { ConfirmService } from '../../core/ui/confirm.service';
 import { ToastService } from '../../core/ui/toast.service';
-import { STATUS_META, compareTasks, daysUntil, shortDate } from '../../core/utils/format';
+import { STATUS_META, compareTasks, daysUntil, percent, shortDate } from '../../core/utils/format';
 import { AvatarComponent } from '../../shared/components/avatar.component';
 import {
   DueDateComponent,
@@ -119,7 +119,7 @@ export class SprintsComponent {
     return {
       done,
       total: tasks.length,
-      pct: tasks.length ? Math.round((done / tasks.length) * 100) : 0,
+      pct: percent(done, tasks.length),
     };
   }
 

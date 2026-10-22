@@ -68,7 +68,7 @@
   <div class="dash-grid">
     <section class="card">
       <header class="card__header">
-        <span class="i" style="color: var(--primary)">target</span>
+        <span class="i card__icon">target</span>
         <h2>My focus</h2>
         <span class="spacer"></span>
         <a routerLink="/my-tasks" class="small">View all</a>
@@ -103,7 +103,7 @@
 
     <section class="card">
       <header class="card__header">
-        <span class="i" style="color: var(--primary)">donut_large</span>
+        <span class="i card__icon">donut_large</span>
         <h2>Work across my projects</h2>
       </header>
       <div class="card__body donut-wrap">
@@ -161,7 +161,7 @@
     </section>
   </div>
 
-  <div class="section-title" style="margin-top: 28px">
+  <div class="section-title recent-heading">
     <h2>Recent projects</h2>
     <a routerLink="/projects">All projects</a>
   </div>
@@ -204,7 +204,7 @@
           </div>
         </a>
       } @empty {
-        <div class="card" style="grid-column: 1 / -1">
+        <div class="card full">
           <app-empty-state
             icon="rocket_launch"
             title="No projects yet"

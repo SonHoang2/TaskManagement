@@ -1,0 +1,16 @@
+.key-col {
+  width: 80px;
+}
+
+.title-cell {
+  max-width: 420px;
+  &__labels {
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+}
+
+.assignee-name {
+  max-width: 140px;
+}

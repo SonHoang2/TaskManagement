@@ -1,0 +1,61 @@
+<form class="dialog" [formGroup]="form" (ngSubmit)="save()">
+  <div class="dialog__header">
+    <div class="grow">
+      <h2 class="dialog__title">{{ data.sprint ? 'Edit sprint' : 'New sprint' }}</h2>
+      <p class="muted small">A time-boxed batch of work, usually 1–2 weeks.</p>
+    </div>
+    <button
+      class="btn btn--ghost btn--icon btn--sm"
+      type="button"
+      (click)="ref.close()"
+      aria-label="Close"
+    >
+      <span class="i">close</span>
+    </button>
+  </div>
+  <div class="dialog__body">
+    <div class="form-grid">
+      <div class="field full">
+        <label for="sf-name">Name</label>
+        <input
+          id="sf-name"
+          class="input"
+          formControlName="name"
+          placeholder="Sprint 1"
+          cdkFocusInitial
+        />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <span class="field__error">Name is required.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="sf-start">Start date</label>
+        <input id="sf-start" class="input" type="date" formControlName="startDate" />
+      </div>
+      <div class="field">
+        <label for="sf-end">End date</label>
+        <input id="sf-end" class="input" type="date" formControlName="endDate" />
+      </div>
+      <div class="field full">
+        <label for="sf-status">Status</label>
+        <select id="sf-status" class="select" formControlName="status">
+          <option value="PLANNED">Planned</option>
+          <option value="ACTIVE">Active</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
+      </div>
+    </div>
+    @if (dateError()) {
+      <p class="field__error dialog__error">End date must be after the start date.</p>
+    }
+  </div>
+  <div class="dialog__footer">
+    <button class="btn btn--ghost" type="button" (click)="ref.close()">Cancel</button>
+    <button class="btn btn--primary" type="submit" [disabled]="saving()">
+      @if (saving()) {
+        <span class="spinner"></span>
+      }
+      {{ data.sprint ? 'Save' : 'Create sprint' }}
+    </button>
+  </div>
+</form>

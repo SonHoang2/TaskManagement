@@ -8,8 +8,16 @@
   &--wide {
     max-width: none;
   }
+  // Single-column pages (notifications, invitations, settings).
+  &--narrow {
+    max-width: 880px;
+  }
   @media (max-width: 768px) {
     padding: 20px 16px 40px;
+  }
+  // Tab content under the project header, which already provides top spacing.
+  &--tab {
+    padding-top: 24px;
   }
 }
 
@@ -83,6 +91,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+  .full {
+    grid-column: 1 / -1;
+  }
 }
 
 .section-title {

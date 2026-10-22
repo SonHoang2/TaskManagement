@@ -135,6 +135,12 @@ textarea {
 .small {
   font-size: 12px;
 }
+.medium {
+  font-weight: 550;
+}
+.semibold {
+  font-weight: 600;
+}
 .mono {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -155,6 +161,9 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  &--lg {
+    gap: 16px;
+  }
 }
 .grow {
   flex: 1;
@@ -162,6 +171,15 @@ textarea {
 }
 .spacer {
   flex: 1;
+}
+.loading-dim {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+@media (max-width: 640px) {
+  .hide-sm {
+    display: none;
+  }
 }
 .sr-only {
   position: absolute;

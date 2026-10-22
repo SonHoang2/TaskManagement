@@ -1,0 +1,57 @@
+@if (ctx.error()) {
+  <div class="page">
+    <app-empty-state icon="lock" title="Can't open this project" [text]="ctx.error()!">
+      <a class="btn" routerLink="/projects"><span class="i">arrow_back</span>Back to projects</a>
+    </app-empty-state>
+  </div>
+} @else {
+  <div class="project-head">
+    <div class="project-head__inner">
+      <div class="eyebrow">
+        <a routerLink="/projects">Projects</a><span class="i">chevron_right</span>
+      </div>
+      <div class="row project-head__main">
+        <span class="project-icon" [style.background]="colorFor(ctx.id())">
+          {{ ctx.project()?.name?.charAt(0) ?? '' }}
+        </span>
+        <div class="grow">
+          @if (ctx.project(); as p) {
+            <h1 class="truncate">{{ p.name }}</h1>
+            <p class="muted truncate">{{ p.description || 'No description' }}</p>
+          } @else {
+            <div class="skeleton project-head__title-skeleton"></div>
+            <div class="skeleton project-head__desc-skeleton"></div>
+          }
+        </div>
+        <div class="row project-head__meta">
+          <div
+            class="progress-ring"
+            [style.--pct]="ctx.stats().pct"
+            [attr.title]="ctx.stats().pct + '% done'"
+          >
+            <span>{{ ctx.stats().pct }}%</span>
+          </div>
+          <a [routerLink]="['members']" class="row">
+            <app-avatar-stack [ids]="memberIds()" [max]="4" />
+          </a>
+          <button class="btn btn--primary" type="button" (click)="newTask()">
+            <span class="i">add</span>New task
+          </button>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <a routerLink="board" routerLinkActive="active"><span class="i">view_kanban</span>Board</a>
+        <a routerLink="list" routerLinkActive="active"><span class="i">list</span>List</a>
+        <a routerLink="sprints" routerLinkActive="active"><span class="i">sprint</span>Sprints</a>
+        <a routerLink="members" routerLinkActive="active"
+          ><span class="i">group</span>Members
+          <span class="count">{{ ctx.members().length }}</span></a
+        >
+        <a routerLink="labels" routerLinkActive="active"><span class="i">sell</span>Labels</a>
+        <a routerLink="settings" routerLinkActive="active"><span class="i">tune</span>Settings</a>
+      </nav>
+    </div>
+  </div>
+  <router-outlet />
+}
