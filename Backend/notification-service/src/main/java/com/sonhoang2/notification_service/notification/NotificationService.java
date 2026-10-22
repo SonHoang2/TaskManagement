@@ -15,10 +15,10 @@ public interface NotificationService {
 
     PageResponse<NotificationResponse> findAll(UUID userId, Boolean isRead, NotificationType type, Pageable pageable);
 
-    NotificationResponse findById(UUID id);
+    NotificationResponse findById(UUID id, UUID userId);
 
-    NotificationResponse update(UUID id, NotificationUpdateRequest request);
+    NotificationResponse update(UUID id, NotificationUpdateRequest request, UUID userId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID userId);
 }
 
