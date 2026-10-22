@@ -41,6 +41,9 @@ class AuthControllerTest {
     private AuthService authService;
 
     @MockitoBean
+    private AuthRateLimitService authRateLimitService;
+
+    @MockitoBean
     private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     private LoginRequest loginRequest;

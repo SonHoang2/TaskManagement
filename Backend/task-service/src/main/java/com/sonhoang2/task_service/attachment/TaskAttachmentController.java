@@ -27,9 +27,10 @@ public class TaskAttachmentController {
 
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, TaskAttachmentResponse>>> create(
-            @Valid @RequestBody TaskAttachmentCreateRequest request
+            @Valid @RequestBody TaskAttachmentCreateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
-        TaskAttachmentResponse attachment = taskAttachmentService.create(request);
+        TaskAttachmentResponse attachment = taskAttachmentService.create(request, currentUserId);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -42,31 +43,41 @@ public class TaskAttachmentController {
 
     @GetMapping
     public ResponseEntity<JSendResponse<Map<String, PageResponse<TaskAttachmentResponse>>>> findAll(
-            @RequestParam(required = false) UUID taskId,
+            @RequestParam UUID taskId,
             @RequestParam(required = false) UUID uploadedBy,
+            @RequestHeader("X-User-Id") UUID currentUserId,
             Pageable pageable
     ) {
-        PageResponse<TaskAttachmentResponse> pageResponse = taskAttachmentService.findAll(taskId, uploadedBy, pageable);
+        PageResponse<TaskAttachmentResponse> pageResponse =
+                taskAttachmentService.findAll(taskId, uploadedBy, pageable, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JSendResponse<Map<String, TaskAttachmentResponse>>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("attachment", taskAttachmentService.findById(id))));
+    public ResponseEntity<JSendResponse<Map<String, TaskAttachmentResponse>>> findById(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("attachment",
+                taskAttachmentService.findById(id, currentUserId))));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskAttachmentResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody TaskAttachmentUpdateRequest request
+            @Valid @RequestBody TaskAttachmentUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
         return ResponseEntity.ok(JSendResponse.success(Map.of("attachment",
-                taskAttachmentService.update(id, request))));
+                taskAttachmentService.update(id, request, currentUserId))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
-        taskAttachmentService.delete(id);
+    public ResponseEntity<JSendResponse<Void>> delete(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        taskAttachmentService.delete(id, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

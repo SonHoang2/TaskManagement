@@ -1,5 +1,8 @@
 package com.sonhoang2.project_service.project;
 
+import com.sonhoang2.project_service.common.dto.JSendResponse;
+import com.sonhoang2.project_service.common.dto.UserResponse;
+import com.sonhoang2.project_service.common.enums.UserRole;
 import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.project_service.events.EventPublisher;
@@ -7,6 +10,7 @@ import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
+import com.sonhoang2.project_service.project.dto.ListProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
@@ -23,10 +27,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -431,5 +439,46 @@ class ProjectServiceImplTest {
         assertThrows(AccessDeniedException.class, () ->
                 projectService.listMembers(projectId, userId));
         verify(projectMemberRepository, never()).findByProjectIdOrderByJoinedAtAsc(any());
+    }
+
+    @Test
+    void listAllProject_ShouldOnlyReturnMemberProjects_ForRegularUser() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(userServiceClient.findById(userId)).thenReturn(userWithRole(UserRole.USER));
+        when(projectRepository.findByMemberUserId(userId, pageable)).thenReturn(Page.empty(pageable));
+
+        projectService.listAllProject(pageable, userId, new ListProjectRequest());
+
+        verify(projectRepository).findByMemberUserId(userId, pageable);
+        verify(projectRepository, never()).findAll(any(Pageable.class));
+    }
+
+    @Test
+    void listAllProject_ShouldReturnEveryProject_ForSystemAdmin() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(userServiceClient.findById(userId)).thenReturn(userWithRole(UserRole.ADMIN));
+        when(projectRepository.findAll(pageable)).thenReturn(Page.empty(pageable));
+
+        projectService.listAllProject(pageable, userId, new ListProjectRequest());
+
+        verify(projectRepository).findAll(pageable);
+        verify(projectRepository, never()).findByMemberUserId(any(), any());
+    }
+
+    @Test
+    void listAllProject_ShouldFallBackToMemberProjects_WhenRoleLookupFails() {
+        Pageable pageable = PageRequest.of(0, 10);
+        ListProjectRequest request = new ListProjectRequest();
+        request.setSearch("alpha");
+        when(userServiceClient.findById(userId)).thenThrow(FeignException.ServiceUnavailable.class);
+        when(projectRepository.searchByMemberUserId(userId, "alpha", pageable)).thenReturn(Page.empty(pageable));
+
+        projectService.listAllProject(pageable, userId, request);
+
+        verify(projectRepository, never()).searchByNameOrDescription(any(), any());
+    }
+
+    private static JSendResponse<Map<String, UserResponse>> userWithRole(UserRole role) {
+        return JSendResponse.success(Map.of("user", UserResponse.builder().role(role).build()));
     }
 }

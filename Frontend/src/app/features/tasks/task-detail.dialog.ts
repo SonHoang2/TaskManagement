@@ -105,6 +105,9 @@ export class TaskDetailDialog {
   protected readonly myRole = computed(
     () => this.members().find((m) => m.userId === this.me())?.role,
   );
+  protected readonly canManage = computed(
+    () => this.myRole() === 'OWNER' || this.myRole() === 'ADMIN',
+  );
   protected readonly appliedLabels = computed(() =>
     this.labels().filter((l) => this.taskLabelIds().has(l.id)),
   );

@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface SprintService {
 
-    SprintResponse create(SprintCreateRequest request);
+    SprintResponse create(SprintCreateRequest request, UUID userId);
 
-    PageResponse<SprintResponse> findAll(UUID projectId, Pageable pageable);
+    PageResponse<SprintResponse> findAll(UUID projectId, Pageable pageable, UUID userId);
 
-    SprintResponse findById(UUID id);
+    SprintResponse findById(UUID id, UUID userId);
 
-    SprintResponse update(UUID id, SprintUpdateRequest request);
+    SprintResponse update(UUID id, SprintUpdateRequest request, UUID userId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID userId);
 }

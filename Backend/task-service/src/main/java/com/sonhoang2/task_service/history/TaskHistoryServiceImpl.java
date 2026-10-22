@@ -2,6 +2,7 @@ package com.sonhoang2.task_service.history;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.history.dto.TaskHistoryCreateRequest;
 import com.sonhoang2.task_service.history.dto.TaskHistoryResponse;
 import com.sonhoang2.task_service.history.dto.TaskHistoryUpdateRequest;
@@ -22,6 +23,7 @@ public class TaskHistoryServiceImpl implements TaskHistoryService {
 
     private final TaskHistoryRepository taskHistoryRepository;
     private final ModelMapper modelMapper;
+    private final ProjectAccessGuard projectAccessGuard;
 
     private PageResponse<TaskHistoryResponse> toPageResponse(Page<TaskHistory> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -35,10 +37,12 @@ public class TaskHistoryServiceImpl implements TaskHistoryService {
     }
 
     @Override
-    public TaskHistoryResponse create(TaskHistoryCreateRequest request) {
+    public TaskHistoryResponse create(TaskHistoryCreateRequest request, UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(request.getTaskId(), currentUserId);
+
         TaskHistory history = TaskHistory.builder()
                 .taskId(request.getTaskId())
-                .changedBy(request.getChangedBy())
+                .changedBy(currentUserId)
                 .field(request.getField())
                 .oldValue(request.getOldValue())
                 .newValue(request.getNewValue())
@@ -48,39 +52,47 @@ public class TaskHistoryServiceImpl implements TaskHistoryService {
     }
 
     @Override
-    public PageResponse<TaskHistoryResponse> findAll(UUID taskId, UUID changedBy, Pageable pageable) {
-        Page<TaskHistory> page;
+    public PageResponse<TaskHistoryResponse> findAll(UUID taskId,
+                                                     UUID changedBy,
+                                                     Pageable pageable,
+                                                     UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(taskId, currentUserId);
 
-        if (taskId != null && changedBy != null) {
-            page = taskHistoryRepository.findByTaskIdAndChangedBy(taskId, changedBy, pageable);
-        } else if (taskId != null) {
-            page = taskHistoryRepository.findByTaskId(taskId, pageable);
-        } else if (changedBy != null) {
-            page = taskHistoryRepository.findByChangedBy(changedBy, pageable);
-        } else {
-            page = taskHistoryRepository.findAll(pageable);
-        }
+        Page<TaskHistory> page = changedBy != null
+                ? taskHistoryRepository.findByTaskIdAndChangedBy(taskId, changedBy, pageable)
+                : taskHistoryRepository.findByTaskId(taskId, pageable);
 
         return toPageResponse(page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public TaskHistoryResponse findById(UUID id) {
-        return toResponse(findHistoryByIdOrThrow(id));
+    public TaskHistoryResponse findById(UUID id, UUID currentUserId) {
+        TaskHistory history = findHistoryByIdOrThrow(id);
+        projectAccessGuard.requireTaskMember(history.getTaskId(), currentUserId);
+        return toResponse(history);
     }
 
+    // History is an audit trail: rewriting it is reserved for project owners/admins.
     @Override
-    public TaskHistoryResponse update(UUID id, TaskHistoryUpdateRequest request) {
+    public TaskHistoryResponse update(UUID id, TaskHistoryUpdateRequest request, UUID currentUserId) {
         TaskHistory history = findHistoryByIdOrThrow(id);
+        requireManagerOfTask(history.getTaskId(), currentUserId);
         modelMapper.map(request, history);
 
         return toResponse(history);
     }
 
     @Override
-    public void delete(UUID id) {
-        taskHistoryRepository.delete(findHistoryByIdOrThrow(id));
+    public void delete(UUID id, UUID currentUserId) {
+        TaskHistory history = findHistoryByIdOrThrow(id);
+        requireManagerOfTask(history.getTaskId(), currentUserId);
+        taskHistoryRepository.delete(history);
+    }
+
+    private void requireManagerOfTask(UUID taskId, UUID currentUserId) {
+        UUID projectId = projectAccessGuard.requireTaskMember(taskId, currentUserId);
+        projectAccessGuard.requireManager(projectId, currentUserId);
     }
 
     private TaskHistory findHistoryByIdOrThrow(UUID id) {

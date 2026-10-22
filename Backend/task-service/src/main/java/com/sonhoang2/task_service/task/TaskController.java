@@ -47,14 +47,16 @@ public class TaskController {
     public ResponseEntity<JSendResponse<Map<String, PageResponse<TaskResponse>>>> findAll(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
+            @RequestHeader("X-User-Id") UUID userId,
             Pageable pageable) {
-        PageResponse<TaskResponse> pageResponse = taskService.findAll(status, keyword, pageable);
+        PageResponse<TaskResponse> pageResponse = taskService.findAll(status, keyword, pageable, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.findById(id))));
+    public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> findById(@PathVariable UUID id,
+                                                                             @RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.findById(id, userId))));
     }
 
     @GetMapping("/project/{projectId}")
@@ -62,32 +64,37 @@ public class TaskController {
             @PathVariable UUID projectId,
             @RequestHeader("X-User-Id") UUID userId,
             Pageable pageable) {
-        PageResponse<TaskDetailResponse> tasks = taskService.findByProjectId(projectId, pageable);
+        PageResponse<TaskDetailResponse> tasks = taskService.findByProjectId(projectId, pageable, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", tasks)));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody TaskUpdateRequest request) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.update(id, request))));
+            @Valid @RequestBody TaskUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("task", taskService.update(id, request, userId))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
-        taskService.delete(id);
+    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id,
+                                                      @RequestHeader("X-User-Id") UUID userId) {
+        taskService.delete(id, userId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 
     @GetMapping("/distribution")
-    public ResponseEntity<JSendResponse<Map<String, TaskDistributionResponse>>> getTaskDistribution() {
-        TaskDistributionResponse distribution = taskService.getTaskDistribution();
+    public ResponseEntity<JSendResponse<Map<String, TaskDistributionResponse>>> getTaskDistribution(
+            @RequestHeader("X-User-Id") UUID userId) {
+        TaskDistributionResponse distribution = taskService.getTaskDistribution(userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("distribution", distribution)));
     }
 
     @GetMapping("/project/{projectId}/stats")
-    public ResponseEntity<JSendResponse<Map<String, TaskStats>>> getTaskStatsByProjectId(@PathVariable UUID projectId) {
-        TaskStats stats = taskService.getTaskStatsByProjectId(projectId);
+    public ResponseEntity<JSendResponse<Map<String, TaskStats>>> getTaskStatsByProjectId(
+            @PathVariable UUID projectId,
+            @RequestHeader("X-User-Id") UUID userId) {
+        TaskStats stats = taskService.getTaskStatsByProjectId(projectId, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("stats", stats)));
     }
 }

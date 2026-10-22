@@ -149,15 +149,17 @@
                   >{{ a.fileName || a.fileUrl }}</a
                 >
                 <span class="subtle small truncate link__host">{{ host(a.fileUrl) }}</span>
-                <button
-                  class="btn btn--ghost btn--icon btn--sm"
-                  type="button"
-                  (click)="removeAttachment(a)"
-                  matTooltip="Remove"
-                  aria-label="Remove link"
-                >
-                  <span class="i">close</span>
-                </button>
+                @if (a.uploadedBy === me() || canManage()) {
+                  <button
+                    class="btn btn--ghost btn--icon btn--sm"
+                    type="button"
+                    (click)="removeAttachment(a)"
+                    matTooltip="Remove"
+                    aria-label="Remove link"
+                  >
+                    <span class="i">close</span>
+                  </button>
+                }
               </div>
             } @empty {
               @if (!addingLink()) {

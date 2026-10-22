@@ -2,6 +2,7 @@ package com.sonhoang2.task_service.history;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.history.dto.TaskHistoryCreateRequest;
 import com.sonhoang2.task_service.history.dto.TaskHistoryResponse;
 import com.sonhoang2.task_service.history.dto.TaskHistoryUpdateRequest;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -35,6 +37,9 @@ class TaskHistoryServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private ProjectAccessGuard projectAccessGuard;
+
     @InjectMocks
     private TaskHistoryServiceImpl taskHistoryService;
 
@@ -44,12 +49,14 @@ class TaskHistoryServiceImplTest {
     private UUID historyId;
     private UUID taskId;
     private UUID changedBy;
+    private UUID projectId;
 
     @BeforeEach
     void setUp() {
         historyId = UUID.randomUUID();
         taskId = UUID.randomUUID();
         changedBy = UUID.randomUUID();
+        projectId = UUID.randomUUID();
 
         history = TaskHistory.builder()
                 .id(historyId)
@@ -63,7 +70,6 @@ class TaskHistoryServiceImplTest {
 
         createRequest = new TaskHistoryCreateRequest();
         createRequest.setTaskId(taskId);
-        createRequest.setChangedBy(changedBy);
         createRequest.setField("status");
         createRequest.setOldValue("TODO");
         createRequest.setNewValue("IN_PROGRESS");
@@ -75,32 +81,24 @@ class TaskHistoryServiceImplTest {
     }
 
     @Test
-    void create_ShouldReturnHistoryResponse() {
-        when(taskHistoryRepository.save(any(TaskHistory.class))).thenReturn(history);
+    void create_ShouldRecordCallerAsAuthor_WhenCallerIsMember() {
+        when(taskHistoryRepository.save(any(TaskHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TaskHistoryResponse result = taskHistoryService.create(createRequest);
+        TaskHistoryResponse result = taskHistoryService.create(createRequest, changedBy);
 
-        assertNotNull(result);
-        assertEquals(historyId, result.getId());
         assertEquals(taskId, result.getTaskId());
         assertEquals(changedBy, result.getChangedBy());
         assertEquals("status", result.getField());
-        assertEquals("TODO", result.getOldValue());
-        assertEquals("IN_PROGRESS", result.getNewValue());
-        verify(taskHistoryRepository).save(any(TaskHistory.class));
+        verify(projectAccessGuard).requireTaskMember(taskId, changedBy);
     }
 
     @Test
-    void findAll_WithoutFilters_ShouldReturnAllHistories() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskHistory> historyPage = new PageImpl<>(java.util.List.of(history));
-        when(taskHistoryRepository.findAll(pageable)).thenReturn(historyPage);
+    void create_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        when(projectAccessGuard.requireTaskMember(taskId, changedBy)).thenThrow(new AccessDeniedException("denied"));
 
-        PageResponse<TaskHistoryResponse> result = taskHistoryService.findAll(null, null, pageable);
+        assertThrows(AccessDeniedException.class, () -> taskHistoryService.create(createRequest, changedBy));
 
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskHistoryRepository).findAll(pageable);
+        verify(taskHistoryRepository, never()).save(any(TaskHistory.class));
     }
 
     @Test
@@ -109,24 +107,10 @@ class TaskHistoryServiceImplTest {
         Page<TaskHistory> historyPage = new PageImpl<>(java.util.List.of(history));
         when(taskHistoryRepository.findByTaskId(taskId, pageable)).thenReturn(historyPage);
 
-        PageResponse<TaskHistoryResponse> result = taskHistoryService.findAll(taskId, null, pageable);
+        PageResponse<TaskHistoryResponse> result = taskHistoryService.findAll(taskId, null, pageable, changedBy);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskHistoryRepository).findByTaskId(taskId, pageable);
-    }
-
-    @Test
-    void findAll_WithChangedByFilter_ShouldReturnFilteredHistories() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskHistory> historyPage = new PageImpl<>(java.util.List.of(history));
-        when(taskHistoryRepository.findByChangedBy(changedBy, pageable)).thenReturn(historyPage);
-
-        PageResponse<TaskHistoryResponse> result = taskHistoryService.findAll(null, changedBy, pageable);
-
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskHistoryRepository).findByChangedBy(changedBy, pageable);
+        verify(projectAccessGuard).requireTaskMember(taskId, changedBy);
     }
 
     @Test
@@ -135,73 +119,92 @@ class TaskHistoryServiceImplTest {
         Page<TaskHistory> historyPage = new PageImpl<>(java.util.List.of(history));
         when(taskHistoryRepository.findByTaskIdAndChangedBy(taskId, changedBy, pageable)).thenReturn(historyPage);
 
-        PageResponse<TaskHistoryResponse> result = taskHistoryService.findAll(taskId, changedBy, pageable);
+        PageResponse<TaskHistoryResponse> result =
+                taskHistoryService.findAll(taskId, changedBy, pageable, changedBy);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskHistoryRepository).findByTaskIdAndChangedBy(taskId, changedBy, pageable);
     }
 
     @Test
-    void findById_ShouldReturnHistoryResponse_WhenHistoryExists() {
+    void findById_ShouldReturnHistoryResponse_WhenCallerIsMember() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.of(history));
 
-        TaskHistoryResponse result = taskHistoryService.findById(historyId);
+        TaskHistoryResponse result = taskHistoryService.findById(historyId, changedBy);
 
-        assertNotNull(result);
         assertEquals(historyId, result.getId());
-        verify(taskHistoryRepository).findById(historyId);
+        verify(projectAccessGuard).requireTaskMember(taskId, changedBy);
     }
 
     @Test
     void findById_ShouldThrowResourceNotFoundException_WhenHistoryNotFound() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskHistoryService.findById(historyId));
-
-        verify(taskHistoryRepository).findById(historyId);
+        assertThrows(ResourceNotFoundException.class, () -> taskHistoryService.findById(historyId, changedBy));
     }
 
     @Test
-    void update_ShouldReturnUpdatedHistoryResponse_WhenHistoryExists() {
+    void update_ShouldReturnUpdatedHistoryResponse_WhenCallerIsManager() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.of(history));
+        when(projectAccessGuard.requireTaskMember(taskId, changedBy)).thenReturn(projectId);
         doNothing().when(modelMapper).map(updateRequest, history);
 
-        TaskHistoryResponse result = taskHistoryService.update(historyId, updateRequest);
+        TaskHistoryResponse result = taskHistoryService.update(historyId, updateRequest, changedBy);
 
         assertNotNull(result);
-        verify(taskHistoryRepository).findById(historyId);
+        verify(projectAccessGuard).requireManager(projectId, changedBy);
         verify(modelMapper).map(updateRequest, history);
+    }
+
+    @Test
+    void update_ShouldThrowAccessDenied_WhenCallerIsNotManager() {
+        when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.of(history));
+        when(projectAccessGuard.requireTaskMember(taskId, changedBy)).thenReturn(projectId);
+        doThrow(new AccessDeniedException("denied")).when(projectAccessGuard).requireManager(projectId, changedBy);
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskHistoryService.update(historyId, updateRequest, changedBy));
+
+        verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
     void update_ShouldThrowResourceNotFoundException_WhenHistoryNotFound() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskHistoryService.update(historyId, updateRequest));
+        assertThrows(ResourceNotFoundException.class,
+                () -> taskHistoryService.update(historyId, updateRequest, changedBy));
 
-        verify(taskHistoryRepository).findById(historyId);
         verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
-    void delete_ShouldDeleteHistory_WhenHistoryExists() {
+    void delete_ShouldDeleteHistory_WhenCallerIsManager() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.of(history));
-        doNothing().when(taskHistoryRepository).delete(history);
+        when(projectAccessGuard.requireTaskMember(taskId, changedBy)).thenReturn(projectId);
 
-        taskHistoryService.delete(historyId);
+        taskHistoryService.delete(historyId, changedBy);
 
-        verify(taskHistoryRepository).findById(historyId);
+        verify(projectAccessGuard).requireManager(projectId, changedBy);
         verify(taskHistoryRepository).delete(history);
+    }
+
+    @Test
+    void delete_ShouldThrowAccessDenied_WhenCallerIsNotManager() {
+        when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.of(history));
+        when(projectAccessGuard.requireTaskMember(taskId, changedBy)).thenReturn(projectId);
+        doThrow(new AccessDeniedException("denied")).when(projectAccessGuard).requireManager(projectId, changedBy);
+
+        assertThrows(AccessDeniedException.class, () -> taskHistoryService.delete(historyId, changedBy));
+
+        verify(taskHistoryRepository, never()).delete(any(TaskHistory.class));
     }
 
     @Test
     void delete_ShouldThrowResourceNotFoundException_WhenHistoryNotFound() {
         when(taskHistoryRepository.findById(historyId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskHistoryService.delete(historyId));
+        assertThrows(ResourceNotFoundException.class, () -> taskHistoryService.delete(historyId, changedBy));
 
-        verify(taskHistoryRepository).findById(historyId);
         verify(taskHistoryRepository, never()).delete(any(TaskHistory.class));
     }
 }

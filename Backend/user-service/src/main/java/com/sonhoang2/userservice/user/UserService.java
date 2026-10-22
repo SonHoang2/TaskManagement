@@ -11,15 +11,15 @@ import java.util.UUID;
 
 public interface UserService {
 
-    UserResponse create(AdminCreateUserRequest request);
+    UserResponse create(AdminCreateUserRequest request, UUID actorId);
 
     PageResponse<UserResponse> findAll(String keyword, Pageable pageable);
 
     UserResponse findById(UUID id);
 
-    UserResponse update(UUID id, AdminUpdateUserRequest request);
+    UserResponse update(UUID id, AdminUpdateUserRequest request, UUID actorId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID actorId);
 
     UserResponse register(RegisterRequest request);
 

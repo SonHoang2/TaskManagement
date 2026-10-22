@@ -10,15 +10,15 @@ import java.util.UUID;
 
 public interface TaskAttachmentService {
 
-    TaskAttachmentResponse create(TaskAttachmentCreateRequest request);
+    TaskAttachmentResponse create(TaskAttachmentCreateRequest request, UUID currentUserId);
 
-    PageResponse<TaskAttachmentResponse> findAll(UUID taskId, UUID uploadedBy, Pageable pageable);
+    PageResponse<TaskAttachmentResponse> findAll(UUID taskId, UUID uploadedBy, Pageable pageable, UUID currentUserId);
 
-    TaskAttachmentResponse findById(UUID id);
+    TaskAttachmentResponse findById(UUID id, UUID currentUserId);
 
-    TaskAttachmentResponse update(UUID id, TaskAttachmentUpdateRequest request);
+    TaskAttachmentResponse update(UUID id, TaskAttachmentUpdateRequest request, UUID currentUserId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID currentUserId);
 }
 
 

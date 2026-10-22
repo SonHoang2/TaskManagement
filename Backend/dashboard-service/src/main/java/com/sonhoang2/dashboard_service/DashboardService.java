@@ -22,6 +22,9 @@ import java.util.UUID;
 @Slf4j
 public class DashboardService {
 
+    // Every service mounts its controllers under this prefix (see their WebMvcConfig).
+    private static final String API_PREFIX = "/api/v1";
+
     private final WebClient webClient;
     private final CircuitBreaker projectServiceCircuitBreaker;
     private final CircuitBreaker taskServiceCircuitBreaker;
@@ -75,9 +78,9 @@ public class DashboardService {
 
     private Mono<DashboardStats> fetchDashboardStats(UUID userId) {
         Mono<Integer> totalProjects = fetchTotalProjects(userId);
-        Mono<Integer> totalTasks = fetchTotalTasks();
+        Mono<Integer> totalTasks = fetchTotalTasks(userId);
         Mono<Integer> totalUsers = fetchTotalUsers();
-        Mono<Integer> activeSprints = fetchActiveSprints();
+        Mono<Integer> activeSprints = fetchActiveSprints(userId);
         Mono<TaskDistribution> taskDist = fetchTaskDistribution(userId);
 
         return Mono.zip(totalProjects, totalTasks, totalUsers, activeSprints, taskDist)
@@ -94,7 +97,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalProjects(UUID userId) {
         return webClient.get()
-                .uri(projectServiceUrl + "/projects")
+                .uri(projectServiceUrl + API_PREFIX + "/projects")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -107,9 +110,10 @@ public class DashboardService {
                 });
     }
 
-    private Mono<Integer> fetchTotalTasks() {
+    private Mono<Integer> fetchTotalTasks(UUID userId) {
         return webClient.get()
-                .uri(taskServiceUrl + "/tasks")
+                .uri(taskServiceUrl + API_PREFIX + "/tasks")
+                .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -122,7 +126,7 @@ public class DashboardService {
 
     private Mono<Integer> fetchTotalUsers() {
         return webClient.get()
-                .uri(userServiceUrl + "/users")
+                .uri(userServiceUrl + API_PREFIX + "/users")
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -133,9 +137,10 @@ public class DashboardService {
                 });
     }
 
-    private Mono<Integer> fetchActiveSprints() {
+    private Mono<Integer> fetchActiveSprints(UUID userId) {
         return webClient.get()
-                .uri(sprintServiceUrl + "/sprints")
+                .uri(sprintServiceUrl + API_PREFIX + "/sprints")
+                .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTotalElements)
@@ -148,7 +153,7 @@ public class DashboardService {
 
     private Mono<List<ProjectSummary>> fetchRecentProjects(UUID userId) {
         return webClient.get()
-                .uri(projectServiceUrl + "/projects?size=20")
+                .uri(projectServiceUrl + API_PREFIX + "/projects?size=20")
                 .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -162,7 +167,8 @@ public class DashboardService {
 
     private Mono<TaskDistribution> fetchTaskDistribution(UUID userId) {
         return webClient.get()
-                .uri(taskServiceUrl + "/tasks/distribution")
+                .uri(taskServiceUrl + API_PREFIX + "/tasks/distribution")
+                .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractTaskDistribution)

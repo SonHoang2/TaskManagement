@@ -10,15 +10,15 @@ import java.util.UUID;
 
 public interface TaskSprintService {
 
-    TaskSprintResponse create(TaskSprintCreateRequest request);
+    TaskSprintResponse create(TaskSprintCreateRequest request, UUID userId);
 
-    PageResponse<TaskSprintResponse> findAll(UUID taskId, UUID sprintId, Pageable pageable);
+    PageResponse<TaskSprintResponse> findAll(UUID taskId, UUID sprintId, Pageable pageable, UUID userId);
 
-    TaskSprintResponse findById(UUID taskId, UUID sprintId);
+    TaskSprintResponse findById(UUID taskId, UUID sprintId, UUID userId);
 
-    TaskSprintResponse update(UUID taskId, UUID sprintId, TaskSprintUpdateRequest request);
+    TaskSprintResponse update(UUID taskId, UUID sprintId, TaskSprintUpdateRequest request, UUID userId);
 
-    void delete(UUID taskId, UUID sprintId);
+    void delete(UUID taskId, UUID sprintId, UUID userId);
 }
 
 

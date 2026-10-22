@@ -287,6 +287,8 @@ services:
     ports:
       - "5004:5004"
     environment:
+      - SERVICES_PROJECT_SERVICE_URL=http://project-service:5002
+      - SERVICES_TASK_SERVICE_URL=http://task-service:5003
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_NAME=${SPRINT_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}

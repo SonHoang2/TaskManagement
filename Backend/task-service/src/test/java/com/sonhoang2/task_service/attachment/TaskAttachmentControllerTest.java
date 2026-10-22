@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -50,7 +51,6 @@ class TaskAttachmentControllerTest {
         request.setTaskId(taskId);
         request.setFileUrl("https://example.com/file.pdf");
         request.setFileName("file.pdf");
-        request.setUploadedBy(uploadedBy);
 
         TaskAttachmentResponse response = TaskAttachmentResponse.builder()
                 .id(attachmentId)
@@ -61,9 +61,10 @@ class TaskAttachmentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskAttachmentService.create(any(TaskAttachmentCreateRequest.class))).thenReturn(response);
+        when(taskAttachmentService.create(any(TaskAttachmentCreateRequest.class), eq(uploadedBy))).thenReturn(response);
 
-        mockMvc.perform(post("/task-attachments")
+        mockMvc.perform(post("/api/v1/task-attachments")
+                        .header("X-User-Id", uploadedBy.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -94,9 +95,9 @@ class TaskAttachmentControllerTest {
                 1
         );
 
-        when(taskAttachmentService.findAll(any(), any(), any())).thenReturn(pageResponse);
+        when(taskAttachmentService.findAll(eq(taskId), any(), any(), eq(uploadedBy))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/task-attachments"))
+        mockMvc.perform(get("/api/v1/task-attachments").param("taskId", taskId.toString()).header("X-User-Id", uploadedBy.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.page.content[0].id").value(attachmentId.toString()));
@@ -124,9 +125,10 @@ class TaskAttachmentControllerTest {
                 1
         );
 
-        when(taskAttachmentService.findAll(eq(taskId), eq(uploadedBy), any())).thenReturn(pageResponse);
+        when(taskAttachmentService.findAll(eq(taskId), eq(uploadedBy), any(), eq(uploadedBy))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/task-attachments")
+        mockMvc.perform(get("/api/v1/task-attachments")
+                        .header("X-User-Id", uploadedBy.toString())
                         .param("taskId", taskId.toString())
                         .param("uploadedBy", uploadedBy.toString()))
                 .andExpect(status().isOk())
@@ -144,9 +146,9 @@ class TaskAttachmentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskAttachmentService.findById(attachmentId)).thenReturn(response);
+        when(taskAttachmentService.findById(attachmentId, uploadedBy)).thenReturn(response);
 
-        mockMvc.perform(get("/task-attachments/{id}", attachmentId))
+        mockMvc.perform(get("/api/v1/task-attachments/{id}", attachmentId).header("X-User-Id", uploadedBy.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.attachment.id").value(attachmentId.toString()))
@@ -168,9 +170,10 @@ class TaskAttachmentControllerTest {
                 .build();
 
         when(taskAttachmentService.update(eq(attachmentId),
-                any(TaskAttachmentUpdateRequest.class))).thenReturn(response);
+                any(TaskAttachmentUpdateRequest.class), eq(uploadedBy))).thenReturn(response);
 
-        mockMvc.perform(patch("/task-attachments/{id}", attachmentId)
+        mockMvc.perform(patch("/api/v1/task-attachments/{id}", attachmentId)
+                        .header("X-User-Id", uploadedBy.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -181,8 +184,10 @@ class TaskAttachmentControllerTest {
 
     @Test
     void delete_ShouldReturnSuccess_WhenAttachmentExists() throws Exception {
-        mockMvc.perform(delete("/task-attachments/{id}", attachmentId))
+        mockMvc.perform(delete("/api/v1/task-attachments/{id}", attachmentId).header("X-User-Id", uploadedBy.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
+
+        verify(taskAttachmentService).delete(attachmentId, uploadedBy);
     }
 }

@@ -7,6 +7,7 @@ import com.sonhoang2.project_service.label.dto.LabelRepository;
 import com.sonhoang2.project_service.label.dto.LabelResponse;
 import com.sonhoang2.project_service.label.dto.LabelUpdateRequest;
 import com.sonhoang2.project_service.label.entity.Label;
+import com.sonhoang2.project_service.project.ProjectMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,11 +39,15 @@ class LabelServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
+
     @InjectMocks
     private LabelServiceImpl labelService;
 
     private UUID labelId;
     private UUID projectId;
+    private UUID userId;
     private Label label;
     private LabelCreateRequest createRequest;
     private LabelUpdateRequest updateRequest;
@@ -51,6 +57,8 @@ class LabelServiceImplTest {
     void setUp() {
         labelId = UUID.randomUUID();
         projectId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        lenient().when(projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)).thenReturn(true);
 
         label = Label.builder()
                 .id(labelId)
@@ -67,7 +75,6 @@ class LabelServiceImplTest {
                 .build();
 
         updateRequest = LabelUpdateRequest.builder()
-                .projectId(projectId)
                 .name("Updated Label")
                 .color("#00FF00")
                 .build();
@@ -81,7 +88,7 @@ class LabelServiceImplTest {
         when(labelRepository.save(any(Label.class))).thenReturn(label);
 
         // Act
-        LabelResponse result = labelService.create(createRequest);
+        LabelResponse result = labelService.create(createRequest, userId);
 
         // Assert
         assertNotNull(result);
@@ -100,7 +107,7 @@ class LabelServiceImplTest {
                 .thenReturn(page);
 
         // Act
-        PageResponse<LabelResponse> result = labelService.findAll(projectId, "Test", pageable);
+        PageResponse<LabelResponse> result = labelService.findAll(projectId, "Test", pageable, userId);
 
         // Assert
         assertNotNull(result);
@@ -120,7 +127,7 @@ class LabelServiceImplTest {
         when(labelRepository.findByProjectId(projectId, pageable)).thenReturn(page);
 
         // Act
-        PageResponse<LabelResponse> result = labelService.findAll(projectId, null, pageable);
+        PageResponse<LabelResponse> result = labelService.findAll(projectId, null, pageable, userId);
 
         // Assert
         assertNotNull(result);
@@ -130,35 +137,28 @@ class LabelServiceImplTest {
     }
 
     @Test
-    void findAll_WithNameOnly_ShouldReturnFilteredPage() {
-        // Arrange
-        Page<Label> page = new PageImpl<>(List.of(label));
-        when(labelRepository.findByNameContainingIgnoreCase("Test", pageable)).thenReturn(page);
+    void findAll_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        UUID outsider = UUID.randomUUID();
 
-        // Act
-        PageResponse<LabelResponse> result = labelService.findAll(null, "Test", pageable);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        assertEquals(labelId, result.content().get(0).getId());
-        verify(labelRepository, times(1)).findByNameContainingIgnoreCase("Test", pageable);
+        assertThrows(AccessDeniedException.class, () -> labelService.findAll(projectId, null, pageable, outsider));
+        verifyNoInteractions(labelRepository);
     }
 
     @Test
-    void findAll_WithNoFilters_ShouldReturnAllLabels() {
-        // Arrange
-        Page<Label> page = new PageImpl<>(List.of(label));
-        when(labelRepository.findAll(pageable)).thenReturn(page);
+    void create_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        UUID outsider = UUID.randomUUID();
 
-        // Act
-        PageResponse<LabelResponse> result = labelService.findAll(null, null, pageable);
+        assertThrows(AccessDeniedException.class, () -> labelService.create(createRequest, outsider));
+        verify(labelRepository, never()).save(any());
+    }
 
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        assertEquals(labelId, result.content().get(0).getId());
-        verify(labelRepository, times(1)).findAll(pageable);
+    @Test
+    void delete_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        UUID outsider = UUID.randomUUID();
+        when(labelRepository.findById(labelId)).thenReturn(Optional.of(label));
+
+        assertThrows(AccessDeniedException.class, () -> labelService.delete(labelId, outsider));
+        verify(labelRepository, never()).delete(any());
     }
 
     @Test
@@ -167,7 +167,7 @@ class LabelServiceImplTest {
         when(labelRepository.findById(labelId)).thenReturn(Optional.of(label));
 
         // Act
-        LabelResponse result = labelService.findById(labelId);
+        LabelResponse result = labelService.findById(labelId, userId);
 
         // Assert
         assertNotNull(result);
@@ -184,7 +184,7 @@ class LabelServiceImplTest {
         when(labelRepository.findById(labelId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> labelService.findById(labelId));
+        assertThrows(ResourceNotFoundException.class, () -> labelService.findById(labelId, userId));
         verify(labelRepository, times(1)).findById(labelId);
     }
 
@@ -204,7 +204,7 @@ class LabelServiceImplTest {
         when(labelRepository.save(any(Label.class))).thenReturn(updatedLabel);
 
         // Act
-        LabelResponse result = labelService.update(labelId, updateRequest);
+        LabelResponse result = labelService.update(labelId, updateRequest, userId);
 
         // Assert
         assertNotNull(result);
@@ -219,7 +219,7 @@ class LabelServiceImplTest {
         when(labelRepository.findById(labelId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> labelService.update(labelId, updateRequest));
+        assertThrows(ResourceNotFoundException.class, () -> labelService.update(labelId, updateRequest, userId));
         verify(labelRepository, times(1)).findById(labelId);
         verify(modelMapper, never()).map(any(), any());
         verify(labelRepository, never()).save(any());
@@ -232,7 +232,7 @@ class LabelServiceImplTest {
         doNothing().when(labelRepository).delete(label);
 
         // Act
-        labelService.delete(labelId);
+        labelService.delete(labelId, userId);
 
         // Assert
         verify(labelRepository, times(1)).findById(labelId);
@@ -245,7 +245,7 @@ class LabelServiceImplTest {
         when(labelRepository.findById(labelId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> labelService.delete(labelId));
+        assertThrows(ResourceNotFoundException.class, () -> labelService.delete(labelId, userId));
         verify(labelRepository, times(1)).findById(labelId);
         verify(labelRepository, never()).delete(any());
     }
@@ -254,10 +254,10 @@ class LabelServiceImplTest {
     void findAll_EmptyPage_ShouldReturnEmptyResponse() {
         // Arrange
         Page<Label> emptyPage = new PageImpl<>(List.of(), pageable, 0);
-        when(labelRepository.findAll(pageable)).thenReturn(emptyPage);
+        when(labelRepository.findByProjectId(projectId, pageable)).thenReturn(emptyPage);
 
         // Act
-        PageResponse<LabelResponse> result = labelService.findAll(null, null, pageable);
+        PageResponse<LabelResponse> result = labelService.findAll(projectId, null, pageable, userId);
 
         // Assert
         assertNotNull(result);
@@ -295,10 +295,10 @@ class LabelServiceImplTest {
                         .build()
         );
         Page<Label> page = new PageImpl<>(labels, pageable, 10);
-        when(labelRepository.findAll(pageable)).thenReturn(page);
+        when(labelRepository.findByProjectId(projectId, pageable)).thenReturn(page);
 
         // Act
-        PageResponse<LabelResponse> result = labelService.findAll(null, null, pageable);
+        PageResponse<LabelResponse> result = labelService.findAll(projectId, null, pageable, userId);
 
         // Assert
         assertNotNull(result);

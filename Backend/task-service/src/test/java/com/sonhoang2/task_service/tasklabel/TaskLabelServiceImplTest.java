@@ -1,7 +1,12 @@
 package com.sonhoang2.task_service.tasklabel;
 
+import com.sonhoang2.common.exception.ResourceConflictException;
+import com.sonhoang2.task_service.common.dto.JSendResponse;
+import com.sonhoang2.task_service.common.dto.LabelSummary;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
+import com.sonhoang2.task_service.feign.ProjectServiceClient;
 import com.sonhoang2.task_service.tasklabel.dto.TaskLabelCreateRequest;
 import com.sonhoang2.task_service.tasklabel.dto.TaskLabelResponse;
 import com.sonhoang2.task_service.tasklabel.dto.TaskLabelUpdateRequest;
@@ -17,7 +22,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +41,12 @@ class TaskLabelServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private ProjectAccessGuard projectAccessGuard;
+
+    @Mock
+    private ProjectServiceClient projectServiceClient;
+
     @InjectMocks
     private TaskLabelServiceImpl taskLabelService;
 
@@ -42,11 +55,15 @@ class TaskLabelServiceImplTest {
     private TaskLabelUpdateRequest updateRequest;
     private UUID taskId;
     private UUID labelId;
+    private UUID userId;
+    private UUID projectId;
 
     @BeforeEach
     void setUp() {
         taskId = UUID.randomUUID();
         labelId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+        projectId = UUID.randomUUID();
 
         taskLabel = TaskLabel.builder()
                 .id(UUID.randomUUID())
@@ -64,130 +81,156 @@ class TaskLabelServiceImplTest {
     }
 
     @Test
-    void create_ShouldReturnTaskLabelResponse() {
+    void create_ShouldReturnTaskLabelResponse_WhenLabelIsInTasksProject() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenReturn(projectId);
+        when(projectServiceClient.findLabel(labelId, userId)).thenReturn(label(labelId, projectId));
         when(taskLabelRepository.save(any(TaskLabel.class))).thenReturn(taskLabel);
 
-        TaskLabelResponse result = taskLabelService.create(createRequest);
+        TaskLabelResponse result = taskLabelService.create(createRequest, userId);
 
-        assertNotNull(result);
         assertEquals(taskId, result.getTaskId());
         assertEquals(labelId, result.getLabelId());
-        verify(taskLabelRepository).save(any(TaskLabel.class));
     }
 
     @Test
-    void findAll_WithoutFilters_ShouldReturnAllTaskLabels() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskLabel> taskLabelPage = new PageImpl<>(java.util.List.of(taskLabel));
-        when(taskLabelRepository.findAll(pageable)).thenReturn(taskLabelPage);
+    void create_ShouldThrowConflict_WhenLabelBelongsToAnotherProject() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenReturn(projectId);
+        when(projectServiceClient.findLabel(labelId, userId)).thenReturn(label(labelId, UUID.randomUUID()));
 
-        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(null, null, pageable);
+        assertThrows(ResourceConflictException.class, () -> taskLabelService.create(createRequest, userId));
 
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskLabelRepository).findAll(pageable);
+        verify(taskLabelRepository, never()).save(any(TaskLabel.class));
+    }
+
+    @Test
+    void create_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenThrow(new AccessDeniedException("denied"));
+
+        assertThrows(AccessDeniedException.class, () -> taskLabelService.create(createRequest, userId));
+
+        verify(taskLabelRepository, never()).save(any(TaskLabel.class));
     }
 
     @Test
     void findAll_WithTaskIdFilter_ShouldReturnFilteredTaskLabels() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskLabel> taskLabelPage = new PageImpl<>(java.util.List.of(taskLabel));
-        when(taskLabelRepository.findByTaskId(taskId, pageable)).thenReturn(taskLabelPage);
+        Page<TaskLabel> page = new PageImpl<>(java.util.List.of(taskLabel));
+        when(taskLabelRepository.findByTaskId(taskId, pageable)).thenReturn(page);
 
-        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, null, pageable);
+        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, null, pageable, userId);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskLabelRepository).findByTaskId(taskId, pageable);
-    }
-
-    @Test
-    void findAll_WithLabelIdFilter_ShouldReturnFilteredTaskLabels() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskLabel> taskLabelPage = new PageImpl<>(java.util.List.of(taskLabel));
-        when(taskLabelRepository.findByLabelId(labelId, pageable)).thenReturn(taskLabelPage);
-
-        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(null, labelId, pageable);
-
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskLabelRepository).findByLabelId(labelId, pageable);
+        verify(projectAccessGuard).requireTaskMember(taskId, userId);
     }
 
     @Test
     void findAll_WithTaskIdAndLabelIdFilters_ShouldReturnFilteredTaskLabels() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskLabel> taskLabelPage = new PageImpl<>(java.util.List.of(taskLabel));
-        when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId, pageable)).thenReturn(taskLabelPage);
+        Page<TaskLabel> page = new PageImpl<>(java.util.List.of(taskLabel));
+        when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId, pageable)).thenReturn(page);
 
-        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, labelId, pageable);
+        PageResponse<TaskLabelResponse> result = taskLabelService.findAll(taskId, labelId, pageable, userId);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId, pageable);
     }
 
     @Test
-    void findById_ShouldReturnTaskLabelResponse_WhenTaskLabelExists() {
+    void findById_ShouldReturnTaskLabelResponse_WhenCallerIsMember() {
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.of(taskLabel));
 
-        TaskLabelResponse result = taskLabelService.findById(taskId, labelId);
+        TaskLabelResponse result = taskLabelService.findById(taskId, labelId, userId);
 
-        assertNotNull(result);
         assertEquals(taskId, result.getTaskId());
-        assertEquals(labelId, result.getLabelId());
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
+        verify(projectAccessGuard).requireTaskMember(taskId, userId);
+    }
+
+    @Test
+    void findById_ShouldThrowAccessDenied_BeforeLookingUpTheLabel_WhenCallerIsNotMember() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenThrow(new AccessDeniedException("denied"));
+
+        assertThrows(AccessDeniedException.class, () -> taskLabelService.findById(taskId, labelId, userId));
+
+        verifyNoInteractions(taskLabelRepository);
     }
 
     @Test
     void findById_ShouldThrowResourceNotFoundException_WhenTaskLabelNotFound() {
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskLabelService.findById(taskId, labelId));
-
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
+        assertThrows(ResourceNotFoundException.class, () -> taskLabelService.findById(taskId, labelId, userId));
     }
 
     @Test
-    void update_ShouldReturnUpdatedTaskLabelResponse_WhenTaskLabelExists() {
+    void update_ShouldReturnUpdatedTaskLabelResponse_WhenCallerIsMemberOfBothTasks() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenReturn(projectId);
+        when(projectAccessGuard.requireTaskMember(updateRequest.getTaskId(), userId)).thenReturn(projectId);
+        when(projectServiceClient.findLabel(updateRequest.getLabelId(), userId))
+                .thenReturn(label(updateRequest.getLabelId(), projectId));
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.of(taskLabel));
         doNothing().when(modelMapper).map(updateRequest, taskLabel);
 
-        TaskLabelResponse result = taskLabelService.update(taskId, labelId, updateRequest);
+        TaskLabelResponse result = taskLabelService.update(taskId, labelId, updateRequest, userId);
 
         assertNotNull(result);
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
+        verify(projectAccessGuard).requireTaskMember(taskId, userId);
+        verify(projectAccessGuard).requireTaskMember(updateRequest.getTaskId(), userId);
         verify(modelMapper).map(updateRequest, taskLabel);
     }
 
     @Test
-    void update_ShouldThrowResourceNotFoundException_WhenTaskLabelNotFound() {
-        when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.empty());
+    void update_ShouldThrowAccessDenied_WhenMovingLabelToTaskCallerCannotAccess() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenReturn(UUID.randomUUID());
+        when(projectAccessGuard.requireTaskMember(updateRequest.getTaskId(), userId))
+                .thenThrow(new AccessDeniedException("denied"));
 
-        assertThrows(ResourceNotFoundException.class, () -> taskLabelService.update(taskId, labelId, updateRequest));
+        assertThrows(AccessDeniedException.class,
+                () -> taskLabelService.update(taskId, labelId, updateRequest, userId));
 
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
         verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
-    void delete_ShouldDeleteTaskLabel_WhenTaskLabelExists() {
+    void update_ShouldThrowResourceNotFoundException_WhenTaskLabelNotFound() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenReturn(projectId);
+        when(projectAccessGuard.requireTaskMember(updateRequest.getTaskId(), userId)).thenReturn(projectId);
+        when(projectServiceClient.findLabel(updateRequest.getLabelId(), userId))
+                .thenReturn(label(updateRequest.getLabelId(), projectId));
+        when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> taskLabelService.update(taskId, labelId, updateRequest, userId));
+
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void delete_ShouldDeleteTaskLabel_WhenCallerIsMember() {
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.of(taskLabel));
-        doNothing().when(taskLabelRepository).delete(taskLabel);
 
-        taskLabelService.delete(taskId, labelId);
+        taskLabelService.delete(taskId, labelId, userId);
 
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
         verify(taskLabelRepository).delete(taskLabel);
+    }
+
+    @Test
+    void delete_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        when(projectAccessGuard.requireTaskMember(taskId, userId)).thenThrow(new AccessDeniedException("denied"));
+
+        assertThrows(AccessDeniedException.class, () -> taskLabelService.delete(taskId, labelId, userId));
+
+        verify(taskLabelRepository, never()).delete(any(TaskLabel.class));
     }
 
     @Test
     void delete_ShouldThrowResourceNotFoundException_WhenTaskLabelNotFound() {
         when(taskLabelRepository.findByTaskIdAndLabelId(taskId, labelId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskLabelService.delete(taskId, labelId));
+        assertThrows(ResourceNotFoundException.class, () -> taskLabelService.delete(taskId, labelId, userId));
 
-        verify(taskLabelRepository).findByTaskIdAndLabelId(taskId, labelId);
         verify(taskLabelRepository, never()).delete(any(TaskLabel.class));
+    }
+
+    private static JSendResponse<Map<String, LabelSummary>> label(UUID id, UUID projectId) {
+        return JSendResponse.success(Map.of("label", new LabelSummary(id, projectId)));
     }
 }

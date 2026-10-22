@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface LabelService {
 
-    LabelResponse create(LabelCreateRequest request);
+    LabelResponse create(LabelCreateRequest request, UUID userId);
 
-    PageResponse<LabelResponse> findAll(UUID projectId, String name, Pageable pageable);
+    PageResponse<LabelResponse> findAll(UUID projectId, String name, Pageable pageable, UUID userId);
 
-    LabelResponse findById(UUID id);
+    LabelResponse findById(UUID id, UUID userId);
 
-    LabelResponse update(UUID id, LabelUpdateRequest request);
+    LabelResponse update(UUID id, LabelUpdateRequest request, UUID userId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID userId);
 }

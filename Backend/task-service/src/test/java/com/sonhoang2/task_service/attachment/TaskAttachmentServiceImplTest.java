@@ -2,6 +2,7 @@ package com.sonhoang2.task_service.attachment;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentCreateRequest;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentResponse;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentUpdateRequest;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -35,6 +37,9 @@ class TaskAttachmentServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private ProjectAccessGuard projectAccessGuard;
+
     @InjectMocks
     private TaskAttachmentServiceImpl taskAttachmentService;
 
@@ -44,12 +49,16 @@ class TaskAttachmentServiceImplTest {
     private UUID attachmentId;
     private UUID taskId;
     private UUID uploadedBy;
+    private UUID otherUserId;
+    private UUID projectId;
 
     @BeforeEach
     void setUp() {
         attachmentId = UUID.randomUUID();
         taskId = UUID.randomUUID();
         uploadedBy = UUID.randomUUID();
+        otherUserId = UUID.randomUUID();
+        projectId = UUID.randomUUID();
 
         attachment = TaskAttachment.builder()
                 .id(attachmentId)
@@ -64,7 +73,6 @@ class TaskAttachmentServiceImplTest {
         createRequest.setTaskId(taskId);
         createRequest.setFileUrl("https://example.com/file.pdf");
         createRequest.setFileName("file.pdf");
-        createRequest.setUploadedBy(uploadedBy);
 
         updateRequest = new TaskAttachmentUpdateRequest();
         updateRequest.setFileUrl("https://example.com/updated-file.pdf");
@@ -72,31 +80,25 @@ class TaskAttachmentServiceImplTest {
     }
 
     @Test
-    void create_ShouldReturnAttachmentResponse() {
-        when(taskAttachmentRepository.save(any(TaskAttachment.class))).thenReturn(attachment);
+    void create_ShouldUseCallerAsUploader_WhenCallerIsMember() {
+        when(taskAttachmentRepository.save(any(TaskAttachment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        TaskAttachmentResponse result = taskAttachmentService.create(createRequest);
+        TaskAttachmentResponse result = taskAttachmentService.create(createRequest, uploadedBy);
 
-        assertNotNull(result);
-        assertEquals(attachmentId, result.getId());
         assertEquals(taskId, result.getTaskId());
-        assertEquals("https://example.com/file.pdf", result.getFileUrl());
-        assertEquals("file.pdf", result.getFileName());
         assertEquals(uploadedBy, result.getUploadedBy());
-        verify(taskAttachmentRepository).save(any(TaskAttachment.class));
+        assertEquals("file.pdf", result.getFileName());
+        verify(projectAccessGuard).requireTaskMember(taskId, uploadedBy);
     }
 
     @Test
-    void findAll_WithoutFilters_ShouldReturnAllAttachments() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskAttachment> attachmentPage = new PageImpl<>(java.util.List.of(attachment));
-        when(taskAttachmentRepository.findAll(pageable)).thenReturn(attachmentPage);
+    void create_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        when(projectAccessGuard.requireTaskMember(taskId, uploadedBy)).thenThrow(new AccessDeniedException("denied"));
 
-        PageResponse<TaskAttachmentResponse> result = taskAttachmentService.findAll(null, null, pageable);
+        assertThrows(AccessDeniedException.class, () -> taskAttachmentService.create(createRequest, uploadedBy));
 
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskAttachmentRepository).findAll(pageable);
+        verify(taskAttachmentRepository, never()).save(any(TaskAttachment.class));
     }
 
     @Test
@@ -105,99 +107,122 @@ class TaskAttachmentServiceImplTest {
         Page<TaskAttachment> attachmentPage = new PageImpl<>(java.util.List.of(attachment));
         when(taskAttachmentRepository.findByTaskId(taskId, pageable)).thenReturn(attachmentPage);
 
-        PageResponse<TaskAttachmentResponse> result = taskAttachmentService.findAll(taskId, null, pageable);
+        PageResponse<TaskAttachmentResponse> result =
+                taskAttachmentService.findAll(taskId, null, pageable, uploadedBy);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskAttachmentRepository).findByTaskId(taskId, pageable);
-    }
-
-    @Test
-    void findAll_WithUploadedByFilter_ShouldReturnFilteredAttachments() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<TaskAttachment> attachmentPage = new PageImpl<>(java.util.List.of(attachment));
-        when(taskAttachmentRepository.findByUploadedBy(uploadedBy, pageable)).thenReturn(attachmentPage);
-
-        PageResponse<TaskAttachmentResponse> result = taskAttachmentService.findAll(null, uploadedBy, pageable);
-
-        assertNotNull(result);
-        assertEquals(1, result.content().size());
-        verify(taskAttachmentRepository).findByUploadedBy(uploadedBy, pageable);
+        verify(projectAccessGuard).requireTaskMember(taskId, uploadedBy);
     }
 
     @Test
     void findAll_WithTaskIdAndUploadedByFilters_ShouldReturnFilteredAttachments() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<TaskAttachment> attachmentPage = new PageImpl<>(java.util.List.of(attachment));
-        when(taskAttachmentRepository.findByTaskIdAndUploadedBy(taskId, uploadedBy, pageable)).thenReturn(attachmentPage);
+        when(taskAttachmentRepository.findByTaskIdAndUploadedBy(taskId, uploadedBy, pageable))
+                .thenReturn(attachmentPage);
 
-        PageResponse<TaskAttachmentResponse> result = taskAttachmentService.findAll(taskId, uploadedBy, pageable);
+        PageResponse<TaskAttachmentResponse> result =
+                taskAttachmentService.findAll(taskId, uploadedBy, pageable, uploadedBy);
 
-        assertNotNull(result);
         assertEquals(1, result.content().size());
-        verify(taskAttachmentRepository).findByTaskIdAndUploadedBy(taskId, uploadedBy, pageable);
     }
 
     @Test
-    void findById_ShouldReturnAttachmentResponse_WhenAttachmentExists() {
+    void findAll_ShouldThrowAccessDenied_WhenCallerIsNotMember() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(projectAccessGuard.requireTaskMember(taskId, otherUserId)).thenThrow(new AccessDeniedException("denied"));
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskAttachmentService.findAll(taskId, null, pageable, otherUserId));
+
+        verifyNoInteractions(taskAttachmentRepository);
+    }
+
+    @Test
+    void findById_ShouldReturnAttachmentResponse_WhenCallerIsMember() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
 
-        TaskAttachmentResponse result = taskAttachmentService.findById(attachmentId);
+        TaskAttachmentResponse result = taskAttachmentService.findById(attachmentId, uploadedBy);
 
-        assertNotNull(result);
         assertEquals(attachmentId, result.getId());
-        verify(taskAttachmentRepository).findById(attachmentId);
+        verify(projectAccessGuard).requireTaskMember(taskId, uploadedBy);
     }
 
     @Test
     void findById_ShouldThrowResourceNotFoundException_WhenAttachmentNotFound() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskAttachmentService.findById(attachmentId));
-
-        verify(taskAttachmentRepository).findById(attachmentId);
+        assertThrows(ResourceNotFoundException.class, () -> taskAttachmentService.findById(attachmentId, uploadedBy));
     }
 
     @Test
-    void update_ShouldReturnUpdatedAttachmentResponse_WhenAttachmentExists() {
+    void update_ShouldReturnUpdatedAttachmentResponse_WhenCallerIsUploader() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
         doNothing().when(modelMapper).map(updateRequest, attachment);
 
-        TaskAttachmentResponse result = taskAttachmentService.update(attachmentId, updateRequest);
+        TaskAttachmentResponse result = taskAttachmentService.update(attachmentId, updateRequest, uploadedBy);
 
         assertNotNull(result);
-        verify(taskAttachmentRepository).findById(attachmentId);
         verify(modelMapper).map(updateRequest, attachment);
+    }
+
+    @Test
+    void update_ShouldThrowAccessDenied_WhenCallerIsNotUploader() {
+        when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
+
+        assertThrows(AccessDeniedException.class,
+                () -> taskAttachmentService.update(attachmentId, updateRequest, otherUserId));
+
+        verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
     void update_ShouldThrowResourceNotFoundException_WhenAttachmentNotFound() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskAttachmentService.update(attachmentId, updateRequest));
+        assertThrows(ResourceNotFoundException.class,
+                () -> taskAttachmentService.update(attachmentId, updateRequest, uploadedBy));
 
-        verify(taskAttachmentRepository).findById(attachmentId);
         verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
-    void delete_ShouldDeleteAttachment_WhenAttachmentExists() {
+    void delete_ShouldDeleteAttachment_WhenCallerIsUploader() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
-        doNothing().when(taskAttachmentRepository).delete(attachment);
 
-        taskAttachmentService.delete(attachmentId);
+        taskAttachmentService.delete(attachmentId, uploadedBy);
 
-        verify(taskAttachmentRepository).findById(attachmentId);
         verify(taskAttachmentRepository).delete(attachment);
+    }
+
+    @Test
+    void delete_ShouldDeleteAttachment_WhenCallerIsProjectManager() {
+        when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
+        when(projectAccessGuard.requireTaskMember(taskId, otherUserId)).thenReturn(projectId);
+        when(projectAccessGuard.isManager(projectId, otherUserId)).thenReturn(true);
+
+        taskAttachmentService.delete(attachmentId, otherUserId);
+
+        verify(taskAttachmentRepository).delete(attachment);
+    }
+
+    @Test
+    void delete_ShouldThrowAccessDenied_WhenCallerIsNeitherUploaderNorManager() {
+        when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
+        when(projectAccessGuard.requireTaskMember(taskId, otherUserId)).thenReturn(projectId);
+        when(projectAccessGuard.isManager(projectId, otherUserId)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class, () -> taskAttachmentService.delete(attachmentId, otherUserId));
+
+        verify(taskAttachmentRepository, never()).delete(any(TaskAttachment.class));
     }
 
     @Test
     void delete_ShouldThrowResourceNotFoundException_WhenAttachmentNotFound() {
         when(taskAttachmentRepository.findById(attachmentId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> taskAttachmentService.delete(attachmentId));
+        assertThrows(ResourceNotFoundException.class, () -> taskAttachmentService.delete(attachmentId, uploadedBy));
 
-        verify(taskAttachmentRepository).findById(attachmentId);
         verify(taskAttachmentRepository, never()).delete(any(TaskAttachment.class));
     }
 }

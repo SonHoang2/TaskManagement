@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 import java.util.UUID;
 
-@FeignClient(name = "task-service", url = "${services.task-service.url:http://task-service}")
+@FeignClient(name = "task-service", url = "${services.task-service.url:http://task-service}", path = "/api/v1")
 public interface TaskServiceClient {
 
     @GetMapping("/tasks/project/{projectId}")
@@ -24,5 +24,6 @@ public interface TaskServiceClient {
             @RequestParam(value = "sort", required = false) String sort);
 
     @GetMapping("/tasks/project/{projectId}/stats")
-    JSendResponse<Map<String, Map<String, Object>>> getTaskStatsByProjectId(@PathVariable UUID projectId);
+    JSendResponse<Map<String, Map<String, Object>>> getTaskStatsByProjectId(@PathVariable UUID projectId,
+                                                                            @RequestHeader("X-User-Id") UUID userId);
 }

@@ -4,9 +4,9 @@ import com.sonhoang2.task_service.attachment.entity.TaskAttachment;
 import com.sonhoang2.task_service.comment.entity.TaskComment;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.events.EventPublisher;
 import com.sonhoang2.task_service.events.TaskAssignedEvent;
-import com.sonhoang2.task_service.feign.ProjectServiceClient;
 import com.sonhoang2.task_service.task.dto.TaskAttachmentResponse;
 import com.sonhoang2.task_service.task.dto.TaskCommentResponse;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
@@ -20,7 +20,6 @@ import com.sonhoang2.task_service.task.entity.Task;
 import com.sonhoang2.task_service.task.entity.TaskStatus;
 import com.sonhoang2.task_service.tasklabel.entity.TaskLabel;
 import com.sonhoang2.common.ratelimit.RateLimit;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -32,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
-    private final ProjectServiceClient projectServiceClient;
+    private final ProjectAccessGuard projectAccessGuard;
     private final ModelMapper modelMapper;
     private final EventPublisher eventPublisher;
     private final TaskLeakHolder leakHolder;
@@ -59,14 +59,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse create(TaskCreateRequest request, UUID userId) {
-        System.out.print("Creating task with projectId: " + request.getProjectId() + "\n" + "userId " + userId);
-        try {
-            projectServiceClient.findById(request.getProjectId(), userId);
-        } catch (FeignException.NotFound e) {
-            throw new ResourceNotFoundException("Project not found: " + request.getProjectId());
-        }
+        projectAccessGuard.requireMember(request.getProjectId(), userId);
 
         Task task = modelMapper.map(request, Task.class);
+        task.setReporterId(userId);
 
         // leakHolder.hold(task);
         return toResponse(taskRepository.save(task));
@@ -74,19 +70,25 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @RateLimit(points = 150, durationSeconds = 60, keyPrefix = "task:list")
-    public PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable) {
+    public PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable, UUID userId) {
+        Set<UUID> projectIds = projectAccessGuard.memberProjectIds(userId);
+        if (projectIds.isEmpty()) {
+            return toPageResponse(Page.empty(pageable));
+        }
+
         Page<Task> page;
 
         if (status != null && keyword != null) {
-            page = taskRepository.findByStatusAndTitleContainingIgnoreCase(TaskStatus.valueOf(status),
+            page = taskRepository.findByProjectIdInAndStatusAndTitleContainingIgnoreCase(projectIds,
+                    TaskStatus.valueOf(status),
                     keyword,
                     pageable);
         } else if (status != null) {
-            page = taskRepository.findByStatus(TaskStatus.valueOf(status), pageable);
+            page = taskRepository.findByProjectIdInAndStatus(projectIds, TaskStatus.valueOf(status), pageable);
         } else if (keyword != null) {
-            page = taskRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+            page = taskRepository.findByProjectIdInAndTitleContainingIgnoreCase(projectIds, keyword, pageable);
         } else {
-            page = taskRepository.findAll(pageable);
+            page = taskRepository.findByProjectIdIn(projectIds, pageable);
         }
 
         return toPageResponse(page);
@@ -95,13 +97,16 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     @RateLimit(points = 150, durationSeconds = 60, keyPrefix = "task:list")
-    public TaskResponse findById(UUID id) {
-        return toResponse(findTaskByIdOrThrow(id));
+    public TaskResponse findById(UUID id, UUID userId) {
+        return toResponse(findAccessibleTaskOrThrow(id, userId));
     }
 
     @Override
-    public TaskResponse update(UUID id, TaskUpdateRequest request) {
-        Task task = findTaskByIdOrThrow(id);
+    public TaskResponse update(UUID id, TaskUpdateRequest request, UUID userId) {
+        Task task = findAccessibleTaskOrThrow(id, userId);
+        if (request.getProjectId() != null && !request.getProjectId().equals(task.getProjectId())) {
+            projectAccessGuard.requireMember(request.getProjectId(), userId);
+        }
         UUID oldAssigneeId = task.getAssigneeId();
         modelMapper.map(request, task);
 
@@ -123,15 +128,18 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void delete(UUID id) {
-        taskRepository.delete(findTaskByIdOrThrow(id));
+    public void delete(UUID id, UUID userId) {
+        taskRepository.delete(findAccessibleTaskOrThrow(id, userId));
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "taskDistribution", key = "'status_count'")
-    public TaskDistributionResponse getTaskDistribution() {
-        List<Object[]> rows = taskRepository.countByStatusGrouped();
+    @Cacheable(value = "taskDistribution", key = "#userId")
+    public TaskDistributionResponse getTaskDistribution(UUID userId) {
+        Set<UUID> projectIds = projectAccessGuard.memberProjectIds(userId);
+        List<Object[]> rows = projectIds.isEmpty()
+                ? List.of()
+                : taskRepository.countByStatusGroupedByProjectIdIn(projectIds);
         Map<TaskStatus, Long> counts = rows.stream()
                 .collect(Collectors.toMap(
                         row -> (TaskStatus) row[0],
@@ -148,7 +156,9 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional(readOnly = true)
     @RateLimit(points = 150, durationSeconds = 60, keyPrefix = "task:list")
-    public PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable) {
+    public PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable, UUID userId) {
+        projectAccessGuard.requireMember(projectId, userId);
+
         Page<Task> taskPage = taskRepository.findByProjectId(projectId, pageable);
         List<Task> tasks = taskPage.getContent();
 
@@ -207,7 +217,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public TaskStats getTaskStatsByProjectId(UUID projectId) {
+    public TaskStats getTaskStatsByProjectId(UUID projectId, UUID userId) {
+        projectAccessGuard.requireMember(projectId, userId);
+
         List<Object[]> rows = taskRepository.countByStatusGroupedByProjectId(projectId);
         Map<TaskStatus, Long> counts = rows.stream()
                 .collect(Collectors.toMap(
@@ -227,9 +239,11 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
-    private Task findTaskByIdOrThrow(UUID id) {
-        return taskRepository.findById(id)
+    private Task findAccessibleTaskOrThrow(UUID id, UUID userId) {
+        Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task with id " + id + " not found"));
+        projectAccessGuard.requireMember(task.getProjectId(), userId);
+        return task;
     }
 
     private TaskResponse toResponse(Task task) {

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
@@ -48,6 +49,8 @@ class UserServiceImplTest {
 
     private User user;
     private UUID userId;
+    private User admin;
+    private User superAdmin;
     private AdminCreateUserRequest createRequest;
     private RegisterRequest registerRequest;
     private AdminUpdateUserRequest updateRequest;
@@ -66,6 +69,9 @@ class UserServiceImplTest {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
+
+        admin = User.builder().id(UUID.randomUUID()).email("admin@example.com").role(UserRole.ADMIN).build();
+        superAdmin = User.builder().id(UUID.randomUUID()).email("root@example.com").role(UserRole.SUPER_ADMIN).build();
 
         createRequest = new AdminCreateUserRequest();
         createRequest.setFullName("Test User");
@@ -89,11 +95,12 @@ class UserServiceImplTest {
 
     @Test
     void create_Success() {
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UserResponse response = userService.create(createRequest);
+        UserResponse response = userService.create(createRequest, admin.getId());
 
         assertNotNull(response);
         assertEquals(userId, response.getId());
@@ -108,11 +115,31 @@ class UserServiceImplTest {
 
     @Test
     void create_EmailConflict() {
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(userRepository.existsByEmailIgnoreCase(anyString())).thenReturn(true);
 
-        assertThrows(ResourceConflictException.class, () -> userService.create(createRequest));
+        assertThrows(ResourceConflictException.class, () -> userService.create(createRequest, admin.getId()));
 
         verify(userRepository).existsByEmailIgnoreCase("test@example.com");
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void create_ShouldBeForbidden_ForRegularUser() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(AccessDeniedException.class, () -> userService.create(createRequest, userId));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void create_ShouldBeForbidden_WhenAdminGrantsSuperAdmin() {
+        createRequest.setRole(UserRole.SUPER_ADMIN);
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+
+        assertThrows(AccessDeniedException.class, () -> userService.create(createRequest, admin.getId()));
+
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -202,10 +229,11 @@ class UserServiceImplTest {
     @Test
     void update_Success() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(userRepository.existsByEmailIgnoreCaseAndIdNot(anyString(), any(UUID.class))).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("newEncodedPassword");
 
-        UserResponse response = userService.update(userId, updateRequest);
+        UserResponse response = userService.update(userId, updateRequest, admin.getId());
 
         assertNotNull(response);
         verify(userRepository).findById(userId);
@@ -216,9 +244,11 @@ class UserServiceImplTest {
     @Test
     void update_EmailConflict() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(userRepository.existsByEmailIgnoreCaseAndIdNot(anyString(), any(UUID.class))).thenReturn(true);
 
-        assertThrows(ResourceConflictException.class, () -> userService.update(userId, updateRequest));
+        assertThrows(ResourceConflictException.class,
+                () -> userService.update(userId, updateRequest, admin.getId()));
 
         verify(userRepository).findById(userId);
         verify(userRepository).existsByEmailIgnoreCaseAndIdNot("updated@example.com", userId);
@@ -229,18 +259,74 @@ class UserServiceImplTest {
     void update_NotFound() {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.update(userId, updateRequest));
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.update(userId, updateRequest, admin.getId()));
 
         verify(userRepository).findById(userId);
         verify(modelMapper, never()).map(any(), any());
     }
 
     @Test
+    void update_ShouldAllowUserToEditOwnProfile() {
+        updateRequest.setRole(null);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot(anyString(), any(UUID.class))).thenReturn(false);
+
+        userService.update(userId, updateRequest, userId);
+
+        verify(modelMapper).map(updateRequest, user);
+    }
+
+    @Test
+    void update_ShouldBeForbidden_WhenUserPromotesThemselves() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(AccessDeniedException.class, () -> userService.update(userId, updateRequest, userId));
+
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void update_ShouldBeForbidden_WhenUserEditsSomeoneElse() {
+        updateRequest.setRole(null);
+        User other = User.builder().id(UUID.randomUUID()).role(UserRole.USER).build();
+        when(userRepository.findById(other.getId())).thenReturn(Optional.of(other));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(AccessDeniedException.class, () -> userService.update(other.getId(), updateRequest, userId));
+
+        verify(modelMapper, never()).map(any(), any());
+    }
+
+    @Test
+    void update_ShouldBeForbidden_WhenAdminEditsSuperAdmin() {
+        updateRequest.setRole(null);
+        when(userRepository.findById(superAdmin.getId())).thenReturn(Optional.of(superAdmin));
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+
+        assertThrows(AccessDeniedException.class,
+                () -> userService.update(superAdmin.getId(), updateRequest, admin.getId()));
+    }
+
+    @Test
+    void update_ShouldAllowSuperAdminToGrantSuperAdmin() {
+        updateRequest.setRole(UserRole.SUPER_ADMIN);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(superAdmin.getId())).thenReturn(Optional.of(superAdmin));
+        when(userRepository.existsByEmailIgnoreCaseAndIdNot(anyString(), any(UUID.class))).thenReturn(false);
+
+        userService.update(userId, updateRequest, superAdmin.getId());
+
+        verify(modelMapper).map(updateRequest, user);
+    }
+
+    @Test
     void delete_Success() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         doNothing().when(userRepository).delete(any(User.class));
 
-        userService.delete(userId);
+        userService.delete(userId, admin.getId());
 
         verify(userRepository).findById(userId);
         verify(userRepository).delete(user);
@@ -250,9 +336,20 @@ class UserServiceImplTest {
     void delete_NotFound() {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> userService.delete(userId));
+        assertThrows(ResourceNotFoundException.class, () -> userService.delete(userId, admin.getId()));
 
         verify(userRepository).findById(userId);
+        verify(userRepository, never()).delete(any(User.class));
+    }
+
+    @Test
+    void delete_ShouldBeForbidden_ForRegularUser() {
+        User other = User.builder().id(UUID.randomUUID()).role(UserRole.USER).build();
+        when(userRepository.findById(other.getId())).thenReturn(Optional.of(other));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(AccessDeniedException.class, () -> userService.delete(other.getId(), userId));
+
         verify(userRepository, never()).delete(any(User.class));
     }
 

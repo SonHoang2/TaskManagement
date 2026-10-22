@@ -27,9 +27,10 @@ public class TaskCommentController {
 
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, TaskCommentResponse>>> create(
-            @Valid @RequestBody TaskCommentCreateRequest request
+            @Valid @RequestBody TaskCommentCreateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
-        TaskCommentResponse comment = taskCommentService.create(request);
+        TaskCommentResponse comment = taskCommentService.create(request, currentUserId);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -42,30 +43,41 @@ public class TaskCommentController {
 
     @GetMapping
     public ResponseEntity<JSendResponse<Map<String, PageResponse<TaskCommentResponse>>>> findAll(
-            @RequestParam(required = false) UUID taskId,
+            @RequestParam UUID taskId,
             @RequestParam(required = false) UUID userId,
+            @RequestHeader("X-User-Id") UUID currentUserId,
             Pageable pageable
     ) {
-        PageResponse<TaskCommentResponse> pageResponse = taskCommentService.findAll(taskId, userId, pageable);
+        PageResponse<TaskCommentResponse> pageResponse =
+                taskCommentService.findAll(taskId, userId, pageable, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JSendResponse<Map<String, TaskCommentResponse>>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("comment", taskCommentService.findById(id))));
+    public ResponseEntity<JSendResponse<Map<String, TaskCommentResponse>>> findById(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("comment",
+                taskCommentService.findById(id, currentUserId))));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskCommentResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody TaskCommentUpdateRequest request
+            @Valid @RequestBody TaskCommentUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("comment", taskCommentService.update(id, request))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("comment",
+                taskCommentService.update(id, request, currentUserId))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
-        taskCommentService.delete(id);
+    public ResponseEntity<JSendResponse<Void>> delete(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        taskCommentService.delete(id, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

@@ -2,6 +2,7 @@ package com.sonhoang2.task_service.attachment;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentCreateRequest;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentResponse;
 import com.sonhoang2.task_service.attachment.dto.TaskAttachmentUpdateRequest;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class TaskAttachmentServiceImpl implements TaskAttachmentService {
 
     private final TaskAttachmentRepository taskAttachmentRepository;
     private final ModelMapper modelMapper;
+    private final ProjectAccessGuard projectAccessGuard;
 
     private PageResponse<TaskAttachmentResponse> toPageResponse(Page<TaskAttachment> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -35,51 +38,62 @@ public class TaskAttachmentServiceImpl implements TaskAttachmentService {
     }
 
     @Override
-    public TaskAttachmentResponse create(TaskAttachmentCreateRequest request) {
+    public TaskAttachmentResponse create(TaskAttachmentCreateRequest request, UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(request.getTaskId(), currentUserId);
+
         TaskAttachment attachment = TaskAttachment.builder()
                 .taskId(request.getTaskId())
                 .fileUrl(request.getFileUrl())
                 .fileName(request.getFileName())
-                .uploadedBy(request.getUploadedBy())
+                .uploadedBy(currentUserId)
                 .build();
 
         return toResponse(taskAttachmentRepository.save(attachment));
     }
 
     @Override
-    public PageResponse<TaskAttachmentResponse> findAll(UUID taskId, UUID uploadedBy, Pageable pageable) {
-        Page<TaskAttachment> page;
+    public PageResponse<TaskAttachmentResponse> findAll(UUID taskId,
+                                                        UUID uploadedBy,
+                                                        Pageable pageable,
+                                                        UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(taskId, currentUserId);
 
-        if (taskId != null && uploadedBy != null) {
-            page = taskAttachmentRepository.findByTaskIdAndUploadedBy(taskId, uploadedBy, pageable);
-        } else if (taskId != null) {
-            page = taskAttachmentRepository.findByTaskId(taskId, pageable);
-        } else if (uploadedBy != null) {
-            page = taskAttachmentRepository.findByUploadedBy(uploadedBy, pageable);
-        } else {
-            page = taskAttachmentRepository.findAll(pageable);
-        }
+        Page<TaskAttachment> page = uploadedBy != null
+                ? taskAttachmentRepository.findByTaskIdAndUploadedBy(taskId, uploadedBy, pageable)
+                : taskAttachmentRepository.findByTaskId(taskId, pageable);
 
         return toPageResponse(page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public TaskAttachmentResponse findById(UUID id) {
-        return toResponse(findAttachmentByIdOrThrow(id));
+    public TaskAttachmentResponse findById(UUID id, UUID currentUserId) {
+        TaskAttachment attachment = findAttachmentByIdOrThrow(id);
+        projectAccessGuard.requireTaskMember(attachment.getTaskId(), currentUserId);
+        return toResponse(attachment);
     }
 
     @Override
-    public TaskAttachmentResponse update(UUID id, TaskAttachmentUpdateRequest request) {
+    public TaskAttachmentResponse update(UUID id, TaskAttachmentUpdateRequest request, UUID currentUserId) {
         TaskAttachment attachment = findAttachmentByIdOrThrow(id);
+        projectAccessGuard.requireTaskMember(attachment.getTaskId(), currentUserId);
+        if (!currentUserId.equals(attachment.getUploadedBy())) {
+            throw new AccessDeniedException("You can only edit attachments you uploaded");
+        }
         modelMapper.map(request, attachment);
 
         return toResponse(attachment);
     }
 
     @Override
-    public void delete(UUID id) {
-        taskAttachmentRepository.delete(findAttachmentByIdOrThrow(id));
+    public void delete(UUID id, UUID currentUserId) {
+        TaskAttachment attachment = findAttachmentByIdOrThrow(id);
+        UUID projectId = projectAccessGuard.requireTaskMember(attachment.getTaskId(), currentUserId);
+        if (!currentUserId.equals(attachment.getUploadedBy())
+                && !projectAccessGuard.isManager(projectId, currentUserId)) {
+            throw new AccessDeniedException("Only the uploader or a project owner/admin can delete this attachment");
+        }
+        taskAttachmentRepository.delete(attachment);
     }
 
     private TaskAttachment findAttachmentByIdOrThrow(UUID id) {

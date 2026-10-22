@@ -16,17 +16,17 @@ public interface TaskService {
 
     TaskResponse create(TaskCreateRequest request, UUID userId);
 
-    PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable);
+    PageResponse<TaskResponse> findAll(String status, String keyword, Pageable pageable, UUID userId);
 
-    TaskResponse findById(UUID id);
+    TaskResponse findById(UUID id, UUID userId);
 
-    TaskResponse update(UUID id, TaskUpdateRequest request);
+    TaskResponse update(UUID id, TaskUpdateRequest request, UUID userId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID userId);
 
-    TaskDistributionResponse getTaskDistribution();
+    TaskDistributionResponse getTaskDistribution(UUID userId);
 
-    PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable);
+    PageResponse<TaskDetailResponse> findByProjectId(UUID projectId, Pageable pageable, UUID userId);
 
-    TaskStats getTaskStatsByProjectId(UUID projectId);
+    TaskStats getTaskStatsByProjectId(UUID projectId, UUID userId);
 }
