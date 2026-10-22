@@ -27,9 +27,10 @@ public class TaskHistoryController {
 
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, TaskHistoryResponse>>> create(
-            @Valid @RequestBody TaskHistoryCreateRequest request
+            @Valid @RequestBody TaskHistoryCreateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
-        TaskHistoryResponse history = taskHistoryService.create(request);
+        TaskHistoryResponse history = taskHistoryService.create(request, currentUserId);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -42,30 +43,41 @@ public class TaskHistoryController {
 
     @GetMapping
     public ResponseEntity<JSendResponse<Map<String, PageResponse<TaskHistoryResponse>>>> findAll(
-            @RequestParam(required = false) UUID taskId,
+            @RequestParam UUID taskId,
             @RequestParam(required = false) UUID changedBy,
+            @RequestHeader("X-User-Id") UUID currentUserId,
             Pageable pageable
     ) {
-        PageResponse<TaskHistoryResponse> pageResponse = taskHistoryService.findAll(taskId, changedBy, pageable);
+        PageResponse<TaskHistoryResponse> pageResponse =
+                taskHistoryService.findAll(taskId, changedBy, pageable, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<JSendResponse<Map<String, TaskHistoryResponse>>> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("history", taskHistoryService.findById(id))));
+    public ResponseEntity<JSendResponse<Map<String, TaskHistoryResponse>>> findById(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("history",
+                taskHistoryService.findById(id, currentUserId))));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, TaskHistoryResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody TaskHistoryUpdateRequest request
+            @Valid @RequestBody TaskHistoryUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID currentUserId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("history", taskHistoryService.update(id, request))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("history",
+                taskHistoryService.update(id, request, currentUserId))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
-        taskHistoryService.delete(id);
+    public ResponseEntity<JSendResponse<Void>> delete(
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID currentUserId
+    ) {
+        taskHistoryService.delete(id, currentUserId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

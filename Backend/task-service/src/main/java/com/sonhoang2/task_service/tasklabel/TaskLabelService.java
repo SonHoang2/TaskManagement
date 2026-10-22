@@ -10,15 +10,15 @@ import java.util.UUID;
 
 public interface TaskLabelService {
 
-    TaskLabelResponse create(TaskLabelCreateRequest request);
+    TaskLabelResponse create(TaskLabelCreateRequest request, UUID currentUserId);
 
-    PageResponse<TaskLabelResponse> findAll(UUID taskId, UUID labelId, Pageable pageable);
+    PageResponse<TaskLabelResponse> findAll(UUID taskId, UUID labelId, Pageable pageable, UUID currentUserId);
 
-    TaskLabelResponse findById(UUID taskId, UUID labelId);
+    TaskLabelResponse findById(UUID taskId, UUID labelId, UUID currentUserId);
 
-    TaskLabelResponse update(UUID taskId, UUID labelId, TaskLabelUpdateRequest request);
+    TaskLabelResponse update(UUID taskId, UUID labelId, TaskLabelUpdateRequest request, UUID currentUserId);
 
-    void delete(UUID taskId, UUID labelId);
+    void delete(UUID taskId, UUID labelId, UUID currentUserId);
 }
 
 

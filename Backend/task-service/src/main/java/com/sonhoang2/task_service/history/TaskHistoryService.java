@@ -10,15 +10,15 @@ import java.util.UUID;
 
 public interface TaskHistoryService {
 
-    TaskHistoryResponse create(TaskHistoryCreateRequest request);
+    TaskHistoryResponse create(TaskHistoryCreateRequest request, UUID currentUserId);
 
-    PageResponse<TaskHistoryResponse> findAll(UUID taskId, UUID changedBy, Pageable pageable);
+    PageResponse<TaskHistoryResponse> findAll(UUID taskId, UUID changedBy, Pageable pageable, UUID currentUserId);
 
-    TaskHistoryResponse findById(UUID id);
+    TaskHistoryResponse findById(UUID id, UUID currentUserId);
 
-    TaskHistoryResponse update(UUID id, TaskHistoryUpdateRequest request);
+    TaskHistoryResponse update(UUID id, TaskHistoryUpdateRequest request, UUID currentUserId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID currentUserId);
 }
 
 

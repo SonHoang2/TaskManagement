@@ -11,8 +11,6 @@ import java.util.UUID;
 public interface TaskLabelRepository extends JpaRepository<TaskLabel, UUID> {
     Page<TaskLabel> findByTaskId(UUID taskId, Pageable pageable);
 
-    Page<TaskLabel> findByLabelId(UUID labelId, Pageable pageable);
-
     Page<TaskLabel> findByTaskIdAndLabelId(UUID taskId, UUID labelId, Pageable pageable);
 
     Optional<TaskLabel> findByTaskIdAndLabelId(UUID taskId, UUID labelId);

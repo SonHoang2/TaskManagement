@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,8 +49,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse create(AdminCreateUserRequest request) {
+    public UserResponse create(AdminCreateUserRequest request, UUID actorId) {
+        User actor = findActorOrThrow(actorId);
+        requireAdmin(actor);
         UserRole role = request.getRole() != null ? request.getRole() : UserRole.USER;
+        requireCanAssign(actor, role);
+
         User user = persistUser(request, role, request.getAvatarUrl());
         return toResponse(user);
     }
@@ -90,8 +95,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse update(UUID id, AdminUpdateUserRequest request) {
+    public UserResponse update(UUID id, AdminUpdateUserRequest request, UUID actorId) {
         User user = findUserByIdOrThrow(id);
+        User actor = findActorOrThrow(actorId);
+
+        // Users may edit their own profile; editing anyone else, or any role change, is an admin action.
+        boolean roleChange = request.getRole() != null && request.getRole() != user.getRole();
+        if (!actor.getId().equals(id) || roleChange) {
+            requireAdmin(actor);
+            requireCanManage(actor, user);
+        }
+        if (roleChange) {
+            requireCanAssign(actor, request.getRole());
+        }
 
         if (StringUtils.hasText(request.getEmail())) {
             String normalizedEmail = normalizeEmail(request.getEmail());
@@ -111,8 +127,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(UUID id) {
-        userRepository.delete(findUserByIdOrThrow(id));
+    public void delete(UUID id, UUID actorId) {
+        User user = findUserByIdOrThrow(id);
+        User actor = findActorOrThrow(actorId);
+        requireAdmin(actor);
+        requireCanManage(actor, user);
+
+        userRepository.delete(user);
+    }
+
+    // The caller's role is read from the database rather than the JWT so a demotion takes effect immediately.
+    private User findActorOrThrow(UUID actorId) {
+        return userRepository.findById(actorId)
+                .orElseThrow(() -> new AccessDeniedException("Unknown user"));
+    }
+
+    private static boolean isAdmin(User user) {
+        return user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.SUPER_ADMIN;
+    }
+
+    private static void requireAdmin(User actor) {
+        if (!isAdmin(actor)) {
+            throw new AccessDeniedException("Only an admin can do this");
+        }
+    }
+
+    /** Only a super admin may act on another super admin's account. */
+    private static void requireCanManage(User actor, User target) {
+        if (target.getRole() == UserRole.SUPER_ADMIN && actor.getRole() != UserRole.SUPER_ADMIN) {
+            throw new AccessDeniedException("Only a super admin can manage a super admin");
+        }
+    }
+
+    /** Only a super admin may hand out the super admin role. */
+    private static void requireCanAssign(User actor, UserRole role) {
+        if (role == UserRole.SUPER_ADMIN && actor.getRole() != UserRole.SUPER_ADMIN) {
+            throw new AccessDeniedException("Only a super admin can grant the super admin role");
+        }
     }
 
     private User findUserByIdOrThrow(UUID id) {

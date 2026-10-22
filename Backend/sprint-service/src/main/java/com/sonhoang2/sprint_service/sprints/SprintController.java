@@ -27,9 +27,10 @@ public class SprintController {
 
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, SprintResponse>>> create(
-            @Valid @RequestBody SprintCreateRequest request
+            @Valid @RequestBody SprintCreateRequest request,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        SprintResponse sprint = sprintService.create(request);
+        SprintResponse sprint = sprintService.create(request, userId);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -43,32 +44,36 @@ public class SprintController {
     @GetMapping
     public ResponseEntity<JSendResponse<Map<String, PageResponse<SprintResponse>>>> findAll(
             @RequestParam(required = false) UUID projectId,
+            @RequestHeader("X-User-Id") UUID userId,
             Pageable pageable
     ) {
-        PageResponse<SprintResponse> pageResponse = sprintService.findAll(projectId, pageable);
+        PageResponse<SprintResponse> pageResponse = sprintService.findAll(projectId, pageable, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, SprintResponse>>> findById(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("sprint", sprintService.findById(id))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("sprint", sprintService.findById(id, userId))));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, SprintResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody SprintUpdateRequest request
+            @Valid @RequestBody SprintUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("sprint", sprintService.update(id, request))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("sprint", sprintService.update(id, request, userId))));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<JSendResponse<Void>> delete(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        sprintService.delete(id);
+        sprintService.delete(id, userId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

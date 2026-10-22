@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -52,6 +53,7 @@ class UserControllerTest {
     private AdminCreateUserRequest createRequest;
     private AdminUpdateUserRequest updateRequest;
     private UUID userId;
+    private final UUID actorId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
@@ -85,9 +87,10 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void create_Success() throws Exception {
-        when(userService.create(any(AdminCreateUserRequest.class))).thenReturn(userResponse);
+        when(userService.create(any(AdminCreateUserRequest.class), eq(actorId))).thenReturn(userResponse);
 
         mockMvc.perform(post("/api/v1/users")
+                        .header("X-User-Id", actorId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
@@ -104,6 +107,7 @@ class UserControllerTest {
         createRequest.setEmail(""); // Invalid email
 
         mockMvc.perform(post("/api/v1/users")
+                        .header("X-User-Id", actorId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isBadRequest());
@@ -198,9 +202,10 @@ class UserControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(userService.update(eq(userId), any(AdminUpdateUserRequest.class))).thenReturn(updatedResponse);
+        when(userService.update(eq(userId), any(AdminUpdateUserRequest.class), eq(actorId))).thenReturn(updatedResponse);
 
         mockMvc.perform(patch("/api/v1/users/{id}", userId)
+                        .header("X-User-Id", actorId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
@@ -216,6 +221,7 @@ class UserControllerTest {
         updateRequest.setEmail("invalid-email"); // Invalid email format
 
         mockMvc.perform(patch("/api/v1/users/{id}", userId)
+                        .header("X-User-Id", actorId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isBadRequest());
@@ -224,7 +230,7 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void delete_Success() throws Exception {
-        mockMvc.perform(delete("/api/v1/users/{id}", userId))
+        mockMvc.perform(delete("/api/v1/users/{id}", userId).header("X-User-Id", actorId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
     }
@@ -233,9 +239,19 @@ class UserControllerTest {
     @WithMockUser
     void delete_NotFound() throws Exception {
         org.mockito.Mockito.doThrow(new ResourceNotFoundException("User with id " + userId + " not found"))
-                .when(userService).delete(userId);
+                .when(userService).delete(userId, actorId);
 
-        mockMvc.perform(delete("/api/v1/users/{id}", userId))
+        mockMvc.perform(delete("/api/v1/users/{id}", userId).header("X-User-Id", actorId.toString()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void delete_Forbidden_WhenServiceRejectsCaller() throws Exception {
+        org.mockito.Mockito.doThrow(new AccessDeniedException("Only an admin can do this"))
+                .when(userService).delete(userId, actorId);
+
+        mockMvc.perform(delete("/api/v1/users/{id}", userId).header("X-User-Id", actorId.toString()))
+                .andExpect(status().isForbidden());
     }
 }

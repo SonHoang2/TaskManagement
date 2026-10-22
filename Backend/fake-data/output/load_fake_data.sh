@@ -99,25 +99,25 @@ load_table() {
   copy_table "$db" "$table" "$csv" "$columns"
 }
 
-# # --------------------------------------------------------------------------
-# # 1. user_db
-# # --------------------------------------------------------------------------
-# echo "[1/5] Nạp dữ liệu vào user_db..."
-# load_table user_db users users.csv \
-#   "id,full_name,email,password,avatar_url,role,created_at,updated_at"
+# --------------------------------------------------------------------------
+# 1. user_db
+# --------------------------------------------------------------------------
+echo "[1/5] Nạp dữ liệu vào user_db..."
+load_table user_db users users.csv \
+  "id,full_name,email,password,avatar_url,role,created_at,updated_at"
 
-# # --------------------------------------------------------------------------
-# # 2. project_db  (thứ tự quan trọng vì có FK nội bộ trong cùng DB)
-# # --------------------------------------------------------------------------
-# echo "[2/5] Nạp dữ liệu vào project_db..."
-# load_table project_db projects projects.csv \
-#   "id,name,description,owner_id,created_at,updated_at"
-# load_table project_db project_members project_members.csv \
-#   "id,project_id,user_id,role,joined_at"
-# load_table project_db project_invitations project_invitations.csv \
-#   "id,project_id,invitee_id,invited_by_id,status,responded_at,created_at,updated_at"
-# load_table project_db labels labels.csv \
-#   "id,project_id,name,color,created_at"
+# --------------------------------------------------------------------------
+# 2. project_db  (thứ tự quan trọng vì có FK nội bộ trong cùng DB)
+# --------------------------------------------------------------------------
+echo "[2/5] Nạp dữ liệu vào project_db..."
+load_table project_db projects projects.csv \
+  "id,name,description,owner_id,created_at,updated_at"
+load_table project_db project_members project_members.csv \
+  "id,project_id,user_id,role,joined_at"
+load_table project_db project_invitations project_invitations.csv \
+  "id,project_id,invitee_id,invited_by_id,status,responded_at,created_at,updated_at"
+load_table project_db labels labels.csv \
+  "id,project_id,name,color,created_at"
 
 # --------------------------------------------------------------------------
 # 3. task_db
@@ -134,21 +134,21 @@ load_table task_db task_labels task_labels.csv \
 load_table task_db task_histories task_histories.csv \
   "id,task_id,changed_by,field,old_value,new_value,created_at"
 
-# # --------------------------------------------------------------------------
-# # 4. sprint_db
-# # --------------------------------------------------------------------------
-# echo "[4/5] Nạp dữ liệu vào sprint_db..."
-# load_table sprint_db sprints sprints.csv \
-#   "id,project_id,name,status,start_date,end_date,created_at"
-# load_table sprint_db task_sprints task_sprints.csv \
-#   "task_id,sprint_id"
+# --------------------------------------------------------------------------
+# 4. sprint_db
+# --------------------------------------------------------------------------
+echo "[4/5] Nạp dữ liệu vào sprint_db..."
+load_table sprint_db sprints sprints.csv \
+  "id,project_id,name,status,start_date,end_date,created_at"
+load_table sprint_db task_sprints task_sprints.csv \
+  "task_id,sprint_id"
 
-# # --------------------------------------------------------------------------
-# # 5. notification_db
-# # --------------------------------------------------------------------------
-# echo "[5/5] Nạp dữ liệu vào notification_db..."
-# load_table notification_db notifications notifications.csv \
-#   "id,user_id,type,content,entity_id,entity_type,is_read,created_at"
+# --------------------------------------------------------------------------
+# 5. notification_db
+# --------------------------------------------------------------------------
+echo "[5/5] Nạp dữ liệu vào notification_db..."
+load_table notification_db notifications notifications.csv \
+  "id,user_id,type,content,entity_id,entity_type,is_read,created_at"
 
-# echo ""
-# echo "Hoàn tất! Đã xóa dữ liệu cũ và nạp dữ liệu mới vào cả 5 database."
+echo ""
+echo "Hoàn tất! Đã xóa dữ liệu cũ và nạp dữ liệu mới vào cả 5 database."

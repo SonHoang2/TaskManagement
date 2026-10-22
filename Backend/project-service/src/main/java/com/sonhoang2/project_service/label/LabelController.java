@@ -27,9 +27,10 @@ public class LabelController {
 
     @PostMapping
     public ResponseEntity<JSendResponse<Map<String, LabelResponse>>> create(
-            @Valid @RequestBody LabelCreateRequest request
+            @Valid @RequestBody LabelCreateRequest request,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        LabelResponse label = labelService.create(request);
+        LabelResponse label = labelService.create(request, userId);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -42,34 +43,38 @@ public class LabelController {
 
     @GetMapping
     public ResponseEntity<JSendResponse<Map<String, PageResponse<LabelResponse>>>> findAll(
-            @RequestParam(required = false) UUID projectId,
+            @RequestParam UUID projectId,
             @RequestParam(required = false) String name,
+            @RequestHeader("X-User-Id") UUID userId,
             Pageable pageable
     ) {
-        PageResponse<LabelResponse> pageResponse = labelService.findAll(projectId, name, pageable);
+        PageResponse<LabelResponse> pageResponse = labelService.findAll(projectId, name, pageable, userId);
         return ResponseEntity.ok(JSendResponse.success(Map.of("page", pageResponse)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, LabelResponse>>> findById(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("label", labelService.findById(id))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("label", labelService.findById(id, userId))));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, LabelResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody LabelUpdateRequest request
+            @Valid @RequestBody LabelUpdateRequest request,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("label", labelService.update(id, request))));
+        return ResponseEntity.ok(JSendResponse.success(Map.of("label", labelService.update(id, request, userId))));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<JSendResponse<Void>> delete(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestHeader("X-User-Id") UUID userId
     ) {
-        labelService.delete(id);
+        labelService.delete(id, userId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

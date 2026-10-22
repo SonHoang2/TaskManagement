@@ -2,6 +2,7 @@ package com.sonhoang2.task_service.comment;
 
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.task_service.events.EventPublisher;
 import com.sonhoang2.task_service.events.TaskCommentCreatedEvent;
 import com.sonhoang2.task_service.comment.dto.TaskCommentCreateRequest;
@@ -12,6 +13,7 @@ import com.sonhoang2.task_service.task.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.modelmapper.ModelMapper;
@@ -28,6 +30,7 @@ public class TaskCommentServiceImpl implements TaskCommentService {
     private final ModelMapper modelMapper;
     private final EventPublisher eventPublisher;
     private final TaskRepository taskRepository;
+    private final ProjectAccessGuard projectAccessGuard;
 
     private PageResponse<TaskCommentResponse> toPageResponse(Page<TaskComment> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -41,10 +44,12 @@ public class TaskCommentServiceImpl implements TaskCommentService {
     }
 
     @Override
-    public TaskCommentResponse create(TaskCommentCreateRequest request) {
+    public TaskCommentResponse create(TaskCommentCreateRequest request, UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(request.getTaskId(), currentUserId);
+
         TaskComment comment = TaskComment.builder()
                 .taskId(request.getTaskId())
-                .userId(request.getUserId())
+                .userId(currentUserId)
                 .content(request.getContent())
                 .createdAt(Instant.now())
                 .build();
@@ -70,38 +75,43 @@ public class TaskCommentServiceImpl implements TaskCommentService {
     }
 
     @Override
-    public PageResponse<TaskCommentResponse> findAll(UUID taskId, UUID userId, Pageable pageable) {
-        Page<TaskComment> page;
+    public PageResponse<TaskCommentResponse> findAll(UUID taskId, UUID userId, Pageable pageable, UUID currentUserId) {
+        projectAccessGuard.requireTaskMember(taskId, currentUserId);
 
-        if (taskId != null && userId != null) {
-            page = taskCommentRepository.findByTaskIdAndUserId(taskId, userId, pageable);
-        } else if (taskId != null) {
-            page = taskCommentRepository.findByTaskId(taskId, pageable);
-        } else if (userId != null) {
-            page = taskCommentRepository.findByUserId(userId, pageable);
-        } else {
-            page = taskCommentRepository.findAll(pageable);
-        }
+        Page<TaskComment> page = userId != null
+                ? taskCommentRepository.findByTaskIdAndUserId(taskId, userId, pageable)
+                : taskCommentRepository.findByTaskId(taskId, pageable);
 
         return toPageResponse(page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public TaskCommentResponse findById(UUID id) {
-        return toResponse(findCommentByIdOrThrow(id));
+    public TaskCommentResponse findById(UUID id, UUID currentUserId) {
+        TaskComment comment = findCommentByIdOrThrow(id);
+        projectAccessGuard.requireTaskMember(comment.getTaskId(), currentUserId);
+        return toResponse(comment);
     }
 
     @Override
-    public TaskCommentResponse update(UUID id, TaskCommentUpdateRequest request) {
+    public TaskCommentResponse update(UUID id, TaskCommentUpdateRequest request, UUID currentUserId) {
         TaskComment comment = findCommentByIdOrThrow(id);
+        projectAccessGuard.requireTaskMember(comment.getTaskId(), currentUserId);
+        if (!comment.getUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only edit your own comments");
+        }
         modelMapper.map(request, comment);
         return toResponse(comment);
     }
 
     @Override
-    public void delete(UUID id) {
-        taskCommentRepository.delete(findCommentByIdOrThrow(id));
+    public void delete(UUID id, UUID currentUserId) {
+        TaskComment comment = findCommentByIdOrThrow(id);
+        UUID projectId = projectAccessGuard.requireTaskMember(comment.getTaskId(), currentUserId);
+        if (!comment.getUserId().equals(currentUserId) && !projectAccessGuard.isManager(projectId, currentUserId)) {
+            throw new AccessDeniedException("Only the author or a project owner/admin can delete this comment");
+        }
+        taskCommentRepository.delete(comment);
     }
 
     private TaskComment findCommentByIdOrThrow(UUID id) {

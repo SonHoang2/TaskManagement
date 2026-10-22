@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,8 +35,10 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<JSendResponse<Map<String, UserResponse>>> create(@Valid @RequestBody AdminCreateUserRequest request) {
-        UserResponse createdUser = userService.create(request);
+    public ResponseEntity<JSendResponse<Map<String, UserResponse>>> create(
+            @Valid @RequestBody AdminCreateUserRequest request,
+            @RequestHeader("X-User-Id") UUID actorId) {
+        UserResponse createdUser = userService.create(request, actorId);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -63,13 +66,15 @@ public class UserController {
     @PatchMapping("/{id}")
     public ResponseEntity<JSendResponse<Map<String, UserResponse>>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody AdminUpdateUserRequest request) {
-        return ResponseEntity.ok(JSendResponse.success(Map.of("user", userService.update(id, request))));
+            @Valid @RequestBody AdminUpdateUserRequest request,
+            @RequestHeader("X-User-Id") UUID actorId) {
+        return ResponseEntity.ok(JSendResponse.success(Map.of("user", userService.update(id, request, actorId))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id) {
-        userService.delete(id);
+    public ResponseEntity<JSendResponse<Void>> delete(@PathVariable UUID id,
+                                                      @RequestHeader("X-User-Id") UUID actorId) {
+        userService.delete(id, actorId);
         return ResponseEntity.ok(JSendResponse.success(null));
     }
 }

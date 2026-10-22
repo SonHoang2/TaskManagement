@@ -10,6 +10,7 @@ import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
+import com.sonhoang2.project_service.project.dto.ProjectMembershipResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -98,6 +99,16 @@ public class ProjectController {
 
         return ResponseEntity.ok(JSendResponse.success(
                 Map.of("invitations", projectService.listInvitationsByInvitee(userId))
+        ));
+    }
+
+    /** Projects the caller belongs to and their role in each; used by other services for access checks. */
+    @GetMapping("/memberships/me")
+    public ResponseEntity<JSendResponse<Map<String, List<ProjectMembershipResponse>>>> listMyMemberships(
+            @RequestHeader("X-User-Id") UUID userId) {
+
+        return ResponseEntity.ok(JSendResponse.success(
+                Map.of("memberships", projectService.listMembershipsByUser(userId))
         ));
     }
 

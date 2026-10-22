@@ -10,15 +10,15 @@ import java.util.UUID;
 
 public interface TaskCommentService {
 
-    TaskCommentResponse create(TaskCommentCreateRequest request);
+    TaskCommentResponse create(TaskCommentCreateRequest request, UUID currentUserId);
 
-    PageResponse<TaskCommentResponse> findAll(UUID taskId, UUID userId, Pageable pageable);
+    PageResponse<TaskCommentResponse> findAll(UUID taskId, UUID userId, Pageable pageable, UUID currentUserId);
 
-    TaskCommentResponse findById(UUID id);
+    TaskCommentResponse findById(UUID id, UUID currentUserId);
 
-    TaskCommentResponse update(UUID id, TaskCommentUpdateRequest request);
+    TaskCommentResponse update(UUID id, TaskCommentUpdateRequest request, UUID currentUserId);
 
-    void delete(UUID id);
+    void delete(UUID id, UUID currentUserId);
 }
 
 

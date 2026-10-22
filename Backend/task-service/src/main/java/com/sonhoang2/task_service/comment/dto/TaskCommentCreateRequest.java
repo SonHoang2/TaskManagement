@@ -12,9 +12,6 @@ public class TaskCommentCreateRequest {
     @NotNull(message = "taskId is required")
     private UUID taskId;
 
-    @NotNull(message = "userId is required")
-    private UUID userId;
-
     @NotBlank(message = "content is required")
     private String content;
 }

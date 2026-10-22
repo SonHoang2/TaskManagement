@@ -28,6 +28,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,6 +48,7 @@ class TaskControllerTest {
 
     private UUID taskId = UUID.randomUUID();
     private UUID projectId = UUID.randomUUID();
+    private UUID userId = UUID.randomUUID();
 
     @Test
     void create_ShouldReturnCreated_WhenValidRequest() throws Exception {
@@ -67,9 +70,9 @@ class TaskControllerTest {
 
         when(taskService.create(any(TaskCreateRequest.class), any(UUID.class))).thenReturn(response);
 
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/api/v1/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-User-Id", UUID.randomUUID().toString())
+                        .header("X-User-Id", userId.toString())
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("success"))
@@ -99,9 +102,9 @@ class TaskControllerTest {
                 1
         );
 
-        when(taskService.findAll(any(), any(), any(Pageable.class))).thenReturn(pageResponse);
+        when(taskService.findAll(any(), any(), any(Pageable.class), eq(userId))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/tasks"))
+        mockMvc.perform(get("/api/v1/tasks").header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.page.content[0].id").value(taskId.toString()));
@@ -129,9 +132,10 @@ class TaskControllerTest {
                 1
         );
 
-        when(taskService.findAll(eq("TODO"), eq("Test"), any(Pageable.class))).thenReturn(pageResponse);
+        when(taskService.findAll(eq("TODO"), eq("Test"), any(Pageable.class), eq(userId))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/tasks")
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("X-User-Id", userId.toString())
                         .param("status", "TODO")
                         .param("keyword", "Test"))
                 .andExpect(status().isOk())
@@ -149,9 +153,9 @@ class TaskControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(taskService.findById(taskId)).thenReturn(response);
+        when(taskService.findById(taskId, userId)).thenReturn(response);
 
-        mockMvc.perform(get("/tasks/{id}", taskId))
+        mockMvc.perform(get("/api/v1/tasks/{id}", taskId).header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.task.id").value(taskId.toString()))
@@ -173,9 +177,10 @@ class TaskControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(taskService.update(eq(taskId), any(TaskUpdateRequest.class))).thenReturn(response);
+        when(taskService.update(eq(taskId), any(TaskUpdateRequest.class), eq(userId))).thenReturn(response);
 
-        mockMvc.perform(patch("/tasks/{id}", taskId)
+        mockMvc.perform(patch("/api/v1/tasks/{id}", taskId)
+                        .header("X-User-Id", userId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -186,8 +191,18 @@ class TaskControllerTest {
 
     @Test
     void delete_ShouldReturnSuccess_WhenTaskExists() throws Exception {
-        mockMvc.perform(delete("/tasks/{id}", taskId))
+        mockMvc.perform(delete("/api/v1/tasks/{id}", taskId).header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
+
+        verify(taskService).delete(taskId, userId);
+    }
+
+    @Test
+    void delete_ShouldReturnBadRequest_WhenUserHeaderMissing() throws Exception {
+        mockMvc.perform(delete("/api/v1/tasks/{id}", taskId))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskService);
     }
 }

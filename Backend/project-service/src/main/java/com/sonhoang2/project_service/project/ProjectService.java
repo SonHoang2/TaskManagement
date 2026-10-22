@@ -9,6 +9,7 @@ import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
+import com.sonhoang2.project_service.project.dto.ProjectMembershipResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -32,6 +33,8 @@ public interface ProjectService {
     List<ProjectInvitationResponse> listInvitations(UUID projectId, UUID userId);
 
     List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId);
+
+    List<ProjectMembershipResponse> listMembershipsByUser(UUID userId);
 
     PageResponse<ProjectDetailResponse> getMyProjects(Pageable pageable, UUID userId, ListProjectRequest request);
 

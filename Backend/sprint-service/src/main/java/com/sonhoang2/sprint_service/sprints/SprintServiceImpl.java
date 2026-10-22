@@ -2,6 +2,7 @@ package com.sonhoang2.sprint_service.sprints;
 
 import com.sonhoang2.sprint_service.common.dto.PageResponse;
 import com.sonhoang2.sprint_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.sprint_service.common.security.ProjectAccessGuard;
 import com.sonhoang2.sprint_service.sprints.dto.SprintCreateRequest;
 import com.sonhoang2.sprint_service.sprints.dto.SprintResponse;
 import com.sonhoang2.sprint_service.sprints.dto.SprintUpdateRequest;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class SprintServiceImpl implements SprintService {
 
     private final SprintRepository sprintRepository;
+    private final ProjectAccessGuard projectAccessGuard;
 
     private PageResponse<SprintResponse> toPageResponse(Page<Sprint> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -34,7 +37,9 @@ public class SprintServiceImpl implements SprintService {
     }
 
     @Override
-    public SprintResponse create(SprintCreateRequest request) {
+    public SprintResponse create(SprintCreateRequest request, UUID userId) {
+        projectAccessGuard.requireMember(request.getProjectId(), userId);
+
         Sprint sprint = Sprint.builder()
                 .projectId(request.getProjectId())
                 .name(request.getName())
@@ -46,25 +51,28 @@ public class SprintServiceImpl implements SprintService {
     }
 
     @Override
-    public PageResponse<SprintResponse> findAll(UUID projectId, Pageable pageable) {
-        Page<Sprint> page;
+    public PageResponse<SprintResponse> findAll(UUID projectId, Pageable pageable, UUID userId) {
         if (projectId != null) {
-            page = sprintRepository.findByProjectId(projectId, pageable);
-        } else {
-            page = sprintRepository.findAll(pageable);
+            projectAccessGuard.requireMember(projectId, userId);
+            return toPageResponse(sprintRepository.findByProjectId(projectId, pageable));
         }
+
+        Set<UUID> projectIds = projectAccessGuard.memberProjectIds(userId);
+        Page<Sprint> page = projectIds.isEmpty()
+                ? Page.empty(pageable)
+                : sprintRepository.findByProjectIdIn(projectIds, pageable);
         return toPageResponse(page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public SprintResponse findById(UUID id) {
-        return toResponse(findSprintByIdOrThrow(id));
+    public SprintResponse findById(UUID id, UUID userId) {
+        return toResponse(findAccessibleSprintOrThrow(id, userId));
     }
 
     @Override
-    public SprintResponse update(UUID id, SprintUpdateRequest request) {
-        Sprint existing = findSprintByIdOrThrow(id);
+    public SprintResponse update(UUID id, SprintUpdateRequest request, UUID userId) {
+        Sprint existing = findAccessibleSprintOrThrow(id, userId);
         existing.setName(request.getName());
         existing.setStartDate(request.getStartDate());
         existing.setEndDate(request.getEndDate());
@@ -75,13 +83,15 @@ public class SprintServiceImpl implements SprintService {
     }
 
     @Override
-    public void delete(UUID id) {
-        sprintRepository.delete(findSprintByIdOrThrow(id));
+    public void delete(UUID id, UUID userId) {
+        sprintRepository.delete(findAccessibleSprintOrThrow(id, userId));
     }
 
-    private Sprint findSprintByIdOrThrow(UUID id) {
-        return sprintRepository.findById(id)
+    private Sprint findAccessibleSprintOrThrow(UUID id, UUID userId) {
+        Sprint sprint = sprintRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sprint with id " + id + " not found"));
+        projectAccessGuard.requireMember(sprint.getProjectId(), userId);
+        return sprint;
     }
 
     private SprintResponse toResponse(Sprint sprint) {

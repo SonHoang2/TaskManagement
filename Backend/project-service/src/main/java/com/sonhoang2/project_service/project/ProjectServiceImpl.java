@@ -6,6 +6,7 @@ import com.sonhoang2.project_service.events.EventPublisher;
 import com.sonhoang2.project_service.events.ProjectInvitationCreatedEvent;
 import com.sonhoang2.project_service.common.dto.PageResponse;
 import com.sonhoang2.project_service.common.dto.UserResponse;
+import com.sonhoang2.project_service.common.enums.UserRole;
 import com.sonhoang2.project_service.project.dto.ActiveSprint;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
@@ -18,6 +19,7 @@ import com.sonhoang2.project_service.project.dto.OwnerInfo;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
+import com.sonhoang2.project_service.project.dto.ProjectMembershipResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
 import com.sonhoang2.project_service.project.dto.TaskStats;
 import com.sonhoang2.project_service.project.entity.Project;
@@ -70,12 +72,17 @@ public class ProjectServiceImpl implements ProjectService {
                                                               UUID userId,
                                                               ListProjectRequest request) {
         Page<Project> projectPage;
+        boolean hasSearch = request.getSearch() != null && !request.getSearch().trim().isEmpty();
 
-        // Apply search filter if provided
-        if (request.getSearch() != null && !request.getSearch().trim().isEmpty()) {
-            projectPage = projectRepository.searchByNameOrDescription(request.getSearch(), pageable);
+        // System admins see every project; everyone else only the projects they belong to
+        if (isSystemAdmin(userId)) {
+            projectPage = hasSearch
+                    ? projectRepository.searchByNameOrDescription(request.getSearch(), pageable)
+                    : projectRepository.findAll(pageable);
         } else {
-            projectPage = projectRepository.findAll(pageable);
+            projectPage = hasSearch
+                    ? projectRepository.searchByMemberUserId(userId, request.getSearch(), pageable)
+                    : projectRepository.findByMemberUserId(userId, pageable);
         }
 
         // Convert to response DTOs
@@ -269,6 +276,17 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectInvitationResponse> listInvitationsByInvitee(UUID userId) {
         return projectInvitationRepository.findByInviteeId(userId).stream().map(this::toInvitationResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProjectMembershipResponse> listMembershipsByUser(UUID userId) {
+        return projectMemberRepository.findByUserId(userId).stream()
+                .map(member -> ProjectMembershipResponse.builder()
+                        .projectId(member.getProject().getId())
+                        .role(member.getRole())
+                        .build())
+                .toList();
     }
 
     @Override
@@ -474,8 +492,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(member -> getMemberInfo(member.getUserId()))
                 .collect(Collectors.toList());
 
-        // Task stats - fetch from task service
-        TaskStats taskStats = getTaskStats(project.getId());
+        // Task stats - fetch from task service; only members may see them
+        TaskStats taskStats = myRole != null ? getTaskStats(project.getId(), userId) : emptyTaskStats();
 
         // Active sprint - placeholder (implement when sprint service is available)
         ActiveSprint activeSprint = null;
@@ -493,6 +511,16 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();
+    }
+
+    /** Fails closed: if user-service cannot confirm the role, the caller is treated as a regular user. */
+    private boolean isSystemAdmin(UUID userId) {
+        try {
+            UserRole role = userServiceClient.findById(userId).data().get("user").getRole();
+            return role == UserRole.ADMIN || role == UserRole.SUPER_ADMIN;
+        } catch (FeignException e) {
+            return false;
+        }
     }
 
     private OwnerInfo getOwnerInfo(UUID ownerId) {
@@ -519,9 +547,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
-    private TaskStats getTaskStats(UUID projectId) {
+    private TaskStats getTaskStats(UUID projectId, UUID userId) {
         try {
-            var response = taskServiceClient.getTaskStatsByProjectId(projectId);
+            var response = taskServiceClient.getTaskStatsByProjectId(projectId, userId);
             @SuppressWarnings("unchecked")
             Map<String, Object> statsData = (Map<String, Object>) response.data().get("stats");
 

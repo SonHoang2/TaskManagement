@@ -11,7 +11,5 @@ public interface LabelRepository extends JpaRepository<Label, UUID> {
 
     Page<Label> findByProjectId(UUID projectId, Pageable pageable);
 
-    Page<Label> findByNameContainingIgnoreCase(String name, Pageable pageable);
-
     Page<Label> findByProjectIdAndNameContainingIgnoreCase(UUID projectId, String name, Pageable pageable);
 }

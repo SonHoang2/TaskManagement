@@ -19,8 +19,6 @@ public class TaskAttachmentCreateRequest {
 
     @Size(max = 255, message = "fileName length must be <= 255")
     private String fileName;
-
-    private UUID uploadedBy;
 }
 
 

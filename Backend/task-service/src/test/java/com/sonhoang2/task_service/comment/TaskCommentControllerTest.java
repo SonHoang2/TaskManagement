@@ -20,6 +20,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -45,7 +47,6 @@ class TaskCommentControllerTest {
     void create_ShouldReturnCreated_WhenValidRequest() throws Exception {
         TaskCommentCreateRequest request = new TaskCommentCreateRequest();
         request.setTaskId(taskId);
-        request.setUserId(userId);
         request.setContent("Test comment");
 
         TaskCommentResponse response = TaskCommentResponse.builder()
@@ -56,9 +57,10 @@ class TaskCommentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskCommentService.create(any(TaskCommentCreateRequest.class))).thenReturn(response);
+        when(taskCommentService.create(any(TaskCommentCreateRequest.class), eq(userId))).thenReturn(response);
 
-        mockMvc.perform(post("/task-comments")
+        mockMvc.perform(post("/api/v1/task-comments")
+                        .header("X-User-Id", userId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -88,9 +90,9 @@ class TaskCommentControllerTest {
                 1
         );
 
-        when(taskCommentService.findAll(any(), any(), any())).thenReturn(pageResponse);
+        when(taskCommentService.findAll(eq(taskId), any(), any(), eq(userId))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/task-comments"))
+        mockMvc.perform(get("/api/v1/task-comments").param("taskId", taskId.toString()).header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.page.content[0].id").value(commentId.toString()));
@@ -117,9 +119,10 @@ class TaskCommentControllerTest {
                 1
         );
 
-        when(taskCommentService.findAll(eq(taskId), eq(userId), any())).thenReturn(pageResponse);
+        when(taskCommentService.findAll(eq(taskId), eq(userId), any(), eq(userId))).thenReturn(pageResponse);
 
-        mockMvc.perform(get("/task-comments")
+        mockMvc.perform(get("/api/v1/task-comments")
+                        .header("X-User-Id", userId.toString())
                         .param("taskId", taskId.toString())
                         .param("userId", userId.toString()))
                 .andExpect(status().isOk())
@@ -136,9 +139,9 @@ class TaskCommentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskCommentService.findById(commentId)).thenReturn(response);
+        when(taskCommentService.findById(commentId, userId)).thenReturn(response);
 
-        mockMvc.perform(get("/task-comments/{id}", commentId))
+        mockMvc.perform(get("/api/v1/task-comments/{id}", commentId).header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.comment.id").value(commentId.toString()))
@@ -158,9 +161,11 @@ class TaskCommentControllerTest {
                 .createdAt(Instant.now())
                 .build();
 
-        when(taskCommentService.update(eq(commentId), any(TaskCommentUpdateRequest.class))).thenReturn(response);
+        when(taskCommentService.update(eq(commentId), any(TaskCommentUpdateRequest.class), eq(userId)))
+                .thenReturn(response);
 
-        mockMvc.perform(patch("/task-comments/{id}", commentId)
+        mockMvc.perform(patch("/api/v1/task-comments/{id}", commentId)
+                        .header("X-User-Id", userId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -171,8 +176,18 @@ class TaskCommentControllerTest {
 
     @Test
     void delete_ShouldReturnSuccess_WhenCommentExists() throws Exception {
-        mockMvc.perform(delete("/task-comments/{id}", commentId))
+        mockMvc.perform(delete("/api/v1/task-comments/{id}", commentId).header("X-User-Id", userId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"));
+
+        verify(taskCommentService).delete(commentId, userId);
+    }
+
+    @Test
+    void findAll_ShouldReturnBadRequest_WhenTaskIdMissing() throws Exception {
+        mockMvc.perform(get("/api/v1/task-comments").header("X-User-Id", userId.toString()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(taskCommentService);
     }
 }

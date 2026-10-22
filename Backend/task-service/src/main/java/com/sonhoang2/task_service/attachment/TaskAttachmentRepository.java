@@ -10,8 +10,6 @@ import java.util.UUID;
 public interface TaskAttachmentRepository extends JpaRepository<TaskAttachment, UUID> {
     Page<TaskAttachment> findByTaskId(UUID taskId, Pageable pageable);
 
-    Page<TaskAttachment> findByUploadedBy(UUID uploadedBy, Pageable pageable);
-
     Page<TaskAttachment> findByTaskIdAndUploadedBy(UUID taskId, UUID uploadedBy, Pageable pageable);
 }
 

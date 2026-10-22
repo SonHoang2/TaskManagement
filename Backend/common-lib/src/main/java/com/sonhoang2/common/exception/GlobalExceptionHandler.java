@@ -10,6 +10,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -134,6 +137,22 @@ public class GlobalExceptionHandler {
         return buildFailResponse(
                 HttpStatus.BAD_REQUEST,
                 "Invalid status value",
+                data
+        );
+    }
+
+    @ExceptionHandler({MissingRequestHeaderException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleMissingRequestPart(
+            ServletRequestBindingException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return buildFailResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 data
         );
     }
