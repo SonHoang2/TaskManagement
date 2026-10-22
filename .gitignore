@@ -4,3 +4,16 @@
 /.idea/workspace.xml
 
 Backend/k8s/secret.yaml
+Backend/fake-data/output/labels.csv
+Backend/fake-data/output/notifications.csv
+Backend/fake-data/output/project_invitations.csv
+Backend/fake-data/output/project_members.csv
+Backend/fake-data/output/projects.csv
+Backend/fake-data/output/sprints.csv
+Backend/fake-data/output/task_attachments.csv
+Backend/fake-data/output/task_comments.csv
+Backend/fake-data/output/task_histories.csv
+Backend/fake-data/output/task_labels.csv
+Backend/fake-data/output/task_sprints.csv
+Backend/fake-data/output/tasks.csv
+Backend/fake-data/output/users.csv
