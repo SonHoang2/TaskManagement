@@ -1,0 +1,444 @@
+<div class="td">
+  <header class="td__top">
+    @if (task(); as t) {
+      <a class="crumb" [routerLink]="['/projects', t.projectId, 'board']" (click)="close()">
+        <span class="i">folder</span>{{ projectName() || 'Project' }}
+      </a>
+      <span class="subtle">/</span>
+      <span class="mono subtle">{{ key() }}</span>
+    }
+    <span class="spacer"></span>
+    @if (task()) {
+      <button
+        class="btn btn--ghost btn--icon btn--sm"
+        type="button"
+        [matMenuTriggerFor]="more"
+        aria-label="More actions"
+      >
+        <span class="i">more_horiz</span>
+      </button>
+      <mat-menu #more="matMenu" class="menu" xPosition="before">
+        <button class="menu-item menu-item--danger" mat-menu-item (click)="deleteTask()">
+          <span class="i">delete</span>Delete task
+        </button>
+      </mat-menu>
+    }
+    <button
+      class="btn btn--ghost btn--icon btn--sm"
+      type="button"
+      (click)="close()"
+      aria-label="Close"
+    >
+      <span class="i">close</span>
+    </button>
+  </header>
+
+  @if (notFound()) {
+    <div class="td__missing">
+      <span class="i">search_off</span>
+      <h3>Task not found</h3>
+      <p class="muted">It may have been deleted.</p>
+    </div>
+  } @else if (task(); as t) {
+    <div class="td__grid">
+      <section class="td__main">
+        @if (editingTitle()) {
+          <textarea
+            class="td__title-input"
+            rows="1"
+            [ngModel]="titleDraft()"
+            (ngModelChange)="titleDraft.set($event)"
+            (blur)="saveTitle()"
+            (keydown.enter)="$event.preventDefault(); saveTitle()"
+            (keydown.escape)="$event.stopPropagation(); editingTitle.set(false)"
+            maxlength="200"
+            autofocus
+          ></textarea>
+        } @else {
+          <h1
+            class="td__title"
+            (click)="startTitleEdit()"
+            tabindex="0"
+            (keydown.enter)="startTitleEdit()"
+          >
+            {{ t.title }}
+          </h1>
+        }
+
+        <div class="td__section">
+          <h4 class="td__label">Description</h4>
+          @if (editingDesc()) {
+            <textarea
+              class="textarea"
+              rows="6"
+              [ngModel]="descDraft()"
+              (ngModelChange)="descDraft.set($event)"
+              (keydown.escape)="$event.stopPropagation(); editingDesc.set(false)"
+              placeholder="Add a more detailed description…"
+            ></textarea>
+            <div class="row" style="margin-top: 8px">
+              <button class="btn btn--primary btn--sm" type="button" (click)="saveDesc()">
+                Save
+              </button>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="editingDesc.set(false)">
+                Cancel
+              </button>
+            </div>
+          } @else {
+            <div
+              class="td__desc"
+              [class.td__desc--empty]="!t.description?.trim()"
+              (click)="startDescEdit()"
+              tabindex="0"
+              (keydown.enter)="startDescEdit()"
+              [textContent]="t.description?.trim() || 'Add a description…'"
+            ></div>
+          }
+        </div>
+
+        <div class="td__section">
+          <div class="row">
+            <h4 class="td__label grow">
+              Links <span class="count">{{ attachments().length }}</span>
+            </h4>
+            @if (!addingLink()) {
+              <button class="btn btn--ghost btn--sm" type="button" (click)="addingLink.set(true)">
+                <span class="i">add_link</span>Add link
+              </button>
+            }
+          </div>
+          @if (addingLink()) {
+            <div class="link-form">
+              <input
+                class="input input--sm"
+                placeholder="https://…"
+                [ngModel]="linkUrl()"
+                (ngModelChange)="linkUrl.set($event)"
+                (keydown.enter)="addLink()"
+                autofocus
+              />
+              <input
+                class="input input--sm"
+                placeholder="Title (optional)"
+                [ngModel]="linkName()"
+                (ngModelChange)="linkName.set($event)"
+                (keydown.enter)="addLink()"
+              />
+              <button
+                class="btn btn--primary btn--sm"
+                type="button"
+                (click)="addLink()"
+                [disabled]="!linkUrl().trim()"
+              >
+                Add
+              </button>
+              <button class="btn btn--ghost btn--sm" type="button" (click)="addingLink.set(false)">
+                Cancel
+              </button>
+            </div>
+          }
+          <div class="links">
+            @for (a of attachments(); track a.id) {
+              <div class="link">
+                <img [src]="favicon(a.fileUrl)" alt="" width="16" height="16" />
+                <a
+                  class="grow truncate"
+                  [href]="a.fileUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ a.fileName || a.fileUrl }}</a
+                >
+                <span class="subtle small truncate link__host">{{ host(a.fileUrl) }}</span>
+                <button
+                  class="btn btn--ghost btn--icon btn--sm"
+                  type="button"
+                  (click)="removeAttachment(a)"
+                  matTooltip="Remove"
+                  aria-label="Remove link"
+                >
+                  <span class="i">close</span>
+                </button>
+              </div>
+            } @empty {
+              @if (!addingLink()) {
+                <p class="subtle small">No links yet — attach designs, docs or PRs.</p>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="td__section">
+          <div class="segmented">
+            <button
+              type="button"
+              [class.active]="tab() === 'comments'"
+              (click)="tab.set('comments')"
+            >
+              <span class="i">forum</span>Comments
+              <span class="count">{{ comments().length }}</span>
+            </button>
+            <button
+              type="button"
+              [class.active]="tab() === 'activity'"
+              (click)="tab.set('activity')"
+            >
+              <span class="i">history</span>Activity
+            </button>
+          </div>
+
+          @if (loading()) {
+            <app-skeleton [count]="2" [height]="48" style="margin-top: 16px" />
+          } @else if (tab() === 'comments') {
+            <div class="comments">
+              @for (c of comments(); track c.id) {
+                <div class="comment">
+                  <app-avatar [userId]="c.userId" size="md" />
+                  <div class="grow">
+                    <div class="comment__head">
+                      <strong>{{ users.name(c.userId, 'Someone') }}</strong>
+                      <span class="subtle small">{{ c.createdAt | ago }}</span>
+                      @if (c.userId === me()) {
+                        <span class="spacer"></span>
+                        <button
+                          class="btn btn--ghost btn--icon btn--sm"
+                          type="button"
+                          (click)="startCommentEdit(c)"
+                          aria-label="Edit comment"
+                        >
+                          <span class="i">edit</span>
+                        </button>
+                        <button
+                          class="btn btn--ghost btn--icon btn--sm"
+                          type="button"
+                          (click)="deleteComment(c)"
+                          aria-label="Delete comment"
+                        >
+                          <span class="i">delete</span>
+                        </button>
+                      }
+                    </div>
+                    @if (editingComment() === c.id) {
+                      <textarea
+                        class="textarea"
+                        rows="3"
+                        [ngModel]="commentEditDraft()"
+                        (ngModelChange)="commentEditDraft.set($event)"
+                      ></textarea>
+                      <div class="row" style="margin-top: 6px">
+                        <button
+                          class="btn btn--primary btn--sm"
+                          type="button"
+                          (click)="saveComment(c)"
+                        >
+                          Save
+                        </button>
+                        <button
+                          class="btn btn--ghost btn--sm"
+                          type="button"
+                          (click)="editingComment.set(null)"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="comment__body">{{ c.content }}</div>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <p class="subtle small" style="padding: 8px 0">
+                  No comments yet. Start the conversation.
+                </p>
+              }
+
+              <div class="comment comment--new">
+                <app-avatar [userId]="me()" size="md" />
+                <div class="grow">
+                  <textarea
+                    class="textarea"
+                    rows="3"
+                    placeholder="Write a comment…  (Ctrl + Enter to send)"
+                    [ngModel]="commentDraft()"
+                    (ngModelChange)="commentDraft.set($event)"
+                    (keydown)="onCommentKey($event)"
+                  ></textarea>
+                  <div class="row" style="margin-top: 8px; justify-content: flex-end">
+                    <button
+                      class="btn btn--primary btn--sm"
+                      type="button"
+                      (click)="addComment()"
+                      [disabled]="busy() || !commentDraft().trim()"
+                    >
+                      <span class="i">send</span>Comment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <ol class="timeline">
+              @for (h of history(); track h.id) {
+                @let d = describe(h);
+                <li>
+                  <app-avatar [userId]="h.changedBy" size="xs" />
+                  <div class="grow">
+                    <strong>{{ users.name(h.changedBy, 'Someone') }}</strong>
+                    {{ d.verb }}
+                    @if (d.from) {
+                      <span class="chip-val">{{ d.from }}</span
+                      ><span class="i arrow">arrow_forward</span>
+                    }
+                    @if (d.to) {
+                      <span class="chip-val">{{ d.to }}</span>
+                    }
+                    <div class="subtle small">{{ h.createdAt | ago }}</div>
+                  </div>
+                </li>
+              } @empty {
+                <p class="subtle small" style="padding: 8px 0">No recorded activity yet.</p>
+              }
+            </ol>
+          }
+        </div>
+      </section>
+
+      <aside class="td__side">
+        <div class="prop">
+          <span class="prop__label">Status</span>
+          <select
+            class="select select--status select--{{ t.status }}"
+            [ngModel]="t.status"
+            (ngModelChange)="setStatus($event)"
+          >
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ statusMeta[s].label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Priority</span>
+          <select class="select" [ngModel]="t.priority ?? ''" (ngModelChange)="setPriority($event)">
+            @if (!t.priority) {
+              <option value="">None</option>
+            }
+            @for (p of priorities; track p) {
+              <option [value]="p">{{ priorityMeta[p].label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Assignee</span>
+          <div class="prop__with-avatar">
+            <app-avatar [userId]="t.assigneeId" size="xs" />
+            <select
+              class="select"
+              [ngModel]="t.assigneeId ?? ''"
+              (ngModelChange)="setAssignee($event)"
+            >
+              @if (!t.assigneeId) {
+                <option value="">Unassigned</option>
+              }
+              @for (m of members(); track m.userId) {
+                <option [value]="m.userId">
+                  {{ users.name(m.userId) }}{{ m.userId === me() ? ' (you)' : '' }}
+                </option>
+              }
+            </select>
+          </div>
+          @if (!t.assigneeId) {
+            <button class="link-btn" type="button" (click)="setAssignee(me())">Assign to me</button>
+          }
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Due date</span>
+          <input
+            class="input"
+            type="date"
+            [value]="toDateInput(t.dueDate)"
+            (change)="setDate('dueDate', $any($event.target).value)"
+          />
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Start date</span>
+          <input
+            class="input"
+            type="date"
+            [value]="toDateInput(t.startDate)"
+            (change)="setDate('startDate', $any($event.target).value)"
+          />
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Sprint</span>
+          <select class="select" [ngModel]="sprintId()" (ngModelChange)="setSprint($event)">
+            <option value="">No sprint</option>
+            @for (s of sprints(); track s.id) {
+              <option [value]="s.id">
+                {{ s.name
+                }}{{
+                  s.status === 'ACTIVE' ? ' · active' : s.status === 'COMPLETED' ? ' · done' : ''
+                }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="prop">
+          <span class="prop__label">Labels</span>
+          <div class="labels">
+            @for (l of appliedLabels(); track l.id) {
+              <span class="label-chip" [style.--c]="l.color || '#64748b'">{{ l.name }}</span>
+            }
+            @if (labels().length) {
+              <button class="btn btn--ghost btn--sm" type="button" [matMenuTriggerFor]="labelMenu">
+                <span class="i">sell</span>{{ appliedLabels().length ? 'Edit' : 'Add' }}
+              </button>
+            } @else {
+              <span class="subtle small">No labels in this project.</span>
+            }
+          </div>
+          <mat-menu #labelMenu="matMenu" class="menu">
+            @for (l of labels(); track l.id) {
+              <button
+                class="menu-item"
+                mat-menu-item
+                (click)="$event.stopPropagation(); toggleLabel(l)"
+              >
+                <span class="label-dot" [style.background]="l.color || '#64748b'"></span>
+                <span class="grow">{{ l.name }}</span>
+                @if (taskLabelIds().has(l.id)) {
+                  <span class="i" style="color: var(--primary)">check</span>
+                }
+              </button>
+            }
+          </mat-menu>
+        </div>
+
+        <div class="side-meta">
+          <div class="row">
+            <span class="subtle">Reporter</span><span class="spacer"></span>
+            <app-avatar [userId]="t.reporterId" size="xs" />
+            <span class="truncate">{{ users.name(t.reporterId, '—') }}</span>
+          </div>
+          <div class="row">
+            <span class="subtle">Created</span><span class="spacer"></span
+            >{{ shortDate(t.createdAt) }}
+          </div>
+          <div class="row">
+            <span class="subtle">Updated</span><span class="spacer"></span>{{ t.updatedAt | ago }}
+          </div>
+        </div>
+      </aside>
+    </div>
+  } @else {
+    <div style="padding: 24px">
+      <app-skeleton [count]="1" [height]="36" />
+      <div style="height: 16px"></div>
+      <app-skeleton [count]="3" [height]="64" />
+    </div>
+  }
+</div>

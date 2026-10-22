@@ -1,239 +1,180 @@
-<div class="team-container">
-  <div class="team-header">
-    <div class="header-left">
+<div class="page">
+  <div class="page-header">
+    <div class="page-header__text">
       <h1>Team</h1>
-      <p>Manage your team members</p>
+      <p>People you work with, and everyone on the platform.</p>
     </div>
-    <button mat-flat-button color="primary" class="invite-btn" (click)="inviteMember()">
-      <mat-icon>person_add</mat-icon>
-      <span>Invite Member</span>
+  </div>
+
+  <nav class="tabs" style="margin-bottom: 20px">
+    <button type="button" [class.active]="tab() === 'team'" (click)="tab.set('team')">
+      <span class="i">diversity_3</span>My teammates
+      <span class="count">{{ teammates().length }}</span>
     </button>
-  </div>
+    <button type="button" [class.active]="tab() === 'directory'" (click)="tab.set('directory')">
+      <span class="i">contacts</span>Directory
+    </button>
+  </nav>
 
-  <div class="stats-bar">
-    <div class="stat-item">
-      <span class="stat-label">Total:</span>
-      <span class="stat-value">{{ getTeamStats().total }}</span>
+  @if (tab() === 'team') {
+    <div class="toolbar">
+      <div class="input-icon">
+        <span class="i">search</span>
+        <input
+          class="input"
+          placeholder="Filter teammates…"
+          [ngModel]="filter()"
+          (ngModelChange)="filter.set($event)"
+        />
+      </div>
     </div>
-    <div class="stat-item">
-      <span class="stat-label">Active:</span>
-      <span class="stat-value">{{ getTeamStats().active }}</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Pending:</span>
-      <span class="stat-value">{{ getTeamStats().pending }}</span>
-    </div>
-  </div>
 
-  <div class="search-bar">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-label>Search team members</mat-label>
-      <input
-        matInput
-        [value]="searchTerm()"
-        (input)="onSearchChange($event.target.value)"
-        placeholder="Search by name, email, or role"
-      />
-      <mat-icon matPrefix>search</mat-icon>
-    </mat-form-field>
-  </div>
-
-  @if (isLoading()) {
-    <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
+    @if (loadingTeam()) {
+      <div class="grid-cards">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton" style="height: 170px; border-radius: 14px"></div>
+        }
+      </div>
+    } @else {
+      <div class="grid-cards">
+        @for (t of visibleTeam(); track t.userId) {
+          @let u = users.get(t.userId);
+          <article class="card person">
+            <div class="person__top">
+              <app-avatar [userId]="t.userId" size="lg" />
+              <div class="grow">
+                <h3 class="truncate">
+                  {{ u?.fullName ?? '…' }}
+                  @if (isMe(t.userId)) {
+                    <span class="pill pill--primary">You</span>
+                  }
+                </h3>
+                <a class="truncate small" [href]="'mailto:' + (u?.email ?? '')">{{ u?.email }}</a>
+              </div>
+            </div>
+            <div class="person__stats">
+              <div>
+                <strong>{{ t.projects.length }}</strong
+                ><span>shared {{ t.projects.length === 1 ? 'project' : 'projects' }}</span>
+              </div>
+              <div>
+                <strong>{{ openTasks().get(t.userId) ?? 0 }}</strong
+                ><span>open tasks</span>
+              </div>
+            </div>
+            <div class="person__projects">
+              @for (p of t.projects.slice(0, 4); track p.id) {
+                <a class="proj-chip" [routerLink]="['/projects', p.id]">
+                  <span class="proj-chip__dot" [style.background]="colorFor(p.id)"></span
+                  >{{ p.name }}
+                  @if (p.role !== 'MEMBER') {
+                    <span class="subtle">· {{ p.role.toLowerCase() }}</span>
+                  }
+                </a>
+              }
+              @if (t.projects.length > 4) {
+                <span class="subtle small">+{{ t.projects.length - 4 }} more</span>
+              }
+            </div>
+          </article>
+        } @empty {
+          <div class="card" style="grid-column: 1 / -1">
+            <app-empty-state
+              icon="group_add"
+              title="No teammates yet"
+              text="Invite people from a project's Members tab to start collaborating."
+              [compact]="true"
+            />
+          </div>
+        }
+      </div>
+    }
   } @else {
-    <mat-card class="team-card">
-      <mat-tab-group [selectedIndex]="selectedTab()" (selectedIndexChange)="onTabChange($event)">
-        <mat-tab label="All Members">
-          <div class="members-list">
-            @for (member of filteredMembers(); track member.id) {
-              <div class="member-item">
-                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
-                  {{ member.avatar }}
-                </div>
-                <div class="member-info">
-                  <div class="member-header">
-                    <h4 class="member-name">{{ member.name }}</h4>
-                    <mat-chip [color]="getStatusColor(member.status)" class="status-chip">
-                      {{ member.status.charAt(0).toUpperCase() + member.status.slice(1) }}
-                    </mat-chip>
-                  </div>
-                  <p class="member-email">{{ member.email }}</p>
-                  <div class="member-details">
-                    <span class="member-role">{{ member.role }}</span>
-                    <span class="member-department">{{ member.department }}</span>
-                  </div>
-                  <div class="member-stats">
-                    <div class="stat">
-                      <mat-icon>task_alt</mat-icon>
-                      <span>{{ member.tasksAssigned }} tasks</span>
-                    </div>
-                    <div class="stat">
-                      <mat-icon>folder</mat-icon>
-                      <span>{{ member.projects.length }} projects</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="member-actions">
-                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #menu="matMenu">
-                    <button mat-menu-item>
-                      <mat-icon>visibility</mat-icon>
-                      <span>View Profile</span>
-                    </button>
-                    <button mat-menu-item>
-                      <mat-icon>edit</mat-icon>
-                      <span>Edit Role</span>
-                    </button>
-                    <button mat-menu-item>
-                      <mat-icon>assignment</mat-icon>
-                      <span>Assign Tasks</span>
-                    </button>
-                    <mat-divider></mat-divider>
-                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
-                      <mat-icon>remove_circle</mat-icon>
-                      <span>Remove</span>
-                    </button>
-                  </mat-menu>
-                </div>
-              </div>
-            }
+    <div class="toolbar">
+      <div class="input-icon">
+        <span class="i">search</span>
+        <input
+          class="input"
+          placeholder="Search by name or email…"
+          [ngModel]="query()"
+          (ngModelChange)="search($event)"
+        />
+      </div>
+      <span class="spacer"></span>
+      @if (directory(); as d) {
+        <span class="subtle small">{{ d.totalElements }} people</span>
+      }
+    </div>
 
-            @if (filteredMembers().length === 0) {
-              <div class="empty-state">
-                <mat-icon class="empty-icon">people_outline</mat-icon>
-                <p>No team members found</p>
-                <button mat-button color="primary" (click)="searchTerm.set('')">
-                  Clear Search
-                </button>
-              </div>
-            }
+    <div class="card">
+      @if (loadingDir() && !directory()) {
+        <div class="card__body"><app-skeleton [count]="6" [height]="44" /></div>
+      } @else if (!directory()?.content?.length) {
+        <app-empty-state icon="person_search" title="No people found" [compact]="true" />
+      } @else {
+        <div class="table-wrap" [style.opacity]="loadingDir() ? 0.6 : 1">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of directory()!.content; track u.id) {
+                <tr>
+                  <td>
+                    <div class="row">
+                      <app-avatar
+                        [userId]="u.id"
+                        [name]="u.fullName"
+                        [url]="u.avatarUrl"
+                        size="sm"
+                      />
+                      <span style="font-weight: 550">{{ u.fullName }}</span>
+                      @if (isMe(u.id)) {
+                        <span class="pill pill--primary">You</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="muted">{{ u.email }}</td>
+                  <td>
+                    <span class="pill" [class.pill--warning]="u.role === 'ADMIN'">{{
+                      u.role === 'ADMIN' ? 'Admin' : 'User'
+                    }}</span>
+                  </td>
+                  <td class="subtle small">{{ u.createdAt | shortDate }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (directory()!.totalPages > 1) {
+          <div class="card__footer" style="justify-content: center; align-items: center; gap: 14px">
+            <button
+              class="btn btn--sm"
+              type="button"
+              [disabled]="!directory()!.hasPrevious"
+              (click)="goTo(dirPage() - 1)"
+            >
+              <span class="i">chevron_left</span>Prev
+            </button>
+            <span class="muted small"
+              >Page {{ dirPage() + 1 }} / {{ directory()!.totalPages }}</span
+            >
+            <button
+              class="btn btn--sm"
+              type="button"
+              [disabled]="!directory()!.hasNext"
+              (click)="goTo(dirPage() + 1)"
+            >
+              Next<span class="i">chevron_right</span>
+            </button>
           </div>
-        </mat-tab>
-
-        <mat-tab label="Active">
-          <div class="members-list">
-            @for (member of activeMembers(); track member.id) {
-              <div class="member-item">
-                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
-                  {{ member.avatar }}
-                </div>
-                <div class="member-info">
-                  <div class="member-header">
-                    <h4 class="member-name">{{ member.name }}</h4>
-                    <mat-chip color="primary" class="status-chip">Active</mat-chip>
-                  </div>
-                  <p class="member-email">{{ member.email }}</p>
-                  <div class="member-details">
-                    <span class="member-role">{{ member.role }}</span>
-                    <span class="member-department">{{ member.department }}</span>
-                  </div>
-                  <div class="member-stats">
-                    <div class="stat">
-                      <mat-icon>task_alt</mat-icon>
-                      <span>{{ member.tasksAssigned }} tasks</span>
-                    </div>
-                    <div class="stat">
-                      <mat-icon>folder</mat-icon>
-                      <span>{{ member.projects.length }} projects</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="member-actions">
-                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #menu="matMenu">
-                    <button mat-menu-item>
-                      <mat-icon>visibility</mat-icon>
-                      <span>View Profile</span>
-                    </button>
-                    <button mat-menu-item>
-                      <mat-icon>edit</mat-icon>
-                      <span>Edit Role</span>
-                    </button>
-                    <button mat-menu-item>
-                      <mat-icon>assignment</mat-icon>
-                      <span>Assign Tasks</span>
-                    </button>
-                    <mat-divider></mat-divider>
-                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
-                      <mat-icon>remove_circle</mat-icon>
-                      <span>Remove</span>
-                    </button>
-                  </mat-menu>
-                </div>
-              </div>
-            }
-
-            @if (activeMembers().length === 0) {
-              <div class="empty-state">
-                <mat-icon class="empty-icon">people_outline</mat-icon>
-                <p>No active team members</p>
-              </div>
-            }
-          </div>
-        </mat-tab>
-
-        <mat-tab label="Pending">
-          <div class="members-list">
-            @for (member of pendingMembers(); track member.id) {
-              <div class="member-item">
-                <div class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
-                  {{ member.avatar }}
-                </div>
-                <div class="member-info">
-                  <div class="member-header">
-                    <h4 class="member-name">{{ member.name }}</h4>
-                    <mat-chip color="warn" class="status-chip">Pending</mat-chip>
-                  </div>
-                  <p class="member-email">{{ member.email }}</p>
-                  <div class="member-details">
-                    <span class="member-role">{{ member.role }}</span>
-                    <span class="member-department">{{ member.department }}</span>
-                  </div>
-                  <div class="member-stats">
-                    <div class="stat">
-                      <mat-icon>event</mat-icon>
-                      <span>Joined: {{ member.joinedDate }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="member-actions">
-                  <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Member actions">
-                    <mat-icon>more_vert</mat-icon>
-                  </button>
-                  <mat-menu #menu="matMenu">
-                    <button mat-menu-item>
-                      <mat-icon>check_circle</mat-icon>
-                      <span>Approve</span>
-                    </button>
-                    <button mat-menu-item>
-                      <mat-icon>cancel</mat-icon>
-                      <span>Reject</span>
-                    </button>
-                    <mat-divider></mat-divider>
-                    <button mat-menu-item (click)="removeMember(member.id)" class="delete-action">
-                      <mat-icon>remove_circle</mat-icon>
-                      <span>Remove</span>
-                    </button>
-                  </mat-menu>
-                </div>
-              </div>
-            }
-
-            @if (pendingMembers().length === 0) {
-              <div class="empty-state">
-                <mat-icon class="empty-icon">hourglass_empty</mat-icon>
-                <p>No pending invitations</p>
-              </div>
-            }
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-    </mat-card>
+        }
+      }
+    </div>
   }
 </div>

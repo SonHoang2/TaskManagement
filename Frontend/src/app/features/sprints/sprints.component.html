@@ -1,0 +1,200 @@
+<div class="page page--wide" style="padding-top: 24px">
+  <div class="sprints-layout">
+    <section>
+      <div class="section-title">
+        <h2>Sprints</h2>
+        <span class="count">{{ ctx.sprints().length }}</span>
+        <span class="spacer"></span>
+        <button class="btn btn--primary btn--sm" type="button" (click)="create()">
+          <span class="i">add</span>New sprint
+        </button>
+      </div>
+
+      @if (!ctx.sprints().length) {
+        <div class="card">
+          <app-empty-state
+            icon="sprint"
+            title="No sprints yet"
+            text="Plan work in short iterations. Create a sprint, then pull tasks in from the backlog."
+          >
+            <button class="btn btn--primary" type="button" (click)="create()">
+              <span class="i">add</span>Create sprint
+            </button>
+          </app-empty-state>
+        </div>
+      }
+
+      <div class="stack">
+        @for (s of sorted(); track s.id) {
+          @let prog = progress(s);
+          <article
+            class="card sprint"
+            [class.sprint--active]="s.status === 'ACTIVE'"
+            [class.sprint--done]="s.status === 'COMPLETED'"
+          >
+            <header class="sprint__head">
+              <button
+                class="btn btn--ghost btn--icon btn--sm"
+                type="button"
+                (click)="toggle(s.id)"
+                [attr.aria-expanded]="expanded().has(s.id)"
+                aria-label="Toggle tasks"
+              >
+                <span class="i chev" [class.open]="expanded().has(s.id)">chevron_right</span>
+              </button>
+              <div class="grow">
+                <div class="row" style="gap: 10px; flex-wrap: wrap">
+                  <h3>{{ s.name }}</h3>
+                  <app-sprint-status [value]="s.status" />
+                </div>
+                <div class="subtle small sprint__dates">
+                  <span class="i">date_range</span>
+                  @if (s.startDate || s.endDate) {
+                    {{ shortDate(s.startDate) || '—' }} → {{ shortDate(s.endDate) || '—' }}
+                  } @else {
+                    No dates
+                  }
+                  @if (timeLeft(s)) {
+                    <span class="sep">·</span>{{ timeLeft(s) }}
+                  }
+                </div>
+              </div>
+
+              <div class="sprint__progress hide-sm">
+                <div class="row small">
+                  <span class="muted">{{ prog.done }}/{{ prog.total }} done</span
+                  ><span class="spacer"></span><strong>{{ prog.pct }}%</strong>
+                </div>
+                <div class="progress">
+                  <span class="progress__done" [style.width.%]="prog.pct"></span>
+                </div>
+              </div>
+
+              @if (s.status === 'PLANNED') {
+                <button
+                  class="btn btn--soft btn--sm"
+                  type="button"
+                  (click)="setStatus(s, 'ACTIVE')"
+                >
+                  <span class="i">play_arrow</span>Start
+                </button>
+              } @else if (s.status === 'ACTIVE') {
+                <button class="btn btn--sm" type="button" (click)="setStatus(s, 'COMPLETED')">
+                  <span class="i">check</span>Complete
+                </button>
+              }
+              <button
+                class="btn btn--ghost btn--icon btn--sm"
+                type="button"
+                [matMenuTriggerFor]="menu"
+                aria-label="Sprint actions"
+              >
+                <span class="i">more_vert</span>
+              </button>
+              <mat-menu #menu="matMenu" class="menu" xPosition="before">
+                <button class="menu-item" mat-menu-item (click)="newTaskIn(s)">
+                  <span class="i">add_task</span>Add new task
+                </button>
+                <button class="menu-item" mat-menu-item (click)="edit(s)">
+                  <span class="i">edit</span>Edit sprint
+                </button>
+                @if (s.status === 'COMPLETED') {
+                  <button class="menu-item" mat-menu-item (click)="setStatus(s, 'ACTIVE')">
+                    <span class="i">replay</span>Reopen
+                  </button>
+                }
+                <div class="menu-sep"></div>
+                <button class="menu-item menu-item--danger" mat-menu-item (click)="remove(s)">
+                  <span class="i">delete</span>Delete sprint
+                </button>
+              </mat-menu>
+            </header>
+
+            @if (expanded().has(s.id)) {
+              <div class="sprint__tasks">
+                @if (loadingMembership()) {
+                  <div style="padding: 12px 16px"><app-skeleton [count]="2" [height]="36" /></div>
+                } @else {
+                  @for (t of tasksOf(s); track t.id) {
+                    <div class="task-row" (click)="open(t)">
+                      <span class="task-row__status task-row__status--{{ t.status }}"
+                        ><span class="i">{{ statusMeta[t.status].icon }}</span></span
+                      >
+                      <span class="task-row__title" [class.done]="t.status === 'DONE'">{{
+                        t.title
+                      }}</span>
+                      <div class="task-row__meta">
+                        <app-priority [value]="t.priority" [iconOnly]="true" />
+                        @if (t.dueDate) {
+                          <app-due [date]="t.dueDate" [status]="t.status" />
+                        }
+                        <app-avatar [userId]="t.assigneeId" size="xs" />
+                        <button
+                          class="btn btn--ghost btn--icon btn--sm"
+                          type="button"
+                          (click)="$event.stopPropagation(); removeFromSprint(t, s)"
+                          matTooltip="Move to backlog"
+                          aria-label="Move to backlog"
+                        >
+                          <span class="i">remove_circle_outline</span>
+                        </button>
+                      </div>
+                    </div>
+                  } @empty {
+                    <p class="subtle small" style="padding: 14px 18px">
+                      No tasks in this sprint yet — add some from the backlog.
+                    </p>
+                  }
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </section>
+
+    <aside class="card backlog">
+      <header class="card__header">
+        <span class="i" style="color: var(--text-3)">inventory_2</span>
+        <h2>Backlog</h2>
+        <span class="count">{{ backlog().length }}</span>
+      </header>
+      <p class="subtle small backlog__hint">Open tasks that aren't in any sprint.</p>
+      <div class="backlog__list">
+        @for (t of backlog(); track t.id) {
+          <div class="task-row" (click)="open(t)">
+            <app-priority [value]="t.priority" [iconOnly]="true" />
+            <span class="task-row__title">{{ t.title }}</span>
+            @if (openSprints().length) {
+              <button
+                class="btn btn--ghost btn--sm"
+                type="button"
+                (click)="$event.stopPropagation()"
+                [matMenuTriggerFor]="pick"
+                aria-label="Add to sprint"
+              >
+                <span class="i">playlist_add</span>
+              </button>
+              <mat-menu #pick="matMenu" class="menu" xPosition="before">
+                <div class="menu-heading">Add to sprint</div>
+                @for (s of openSprints(); track s.id) {
+                  <button class="menu-item" mat-menu-item (click)="addToSprint(t, s)">
+                    <span class="i">{{ s.status === 'ACTIVE' ? 'bolt' : 'event' }}</span
+                    >{{ s.name }}
+                  </button>
+                }
+              </mat-menu>
+            }
+          </div>
+        } @empty {
+          <app-empty-state
+            icon="celebration"
+            title="Backlog is clear"
+            text="Every open task is planned into a sprint."
+            [compact]="true"
+          />
+        }
+      </div>
+    </aside>
+  </div>
+</div>

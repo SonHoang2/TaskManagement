@@ -1,0 +1,98 @@
+// Design tokens. Light is the default; `html[data-theme='dark']` is set by ThemeService.
+:root {
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --surface-3: #eef0f4;
+  --hover: #f2f4f7;
+  --border: #e6e8ee;
+  --border-strong: #d3d7e0;
+
+  --text: #0f1729;
+  --text-2: #4b5567;
+  --text-3: #8a93a6;
+
+  --primary: #5b5bd6;
+  --primary-hover: #4c4cc4;
+  --primary-soft: #eef0ff;
+  --primary-text: #4545b8;
+  --on-primary: #ffffff;
+  --ring: rgba(91, 91, 214, 0.28);
+
+  --success: #12a150;
+  --success-soft: #e8f8ef;
+  --warning: #d97706;
+  --warning-soft: #fff6e5;
+  --danger: #e5484d;
+  --danger-soft: #fff0f0;
+  --info: #0b84e5;
+  --info-soft: #eaf5ff;
+
+  --todo: #6b7489;
+  --todo-soft: #eff1f5;
+  --progress: #0b84e5;
+  --progress-soft: #e8f3fe;
+  --done: #12a150;
+  --done-soft: #e7f7ee;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.07), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow: 0 4px 12px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 20px 40px -12px rgba(16, 24, 40, 0.22), 0 6px 12px -6px rgba(16, 24, 40, 0.08);
+
+  --sidebar-w: 252px;
+  --topbar-h: 60px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --hero: linear-gradient(135deg, #5b5bd6 0%, #8b5cf6 55%, #d946ef 100%);
+}
+
+html[data-theme='dark'] {
+  --bg: #0c0e14;
+  --surface: #13161e;
+  --surface-2: #171a24;
+  --surface-3: #1f2330;
+  --hover: #1b1f2b;
+  --border: #252a38;
+  --border-strong: #343a4b;
+
+  --text: #e8eaf1;
+  --text-2: #a7aec0;
+  --text-3: #6d768b;
+
+  --primary: #7c7cf0;
+  --primary-hover: #8e8ef5;
+  --primary-soft: #1f2042;
+  --primary-text: #a9a9ff;
+  --ring: rgba(124, 124, 240, 0.35);
+
+  --success: #3dd68c;
+  --success-soft: #11291d;
+  --warning: #f5a524;
+  --warning-soft: #2c2210;
+  --danger: #ff6369;
+  --danger-soft: #2f1416;
+  --info: #52a9ff;
+  --info-soft: #102236;
+
+  --todo: #9aa3b6;
+  --todo-soft: #1e2230;
+  --progress: #52a9ff;
+  --progress-soft: #10233a;
+  --done: #3dd68c;
+  --done-soft: #102a1d;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+}

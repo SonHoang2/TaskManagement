@@ -1,171 +1,171 @@
-import { Component, signal, computed } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatDividerModule } from '@angular/material/divider';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import {
+  Subject,
+  catchError,
+  debounceTime,
+  from,
+  map,
+  mergeMap,
+  of,
+  startWith,
+  switchMap,
+  toArray,
+} from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
+import { MemberRole, Page, User } from '../../core/models';
+import { ProjectsService } from '../../core/services/projects.service';
+import { UsersService } from '../../core/services/users.service';
+import { WorkspaceService } from '../../core/services/workspace.service';
+import { colorFor } from '../../core/utils/format';
+import { AvatarComponent } from '../../shared/components/avatar.component';
+import {
+  EmptyStateComponent,
+  SkeletonComponent,
+} from '../../shared/components/empty-state.component';
+import { ShortDatePipe } from '../../shared/pipes';
 
-interface TeamMember {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  department: string;
-  avatar: string;
-  status: 'active' | 'inactive' | 'pending';
-  tasksAssigned: number;
-  projects: string[];
-  joinedDate: string;
+interface Teammate {
+  userId: string;
+  projects: { id: string; name: string; role: MemberRole }[];
 }
 
 @Component({
   selector: 'app-team',
-  standalone: true,
   imports: [
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatMenuModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    MatDividerModule,
     FormsModule,
+    RouterLink,
+    AvatarComponent,
+    EmptyStateComponent,
+    SkeletonComponent,
+    ShortDatePipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
 })
 export class TeamComponent {
-  readonly isLoading = signal(false);
-  readonly searchTerm = signal('');
-  readonly selectedTab = signal(0);
+  private readonly ws = inject(WorkspaceService);
+  private readonly projectsApi = inject(ProjectsService);
+  private readonly auth = inject(AuthService);
+  protected readonly users = inject(UsersService);
+  protected readonly colorFor = colorFor;
 
-  readonly teamMembers = signal<TeamMember[]>([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      role: 'Senior Developer',
-      department: 'Engineering',
-      avatar: 'JD',
-      status: 'active',
-      tasksAssigned: 8,
-      projects: ['Website Redesign', 'API Integration'],
-      joinedDate: '2023-01-15',
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      role: 'Product Manager',
-      department: 'Product',
-      avatar: 'JS',
-      status: 'active',
-      tasksAssigned: 12,
-      projects: ['Mobile App Development', 'Marketing Campaign'],
-      joinedDate: '2023-03-20',
-    },
-    {
-      id: 3,
-      name: 'Bob Johnson',
-      email: 'bob.johnson@example.com',
-      role: 'UI/UX Designer',
-      department: 'Design',
-      avatar: 'BJ',
-      status: 'active',
-      tasksAssigned: 6,
-      projects: ['Website Redesign'],
-      joinedDate: '2023-05-10',
-    },
-    {
-      id: 4,
-      name: 'Alice Williams',
-      email: 'alice.williams@example.com',
-      role: 'QA Engineer',
-      department: 'Quality Assurance',
-      avatar: 'AW',
-      status: 'active',
-      tasksAssigned: 4,
-      projects: ['API Integration'],
-      joinedDate: '2023-06-01',
-    },
-    {
-      id: 5,
-      name: 'Charlie Brown',
-      email: 'charlie.brown@example.com',
-      role: 'DevOps Engineer',
-      department: 'Operations',
-      avatar: 'CB',
-      status: 'pending',
-      tasksAssigned: 0,
-      projects: [],
-      joinedDate: '2024-08-01',
-    },
-  ]);
+  protected readonly tab = signal<'team' | 'directory'>('team');
+  protected readonly filter = signal('');
+  protected readonly teammates = signal<Teammate[]>([]);
+  protected readonly loadingTeam = signal(true);
 
-  readonly filteredMembers = computed(() => {
-    return this.teamMembers().filter((member) => {
-      const matchesSearch =
-        member.name.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-        member.email.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-        member.role.toLowerCase().includes(this.searchTerm().toLowerCase());
-      return matchesSearch;
-    });
+  protected readonly query = signal('');
+  protected readonly dirPage = signal(0);
+  protected readonly directory = signal<Page<User> | null>(null);
+  protected readonly loadingDir = signal(false);
+  private readonly dir$ = new Subject<void>();
+
+  protected readonly openTasks = computed(() => {
+    const m = new Map<string, number>();
+    for (const t of this.ws.tasks())
+      if (t.assigneeId && t.status !== 'DONE') m.set(t.assigneeId, (m.get(t.assigneeId) ?? 0) + 1);
+    return m;
   });
 
-  readonly activeMembers = computed(() => this.teamMembers().filter((m) => m.status === 'active'));
-  readonly pendingMembers = computed(() =>
-    this.teamMembers().filter((m) => m.status === 'pending'),
-  );
+  protected readonly visibleTeam = computed(() => {
+    const q = this.filter().trim().toLowerCase();
+    const me = this.auth.userId();
+    return this.teammates()
+      .filter((t) => {
+        if (!q) return true;
+        const u = this.users.get(t.userId);
+        return !!u && (u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      })
+      .sort(
+        (a, b) =>
+          Number(b.userId === me) - Number(a.userId === me) ||
+          b.projects.length - a.projects.length,
+      );
+  });
 
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'active':
-        return 'primary';
-      case 'pending':
-        return 'warn';
-      case 'inactive':
-        return '';
-      default:
-        return '';
+  constructor() {
+    this.ws.load();
+    effect(() => {
+      const projects = this.ws.projects();
+      if (this.ws.loaded())
+        untracked(() => this.loadTeam(projects.map((p) => ({ id: p.id, name: p.name }))));
+    });
+
+    this.dir$
+      .pipe(
+        startWith(undefined),
+        debounceTime(250),
+        switchMap(() => {
+          this.loadingDir.set(true);
+          return this.users
+            .search(this.query().trim(), { page: this.dirPage(), size: 24, sort: 'fullName,asc' })
+            .pipe(catchError(() => of(null)));
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((p) => {
+        this.directory.set(p);
+        this.loadingDir.set(false);
+      });
+  }
+
+  private loadTeam(projects: { id: string; name: string }[]): void {
+    if (!projects.length) {
+      this.teammates.set([]);
+      this.loadingTeam.set(false);
+      return;
     }
+    from(projects)
+      .pipe(
+        mergeMap(
+          (p) =>
+            this.projectsApi.members(p.id).pipe(
+              map((members) => ({ p, members })),
+              catchError(() => of({ p, members: [] })),
+            ),
+          3,
+        ),
+        toArray(),
+      )
+      .subscribe((rows) => {
+        const byUser = new Map<string, Teammate>();
+        for (const { p, members } of rows) {
+          for (const m of members) {
+            const t = byUser.get(m.userId) ?? { userId: m.userId, projects: [] };
+            t.projects.push({ id: p.id, name: p.name, role: m.role });
+            byUser.set(m.userId, t);
+          }
+        }
+        this.users.ensure(byUser.keys());
+        this.teammates.set([...byUser.values()]);
+        this.loadingTeam.set(false);
+      });
   }
 
-  getAvatarColor(name: string): string {
-    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
+  protected search(q: string): void {
+    this.query.set(q);
+    this.dirPage.set(0);
+    this.dir$.next();
   }
 
-  onSearchChange(value: string) {
-    this.searchTerm.set(value);
+  protected goTo(page: number): void {
+    this.dirPage.set(page);
+    this.dir$.next();
   }
 
-  onTabChange(index: number) {
-    this.selectedTab.set(index);
-  }
-
-  inviteMember() {
-    // Implement invite functionality
-  }
-
-  removeMember(memberId: number) {
-    const updatedMembers = this.teamMembers().filter((member) => member.id !== memberId);
-    this.teamMembers.set(updatedMembers);
-  }
-
-  getTeamStats() {
-    const total = this.teamMembers().length;
-    const active = this.teamMembers().filter((m) => m.status === 'active').length;
-    const pending = this.teamMembers().filter((m) => m.status === 'pending').length;
-    return { total, active, pending };
+  protected isMe(id: string): boolean {
+    return id === this.auth.userId();
   }
 }

@@ -1,0 +1,215 @@
+<div class="board-page">
+  <div class="toolbar">
+    <div class="input-icon">
+      <span class="i">search</span>
+      <input
+        class="input"
+        placeholder="Filter tasks…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </div>
+
+    <select
+      class="select"
+      [ngModel]="assignee()"
+      (ngModelChange)="assignee.set($event)"
+      aria-label="Assignee"
+    >
+      <option value="">Everyone</option>
+      <option [value]="me()">Assigned to me</option>
+      <option value="none">Unassigned</option>
+      @for (m of ctx.members(); track m.userId) {
+        @if (m.userId !== me()) {
+          <option [value]="m.userId">{{ users.name(m.userId) }}</option>
+        }
+      }
+    </select>
+
+    <select
+      class="select"
+      [ngModel]="priority()"
+      (ngModelChange)="priority.set($event)"
+      aria-label="Priority"
+    >
+      <option value="">Any priority</option>
+      @for (p of priorities; track p) {
+        <option [value]="p">{{ priorityMeta[p].label }}</option>
+      }
+    </select>
+
+    @if (ctx.labels().length) {
+      <select
+        class="select"
+        [ngModel]="label()"
+        (ngModelChange)="label.set($event)"
+        aria-label="Label"
+      >
+        <option value="">Any label</option>
+        @for (l of ctx.labels(); track l.id) {
+          <option [value]="l.id">{{ l.name }}</option>
+        }
+      </select>
+    }
+
+    @if (ctx.sprints().length) {
+      <select
+        class="select"
+        [ngModel]="sprint()"
+        (ngModelChange)="setSprint($event)"
+        aria-label="Sprint"
+      >
+        <option value="">All sprints</option>
+        @for (s of ctx.sprints(); track s.id) {
+          <option [value]="s.id">{{ s.name }}{{ s.status === 'ACTIVE' ? ' (active)' : '' }}</option>
+        }
+      </select>
+    }
+
+    @if (hasFilters()) {
+      <button class="btn btn--ghost btn--sm" type="button" (click)="clearFilters()">
+        <span class="i">filter_alt_off</span>Clear
+      </button>
+    }
+    <span class="spacer"></span>
+    <span class="subtle small">{{ filtered().length }} of {{ ctx.tasks().length }} tasks</span>
+  </div>
+
+  @if (ctx.tasksLoading() && !ctx.tasks().length) {
+    <div class="board">
+      @for (s of statuses; track s) {
+        <div class="column">
+          <div class="column__head">
+            <div class="skeleton" style="width: 90px; height: 18px"></div>
+          </div>
+          <div class="column__body">
+            @for (i of [1, 2, 3]; track i) {
+              <div class="skeleton" style="height: 92px"></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (!ctx.tasks().length) {
+    <div class="card">
+      <app-empty-state
+        icon="view_kanban"
+        title="No tasks yet"
+        text="Create the first task for this project and drag it across the board as work progresses."
+      >
+        <button class="btn btn--primary" type="button" (click)="newTask()">
+          <span class="i">add</span>Create task
+        </button>
+      </app-empty-state>
+    </div>
+  } @else {
+    <div class="board" cdkDropListGroup>
+      @for (col of columns(); track col.status) {
+        <section class="column column--{{ col.meta.tone }}">
+          <header class="column__head">
+            <span class="i column__icon">{{ col.meta.icon }}</span>
+            <h3>{{ col.meta.label }}</h3>
+            <span class="count">{{ col.tasks.length }}</span>
+            <span class="spacer"></span>
+            <button
+              class="btn btn--ghost btn--icon btn--sm"
+              type="button"
+              (click)="newTask(col.status)"
+              [matTooltip]="'Add to ' + col.meta.label"
+              aria-label="Add task"
+            >
+              <span class="i">add</span>
+            </button>
+          </header>
+
+          <div
+            class="column__body"
+            cdkDropList
+            [cdkDropListData]="col.status"
+            [cdkDropListSortingDisabled]="true"
+            (cdkDropListDropped)="drop($event)"
+          >
+            @for (t of col.tasks; track t.id) {
+              <article
+                class="tcard"
+                cdkDrag
+                [cdkDragData]="t"
+                (click)="open(t)"
+                tabindex="0"
+                (keydown.enter)="open(t)"
+              >
+                @if (t.labels.length) {
+                  <div class="tcard__labels">
+                    @for (tl of t.labels; track tl.labelId) {
+                      @if (labelOf(tl.labelId); as l) {
+                        <span class="label-chip" [style.--c]="l.color || '#64748b'">{{
+                          l.name
+                        }}</span>
+                      }
+                    }
+                  </div>
+                }
+                <p class="tcard__title" [class.done]="t.status === 'DONE'">{{ t.title }}</p>
+                <div class="tcard__meta">
+                  <span class="mono subtle">{{ taskKey(t) }}</span>
+                  <app-priority [value]="t.priority" [iconOnly]="true" />
+                  @if (t.dueDate) {
+                    <app-due [date]="t.dueDate" [status]="t.status" />
+                  }
+                  <span class="spacer"></span>
+                  @if (t.comments.length) {
+                    <span class="tcard__stat" matTooltip="Comments"
+                      ><span class="i">chat_bubble</span>{{ t.comments.length }}</span
+                    >
+                  }
+                  @if (t.attachments.length) {
+                    <span class="tcard__stat" matTooltip="Links"
+                      ><span class="i">link</span>{{ t.attachments.length }}</span
+                    >
+                  }
+                  <app-avatar [userId]="t.assigneeId" size="sm" />
+                </div>
+                <div *cdkDragPlaceholder class="tcard tcard--placeholder"></div>
+              </article>
+            } @empty {
+              <div class="column__empty">Drop tasks here</div>
+            }
+
+            @if (quickAdd() === col.status) {
+              <div class="quick-add">
+                <textarea
+                  class="textarea"
+                  rows="2"
+                  placeholder="Task title… (Enter to add)"
+                  [ngModel]="quickTitle()"
+                  (ngModelChange)="quickTitle.set($event)"
+                  (keydown.enter)="$event.preventDefault(); submitQuickAdd(col.status)"
+                  (keydown.escape)="quickAdd.set(null)"
+                  (blur)="!quickTitle().trim() && quickAdd.set(null)"
+                  autofocus
+                ></textarea>
+                <div class="row">
+                  <button
+                    class="btn btn--primary btn--sm"
+                    type="button"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="submitQuickAdd(col.status)"
+                  >
+                    Add
+                  </button>
+                  <button class="btn btn--ghost btn--sm" type="button" (click)="quickAdd.set(null)">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <button class="add-row" type="button" (click)="startQuickAdd(col.status)">
+                <span class="i">add</span>Add task
+              </button>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
