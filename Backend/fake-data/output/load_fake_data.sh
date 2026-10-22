@@ -6,7 +6,8 @@
 #
 # Cách dùng:
 #   chmod +x load_fake_data.sh
-#   ./load_fake_data.sh
+#   ./load_fake_data.sh                       # đọc user/mật khẩu từ Backend/.env
+#   PGUSER=abc PGPASSWORD=xyz ./load_fake_data.sh   # ghi đè khi cần
 #
 # Yêu cầu trước khi chạy:
 #   1. Đã tạo sẵn schema (bảng) trong từng DB tương ứng (từ file DBML export
@@ -33,16 +34,41 @@
 # ==========================================================================
 set -euo pipefail
 
-# --------------------------------------------------------------------------
-# Cấu hình kết nối - CHỈNH LẠI cho đúng môi trường của bạn
-# --------------------------------------------------------------------------
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_USER="myuser"                 # đổi thành user Postgres của bạn
-export PGPASSWORD="${PGPASSWORD:-mypassword}"   # hoặc export PGPASSWORD trước khi chạy script
+# Thư mục chứa các file CSV (mặc định = thư mục chứa script)
+DATA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Thư mục chứa các file CSV (mặc định = thư mục hiện tại)
-DATA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -W)"
+# --------------------------------------------------------------------------
+# Cấu hình kết nối - lấy động, KHÔNG để cứng trong script.
+# Thứ tự ưu tiên cho từng giá trị:
+#   1. Biến môi trường chuẩn của psql: PGHOST, PGPORT, PGUSER, PGPASSWORD
+#   2. POSTGRES_USER / POSTGRES_PASSWORD trong Backend/.env (file mà
+#      docker-compose dùng). Đổi file khác bằng ENV_FILE=/path/to/.env
+#   3. Mặc định: localhost:5432, user postgres
+#   4. Nếu vẫn chưa có mật khẩu -> hỏi khi chạy (không hiện lên màn hình)
+# DB_HOST trong .env là "postgres" (hostname trong mạng docker), từ máy host
+# không resolve được nên KHÔNG đọc từ .env - dùng PGHOST nếu cần đổi.
+# --------------------------------------------------------------------------
+ENV_FILE="${ENV_FILE:-$DATA_DIR/../../.env}"
+
+# read_env <KEY> - đọc giá trị KEY=... trong ENV_FILE, bỏ dấu nháy bao ngoài
+read_env() {
+  [[ -f "$ENV_FILE" ]] || return 0
+  grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2- \
+    | sed -e 's/^["'\'']//' -e 's/["'\'']$//' || true
+}
+
+DB_HOST="${PGHOST:-localhost}"
+DB_PORT="${PGPORT:-5432}"
+DB_USER="${PGUSER:-$(read_env POSTGRES_USER)}"
+DB_USER="${DB_USER:-postgres}"
+PGPASSWORD="${PGPASSWORD:-$(read_env POSTGRES_PASSWORD)}"
+if [[ -z "$PGPASSWORD" ]]; then
+  read -rsp "Mật khẩu Postgres cho $DB_USER@$DB_HOST:$DB_PORT: " PGPASSWORD
+  echo
+fi
+export PGPASSWORD
+
+echo "Kết nối: $DB_USER@$DB_HOST:$DB_PORT"
 
 # truncate_table <db> <table>
 # Xóa sạch dữ liệu cũ trước khi nạp lại. CASCADE để Postgres tự xóa theo
