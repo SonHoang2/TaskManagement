@@ -1,0 +1,234 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header__text">
+      <h1>Projects</h1>
+      <p>Every project you own or have joined.</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn--primary" type="button" (click)="create()">
+        <span class="i">add</span>New project
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="input-icon">
+      <span class="i">search</span>
+      <input
+        class="input"
+        placeholder="Search projects…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event); refresh()"
+      />
+    </div>
+    <select
+      class="select"
+      [ngModel]="sort()"
+      (ngModelChange)="sort.set($event); refresh()"
+      aria-label="Sort projects"
+    >
+      <option value="updatedat">Recently updated</option>
+      <option value="createdat">Newest</option>
+      <option value="taskcount">Most tasks</option>
+      <option value="membercount">Most members</option>
+    </select>
+    <span class="spacer"></span>
+    <div class="segmented" role="group" aria-label="View">
+      <button
+        type="button"
+        [class.active]="view() === 'grid'"
+        (click)="view.set('grid')"
+        aria-label="Grid view"
+      >
+        <span class="i">grid_view</span>
+      </button>
+      <button
+        type="button"
+        [class.active]="view() === 'list'"
+        (click)="view.set('list')"
+        aria-label="List view"
+      >
+        <span class="i">view_list</span>
+      </button>
+    </div>
+  </div>
+
+  @if (loading() && !data()) {
+    <div class="grid-cards">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="skeleton" style="height: 190px; border-radius: 14px"></div>
+      }
+    </div>
+  } @else if (!data()?.content?.length) {
+    <div class="card">
+      @if (search()) {
+        <app-empty-state
+          icon="search_off"
+          title="No projects found"
+          [text]="'Nothing matches “' + search() + '”.'"
+        />
+      } @else {
+        <app-empty-state
+          icon="rocket_launch"
+          title="Create your first project"
+          text="Projects keep your tasks, sprints and teammates in one place."
+        >
+          <button class="btn btn--primary" type="button" (click)="create()">
+            <span class="i">add</span>New project
+          </button>
+        </app-empty-state>
+      }
+    </div>
+  } @else {
+    <div [class.loading-dim]="loading()">
+      @if (view() === 'grid') {
+        <div class="grid-cards">
+          @for (p of data()!.content; track p.id) {
+            <a class="card card--hover pcard" [routerLink]="['/projects', p.id]">
+              <div class="pcard__top">
+                <span class="pcard__icon" [style.background]="colorFor(p.id)">{{
+                  p.name.charAt(0)
+                }}</span>
+                <div class="grow">
+                  <h3 class="truncate">{{ p.name }}</h3>
+                  <div class="subtle small">Updated {{ p.updatedAt | ago }}</div>
+                </div>
+                @if (p.myRole) {
+                  <app-role [value]="p.myRole" />
+                }
+              </div>
+              <p class="pcard__desc">{{ p.description || 'No description yet.' }}</p>
+              <div class="pcard__progress">
+                <div class="row small">
+                  <span class="muted"
+                    >{{ p.taskStats.done }}/{{ p.taskStats.total }} tasks done</span
+                  >
+                  <span class="spacer"></span>
+                  <strong>{{ pct(p) }}%</strong>
+                </div>
+                <div class="progress">
+                  <span
+                    class="progress__done"
+                    [style.width.%]="
+                      p.taskStats.total ? (p.taskStats.done / p.taskStats.total) * 100 : 0
+                    "
+                  ></span>
+                  <span
+                    class="progress__progress"
+                    [style.width.%]="
+                      p.taskStats.total ? (p.taskStats.inProgress / p.taskStats.total) * 100 : 0
+                    "
+                  ></span>
+                </div>
+              </div>
+              <div class="pcard__foot">
+                <app-avatar-stack
+                  [ids]="memberIds(p)"
+                  [total]="p.memberCount"
+                  [max]="4"
+                  size="xs"
+                />
+                <span class="subtle small"
+                  >{{ p.memberCount }} {{ p.memberCount === 1 ? 'member' : 'members' }}</span
+                >
+                <span class="spacer"></span>
+                <span class="row small subtle" style="gap: 4px">
+                  <app-avatar
+                    [userId]="p.owner.id"
+                    [name]="p.owner.fullName"
+                    [url]="p.owner.avatarUrl"
+                    size="xs"
+                  />
+                  {{ p.owner.fullName }}
+                </span>
+              </div>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="card table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Role</th>
+                <th>Progress</th>
+                <th>Members</th>
+                <th>Owner</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of data()!.content; track p.id) {
+                <tr class="clickable" [routerLink]="['/projects', p.id]">
+                  <td>
+                    <div class="row">
+                      <span
+                        class="pcard__icon pcard__icon--sm"
+                        [style.background]="colorFor(p.id)"
+                        >{{ p.name.charAt(0) }}</span
+                      >
+                      <div style="min-width: 0">
+                        <div class="truncate" style="font-weight: 600; max-width: 320px">
+                          {{ p.name }}
+                        </div>
+                        <div class="truncate subtle small" style="max-width: 320px">
+                          {{ p.description }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    @if (p.myRole) {
+                      <app-role [value]="p.myRole" />
+                    }
+                  </td>
+                  <td style="min-width: 140px">
+                    <div class="progress">
+                      <span class="progress__done" [style.width.%]="pct(p)"></span>
+                    </div>
+                    <div class="subtle small" style="margin-top: 4px">
+                      {{ p.taskStats.done }}/{{ p.taskStats.total }} · {{ pct(p) }}%
+                    </div>
+                  </td>
+                  <td>
+                    <app-avatar-stack
+                      [ids]="memberIds(p)"
+                      [total]="p.memberCount"
+                      [max]="3"
+                      size="xs"
+                    />
+                  </td>
+                  <td class="small">{{ p.owner.fullName }}</td>
+                  <td class="subtle small">{{ p.updatedAt | ago }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (data()!.totalPages > 1) {
+        <div class="pager">
+          <button
+            class="btn btn--sm"
+            type="button"
+            [disabled]="!data()!.hasPrevious"
+            (click)="goTo(page() - 1)"
+          >
+            <span class="i">chevron_left</span>Previous
+          </button>
+          <span class="muted small">Page {{ page() + 1 }} of {{ data()!.totalPages }}</span>
+          <button
+            class="btn btn--sm"
+            type="button"
+            [disabled]="!data()!.hasNext"
+            (click)="goTo(page() + 1)"
+          >
+            Next<span class="i">chevron_right</span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

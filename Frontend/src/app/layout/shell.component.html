@@ -1,0 +1,165 @@
+<div class="shell" [class.shell--open]="mobileOpen()">
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="brand" routerLink="/dashboard">
+      <span class="brand__mark"><span class="i fill">bolt</span></span>
+      <span class="brand__name">TaskFlow</span>
+    </a>
+
+    <button class="search-trigger" type="button" (click)="openPalette()">
+      <span class="i">search</span>
+      <span class="grow">Search…</span>
+      <kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd
+      ><kbd>K</kbd>
+    </button>
+
+    <nav class="nav">
+      @for (item of nav; track item.path) {
+        <a class="nav__item" [routerLink]="item.path" routerLinkActive="active">
+          <span class="i">{{ item.icon }}</span>
+          <span class="grow">{{ item.label }}</span>
+          @if (item.badge && item.badge() > 0) {
+            <span class="count count--primary">{{ item.badge() }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="nav-section">
+      <div class="nav-section__title">
+        <span>Projects</span>
+        <button
+          class="btn btn--ghost btn--icon btn--sm"
+          type="button"
+          (click)="newProject()"
+          matTooltip="New project"
+          aria-label="New project"
+        >
+          <span class="i">add</span>
+        </button>
+      </div>
+      @for (p of sidebarProjects(); track p.id) {
+        <a
+          class="nav__item nav__item--project"
+          [routerLink]="['/projects', p.id]"
+          routerLinkActive="active"
+        >
+          <span class="project-dot" [style.background]="colorFor(p.id)">{{
+            p.name.charAt(0)
+          }}</span>
+          <span class="grow truncate">{{ p.name }}</span>
+        </a>
+      } @empty {
+        @if (!workspace.loading()) {
+          <p class="nav-section__empty">No projects yet.</p>
+        }
+      }
+      @if (workspace.projects().length > sidebarProjects().length) {
+        <a class="nav__item nav__more" routerLink="/projects">
+          <span class="i">more_horiz</span>View all
+        </a>
+      }
+    </div>
+
+    <div class="sidebar__footer">
+      <a class="nav__item" routerLink="/settings" routerLinkActive="active">
+        <span class="i">settings</span>
+        <span class="grow">Settings</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="scrim" (click)="mobileOpen.set(false)"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button
+        class="btn btn--ghost btn--icon menu-btn"
+        type="button"
+        (click)="mobileOpen.set(true)"
+        aria-label="Open navigation"
+      >
+        <span class="i">menu</span>
+      </button>
+
+      <button class="topbar__search" type="button" (click)="openPalette()">
+        <span class="i">search</span>
+        <span>Search projects, tasks or jump to…</span>
+        <span class="spacer"></span>
+        <kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd
+        ><kbd>K</kbd>
+      </button>
+
+      <span class="spacer"></span>
+
+      <button class="btn btn--primary" type="button" [matMenuTriggerFor]="createMenu">
+        <span class="i">add</span><span class="hide-sm">Create</span>
+      </button>
+      <mat-menu #createMenu="matMenu" class="menu" xPosition="before">
+        <button class="menu-item" mat-menu-item (click)="newTask()">
+          <span class="i">add_task</span>New task
+        </button>
+        <button class="menu-item" mat-menu-item (click)="newProject()">
+          <span class="i">create_new_folder</span>New project
+        </button>
+      </mat-menu>
+
+      <button
+        class="btn btn--ghost btn--icon"
+        type="button"
+        (click)="theme.toggle()"
+        [matTooltip]="theme.isDark() ? 'Light mode' : 'Dark mode'"
+        aria-label="Toggle theme"
+      >
+        <span class="i">{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</span>
+      </button>
+
+      <app-notification-bell />
+
+      @if (auth.user(); as user) {
+        <button
+          class="user-btn"
+          type="button"
+          [matMenuTriggerFor]="userMenu"
+          aria-label="Account menu"
+        >
+          <app-avatar
+            [userId]="user.id"
+            [name]="user.fullName"
+            [url]="user.avatarUrl"
+            size="md"
+            [showTitle]="false"
+          />
+        </button>
+        <mat-menu #userMenu="matMenu" class="menu" xPosition="before">
+          <div class="user-card">
+            <app-avatar
+              [name]="user.fullName"
+              [url]="user.avatarUrl"
+              [userId]="user.id"
+              size="lg"
+            />
+            <div class="grow">
+              <div class="truncate user-card__name">{{ user.fullName }}</div>
+              <div class="truncate subtle small">{{ user.email }}</div>
+            </div>
+          </div>
+          <div class="menu-sep"></div>
+          <a class="menu-item" mat-menu-item routerLink="/settings">
+            <span class="i">person</span>Profile & settings
+          </a>
+          <a class="menu-item" mat-menu-item routerLink="/invitations">
+            <span class="i">mail</span>Invitations
+          </a>
+          <div class="menu-sep"></div>
+          <button class="menu-item menu-item--danger" mat-menu-item (click)="logout()">
+            <span class="i">logout</span>Sign out
+          </button>
+        </mat-menu>
+      }
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
