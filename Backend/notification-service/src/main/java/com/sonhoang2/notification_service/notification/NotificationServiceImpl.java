@@ -55,22 +55,14 @@ public class NotificationServiceImpl implements NotificationService {
                                                       Pageable pageable) {
         Page<Notification> page;
 
-        if (userId != null && isRead != null && type != null) {
+        if (isRead != null && type != null) {
             page = notificationRepository.findByUserIdAndIsReadAndType(userId, isRead, type, pageable);
-        } else if (userId != null && isRead != null) {
-            page = notificationRepository.findByUserIdAndIsRead(userId, isRead, pageable);
-        } else if (userId != null && type != null) {
-            page = notificationRepository.findByUserIdAndType(userId, type, pageable);
-        } else if (isRead != null && type != null) {
-            page = notificationRepository.findByIsReadAndType(isRead, type, pageable);
-        } else if (userId != null) {
-            page = notificationRepository.findByUserId(userId, pageable);
         } else if (isRead != null) {
-            page = notificationRepository.findByIsRead(isRead, pageable);
+            page = notificationRepository.findByUserIdAndIsRead(userId, isRead, pageable);
         } else if (type != null) {
-            page = notificationRepository.findByType(type, pageable);
+            page = notificationRepository.findByUserIdAndType(userId, type, pageable);
         } else {
-            page = notificationRepository.findAll(pageable);
+            page = notificationRepository.findByUserId(userId, pageable);
         }
 
         return toPageResponse(page);
@@ -78,13 +70,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public NotificationResponse findById(UUID id) {
-        return toResponse(findNotificationByIdOrThrow(id));
+    public NotificationResponse findById(UUID id, UUID userId) {
+        return toResponse(findOwnNotificationOrThrow(id, userId));
     }
 
     @Override
-    public NotificationResponse update(UUID id, NotificationUpdateRequest request) {
-        Notification notification = findNotificationByIdOrThrow(id);
+    public NotificationResponse update(UUID id, NotificationUpdateRequest request, UUID userId) {
+        Notification notification = findOwnNotificationOrThrow(id, userId);
 
         modelMapper.map(request, notification);
 
@@ -92,12 +84,13 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void delete(UUID id) {
-        notificationRepository.delete(findNotificationByIdOrThrow(id));
+    public void delete(UUID id, UUID userId) {
+        notificationRepository.delete(findOwnNotificationOrThrow(id, userId));
     }
 
-    private Notification findNotificationByIdOrThrow(UUID id) {
-        return notificationRepository.findById(id)
+    // Someone else's notification is reported as missing so its existence isn't leaked.
+    private Notification findOwnNotificationOrThrow(UUID id, UUID userId) {
+        return notificationRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification with id " + id + " not found"));
     }
 

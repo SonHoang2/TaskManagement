@@ -19,7 +19,6 @@ export class NotificationsService {
   ): Observable<Page<AppNotification>> {
     return this.api
       .get<{ page: Page<AppNotification> }>('notification-service', '/notifications', {
-        userId: this.auth.userId(),
         isRead: opts.unreadOnly ? false : undefined,
         page: opts.page ?? 0,
         size: opts.size ?? 20,
