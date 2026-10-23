@@ -9,6 +9,7 @@ import com.sonhoang2.notification_service.notification.entity.Notification;
 import com.sonhoang2.notification_service.notification.entity.NotificationType;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ModelMapper modelMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     private PageResponse<NotificationResponse> toPageResponse(Page<Notification> page) {
         return new PageResponse<>(page.getContent().stream().map(this::toResponse).toList(),
@@ -45,7 +47,10 @@ public class NotificationServiceImpl implements NotificationService {
                 .isRead(isRead)
                 .build();
 
-        return toResponse(notificationRepository.save(notification));
+        NotificationResponse response = toResponse(notificationRepository.save(notification));
+        // Delivered to open WebSocket sessions after commit (see NotificationPusher)
+        eventPublisher.publishEvent(response);
+        return response;
     }
 
     @Override

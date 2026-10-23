@@ -84,7 +84,9 @@ spec:
         image: rabbitmq:3.13-management
         resources:
           limits: {cpu: 500m, memory: 512Mi}
-        ports: [{containerPort: 5672}, {containerPort: 15672}]
+        ports: [{containerPort: 5672}, {containerPort: 15672}, {containerPort: 61613}]
+        volumeMounts:
+        - {name: plugins, mountPath: /etc/rabbitmq/enabled_plugins, subPath: enabled_plugins}
         env:
         - name: RABBITMQ_DEFAULT_USER
           valueFrom: {secretKeyRef: {name: app-secrets, key: SPRING_RABBITMQ_USERNAME}}
@@ -94,6 +96,16 @@ spec:
           exec: {command: [rabbitmq-diagnostics, -q, ping]}
           initialDelaySeconds: 20
           periodSeconds: 10
+      volumes:
+      - name: plugins
+        configMap: {name: rabbitmq-plugins}
+---
+# rabbitmq_stomp (port 61613) is the broker behind notification-service's WebSocket push
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: rabbitmq-plugins, namespace: taskmgmt}
+data:
+  enabled_plugins: "[rabbitmq_management,rabbitmq_prometheus,rabbitmq_stomp]."
 ---
 apiVersion: v1
 kind: Service
@@ -103,3 +115,4 @@ spec:
   ports:
   - {name: amqp, port: 5672}
   - {name: management, port: 15672}
+  - {name: stomp, port: 61613}

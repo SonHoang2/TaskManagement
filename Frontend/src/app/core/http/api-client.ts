@@ -37,6 +37,11 @@ export class ApiClient {
     return `${environment.apiGatewayUrl}/${service}/api/v1${path}`;
   }
 
+  /** WebSocket endpoints are mounted outside `/api/v1`, e.g. `/notification-service/ws`. */
+  wsUrl(service: ServiceName, path: string): string {
+    return `${environment.apiGatewayUrl.replace(/^http/, 'ws')}/${service}${path}`;
+  }
+
   get<T>(service: ServiceName, path: string, params?: Params): Observable<T> {
     return this.unwrap(
       this.http.get<JSend<T>>(this.url(service, path), { params: toParams(params) }),

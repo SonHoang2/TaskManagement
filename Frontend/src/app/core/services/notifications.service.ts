@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, forkJoin, map, of, tap } from 'rxjs';
+import { Client } from '@stomp/stompjs';
+import { Observable, Subject, forkJoin, map, of, tap } from 'rxjs';
 import { ApiClient } from '../http/api-client';
 import { AuthService } from '../auth/auth.service';
 import { AppNotification, Page } from '../models';
@@ -13,6 +14,11 @@ export class NotificationsService {
   readonly recent = signal<AppNotification[]>([]);
   readonly unreadCount = signal(0);
   readonly hasUnread = computed(() => this.unreadCount() > 0);
+
+  private readonly pushed = new Subject<AppNotification>();
+  /** Notifications pushed by the server as they are created. */
+  readonly incoming$ = this.pushed.asObservable();
+  private client: Client | null = null;
 
   list(
     opts: { unreadOnly?: boolean; page?: number; size?: number } = {},
@@ -41,6 +47,40 @@ export class NotificationsService {
         /* notification-service may be down; the bell just stays quiet */
       },
     });
+  }
+
+  /** Opens the STOMP connection that delivers new notifications in real time. */
+  connect(): void {
+    if (this.client || !this.auth.token) return;
+    this.client = new Client({
+      brokerURL: this.api.wsUrl('notification-service', '/ws'),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      // Read the token on every (re)connect so a renewed session is picked up.
+      beforeConnect: (client) => {
+        client.connectHeaders = { Authorization: `Bearer ${this.auth.token ?? ''}` };
+      },
+      onConnect: () => {
+        this.client?.subscribe('/user/topic/notifications', (frame) =>
+          this.onPushed(JSON.parse(frame.body) as AppNotification),
+        );
+        // Catch up on anything created while we were disconnected.
+        this.refresh();
+      },
+    });
+    this.client.activate();
+  }
+
+  disconnect(): void {
+    void this.client?.deactivate();
+    this.client = null;
+  }
+
+  private onPushed(n: AppNotification): void {
+    this.recent.update((list) => [n, ...list.filter((x) => x.id !== n.id)].slice(0, 8));
+    if (!n.isRead) this.unreadCount.update((c) => c + 1);
+    this.pushed.next(n);
   }
 
   markRead(n: AppNotification, isRead = true): Observable<AppNotification> {

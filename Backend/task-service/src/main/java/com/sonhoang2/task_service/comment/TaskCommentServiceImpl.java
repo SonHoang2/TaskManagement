@@ -65,6 +65,8 @@ public class TaskCommentServiceImpl implements TaskCommentService {
                     .projectId(task.get().getProjectId())
                     .taskTitle(task.get().getTitle())
                     .userId(savedComment.getUserId())
+                    .assigneeId(task.get().getAssigneeId())
+                    .reporterId(task.get().getReporterId())
                     .content(savedComment.getContent())
                     .eventType("TASK_COMMENT_CREATED")
                     .build();

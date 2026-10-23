@@ -14,9 +14,12 @@ import reactor.core.publisher.Mono;
 public class JwtToHeaderGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
-         return exchange.getPrincipal().cast(JwtAuthenticationToken.class)
+    public Mono<Void> filter(ServerWebExchange incoming, GatewayFilterChain chain) {
+        // Services trust X-User-Id, so a client-supplied value must never reach them (e.g. on permitAll routes)
+        ServerWebExchange exchange = incoming.mutate()
+                .request(incoming.getRequest().mutate().headers(headers -> headers.remove("X-User-Id")).build())
+                .build();
+        return exchange.getPrincipal().cast(JwtAuthenticationToken.class)
                 .flatMap(authentication -> {
                     Jwt jwt = authentication.getToken();
                     String userId = jwt.getClaimAsString("userId");

@@ -11,7 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { filter, interval } from 'rxjs';
+import { filter, fromEvent, interval } from 'rxjs';
 import { AuthService } from '../core/auth/auth.service';
 import { NotificationsService } from '../core/services/notifications.service';
 import { WorkspaceService } from '../core/services/workspace.service';
@@ -74,13 +74,24 @@ export class ShellComponent {
   constructor() {
     this.workspace.load();
     this.notifications.refresh();
+    // New notifications arrive over WebSocket; polling is only a safety net.
+    this.notifications.connect();
+    inject(DestroyRef).onDestroy(() => this.notifications.disconnect());
 
     interval(60_000)
       .pipe(takeUntilDestroyed())
-      .subscribe(() => {
-        this.notifications.refresh();
-        this.workspace.refreshInvitations();
-      });
+      .subscribe(() => this.workspace.refreshInvitations());
+
+    interval(5 * 60_000)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.notifications.refresh());
+
+    fromEvent(document, 'visibilitychange')
+      .pipe(
+        filter(() => document.visibilityState === 'visible'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.notifications.refresh());
 
     this.router.events
       .pipe(
