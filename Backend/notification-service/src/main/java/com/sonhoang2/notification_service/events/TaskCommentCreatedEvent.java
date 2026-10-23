@@ -16,7 +16,11 @@ public class TaskCommentCreatedEvent {
     private UUID taskId;
     private UUID projectId;
     private String taskTitle;
+    /** The comment's author. */
     private UUID userId;
+    /** The task's assignee and reporter: the people to notify (minus the author). */
+    private UUID assigneeId;
+    private UUID reporterId;
     private String content;
     private String eventType;
 }

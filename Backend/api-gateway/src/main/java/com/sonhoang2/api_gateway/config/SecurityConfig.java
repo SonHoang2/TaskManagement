@@ -35,6 +35,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.POST, "/user-service/api/v1/auth/**")
                         .permitAll()
+                        // Browsers cannot send an Authorization header on the WebSocket handshake;
+                        // notification-service authenticates the STOMP CONNECT frame instead
+                        .pathMatchers(HttpMethod.GET, "/notification-service/ws")
+                        .permitAll()
                         // health + prometheus live on the separate management port (cluster-internal only);
                         // EndpointRequest matches only that port, so /actuator stays 401 on the public port
                         .matchers(EndpointRequest.toAnyEndpoint())

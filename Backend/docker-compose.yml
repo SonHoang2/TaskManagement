@@ -12,6 +12,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      # adds rabbitmq_stomp (port 61613), the broker behind notification-service's WebSocket push
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
@@ -322,6 +324,7 @@ services:
       - "5005:5005"
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - JWT_SECRET=${JWT_SECRET}
       - DB_NAME=${NOTIFICATION_DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}

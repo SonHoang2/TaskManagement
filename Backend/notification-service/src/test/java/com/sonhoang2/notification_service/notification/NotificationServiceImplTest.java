@@ -2,6 +2,7 @@ package com.sonhoang2.notification_service.notification;
 
 import com.sonhoang2.notification_service.common.dto.PageResponse;
 import com.sonhoang2.notification_service.common.exception.ResourceNotFoundException;
+import com.sonhoang2.notification_service.notification.dto.NotificationCreateRequest;
 import com.sonhoang2.notification_service.notification.dto.NotificationResponse;
 import com.sonhoang2.notification_service.notification.dto.NotificationUpdateRequest;
 import com.sonhoang2.notification_service.notification.entity.Notification;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,12 +35,29 @@ class NotificationServiceImplTest {
     @Mock
     private ModelMapper modelMapper;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
     private final UUID userId = UUID.randomUUID();
     private final UUID notificationId = UUID.randomUUID();
     private final Pageable pageable = PageRequest.of(0, 20);
+
+    @Test
+    void create_ShouldPublishTheSavedNotificationForPush() {
+        when(notificationRepository.save(any(Notification.class))).thenReturn(notification());
+
+        NotificationResponse response = notificationService.create(NotificationCreateRequest.builder()
+                .userId(userId)
+                .type(NotificationType.TASK_ASSIGNED)
+                .content("You were assigned a task")
+                .build());
+
+        verify(eventPublisher).publishEvent(response);
+        assertEquals(userId, response.getUserId());
+    }
 
     @Test
     void findAll_ShouldOnlyQueryTheCallersNotifications() {

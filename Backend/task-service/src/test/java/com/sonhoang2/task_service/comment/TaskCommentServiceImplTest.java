@@ -3,6 +3,9 @@ package com.sonhoang2.task_service.comment;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
+import com.sonhoang2.task_service.events.EventPublisher;
+import com.sonhoang2.task_service.events.TaskCommentCreatedEvent;
+import com.sonhoang2.task_service.task.entity.Task;
 import com.sonhoang2.task_service.comment.dto.TaskCommentCreateRequest;
 import com.sonhoang2.task_service.comment.dto.TaskCommentResponse;
 import com.sonhoang2.task_service.comment.dto.TaskCommentUpdateRequest;
@@ -10,6 +13,7 @@ import com.sonhoang2.task_service.comment.entity.TaskComment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,6 +46,9 @@ class TaskCommentServiceImplTest {
 
     @Mock
     private ProjectAccessGuard projectAccessGuard;
+
+    @Mock
+    private EventPublisher eventPublisher;
 
     @InjectMocks
     private TaskCommentServiceImpl taskCommentService;
@@ -89,6 +96,24 @@ class TaskCommentServiceImplTest {
         assertEquals(userId, result.getUserId());
         assertEquals("Test comment content", result.getContent());
         verify(projectAccessGuard).requireTaskMember(taskId, userId);
+    }
+
+    @Test
+    void create_ShouldPublishEventWithTheTasksAssigneeAndReporter() {
+        UUID assignee = UUID.randomUUID();
+        UUID reporter = UUID.randomUUID();
+        Task task = Task.builder().id(taskId).projectId(projectId).title("Fix login")
+                .assigneeId(assignee).reporterId(reporter).build();
+        when(taskCommentRepository.save(any(TaskComment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+
+        taskCommentService.create(createRequest, userId);
+
+        ArgumentCaptor<TaskCommentCreatedEvent> captor = ArgumentCaptor.forClass(TaskCommentCreatedEvent.class);
+        verify(eventPublisher).publishTaskCommentCreatedEvent(captor.capture());
+        assertEquals(userId, captor.getValue().getUserId());
+        assertEquals(assignee, captor.getValue().getAssigneeId());
+        assertEquals(reporter, captor.getValue().getReporterId());
     }
 
     @Test

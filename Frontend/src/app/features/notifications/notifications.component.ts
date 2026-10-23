@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppNotification, Page } from '../../core/models';
@@ -31,6 +32,10 @@ export class NotificationsComponent {
 
   constructor() {
     this.fetch(0);
+    this.svc.incoming$.pipe(takeUntilDestroyed()).subscribe((n) => {
+      if (this.unreadOnly() && n.isRead) return;
+      this.items.update((l) => [n, ...l.filter((x) => x.id !== n.id)]);
+    });
   }
 
   protected setFilter(unread: boolean): void {
