@@ -1,5 +1,6 @@
 package com.sonhoang2.common.ratelimit;
 
+import com.sonhoang2.common.exception.RateLimiterUnavailableException;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,17 @@ class RateLimitServiceTest {
         };
     }
 
+    // Stands in for a connected proxy manager whose Redis commands fail.
+    private static ProxyManager<byte[]> failingCommands() {
+        return mock(ProxyManager.class, invocation -> {
+            throw new IllegalStateException("command failed");
+        });
+    }
+
+    private static void consume(RateLimitService service) {
+        service.tryConsume("k", 1, Duration.ofMinutes(1));
+    }
+
     @Test
     void doesNotConnectUntilFirstUse() {
         new RateLimitService(failingConnect(), now::get);
@@ -32,22 +44,38 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void refusesWithRetryAfterWhenConnectFails() {
+        RateLimitService service = new RateLimitService(failingConnect(), now::get);
+
+        assertThatThrownBy(() -> consume(service))
+                .isInstanceOfSatisfying(RateLimiterUnavailableException.class,
+                        e -> assertThat(e.getRetryAfterSeconds()).isEqualTo(RateLimitService.RETRY_BACKOFF.toSeconds()))
+                .hasRootCauseMessage("connection refused");
+    }
+
+    @Test
     void failsFastDuringBackoffAfterAFailedConnect() {
         RateLimitService service = new RateLimitService(failingConnect(), now::get);
 
-        assertThatThrownBy(() -> service.tryConsume("k", 1, Duration.ofMinutes(1))).hasMessage("connection refused");
+        assertThatThrownBy(() -> consume(service)).isInstanceOf(RateLimiterUnavailableException.class);
         now.addAndGet(RateLimitService.RETRY_BACKOFF.toNanos() - 1);
-        assertThatThrownBy(() -> service.tryConsume("k", 1, Duration.ofMinutes(1)))
-                .hasMessageContaining("Redis connection failed recently");
+        assertThatThrownBy(() -> consume(service)).isInstanceOf(RateLimiterUnavailableException.class);
 
         assertThat(connectAttempts).hasValue(1);
     }
 
     @Test
+    void refusesWhenRedisCommandsFailAfterConnecting() {
+        RateLimitService service = new RateLimitService(RateLimitServiceTest::failingCommands, now::get);
+
+        assertThatThrownBy(() -> consume(service))
+                .isInstanceOf(RateLimiterUnavailableException.class)
+                .hasRootCauseMessage("command failed");
+    }
+
+    @Test
     void retriesConnectAfterBackoffAndKeepsTheConnectedProxyManager() {
-        ProxyManager<byte[]> connected = mock(ProxyManager.class, invocation -> {
-            throw new UnsupportedOperationException("bucket built");
-        });
+        ProxyManager<byte[]> connected = failingCommands();
         Supplier<ProxyManager<byte[]>> connectOnSecondAttempt = () -> {
             if (connectAttempts.incrementAndGet() == 1) {
                 throw new IllegalStateException("connection refused");
@@ -56,11 +84,11 @@ class RateLimitServiceTest {
         };
         RateLimitService service = new RateLimitService(connectOnSecondAttempt, now::get);
 
-        assertThatThrownBy(() -> service.tryConsume("k", 1, Duration.ofMinutes(1))).hasMessage("connection refused");
+        assertThatThrownBy(() -> consume(service)).hasRootCauseMessage("connection refused");
         now.addAndGet(RateLimitService.RETRY_BACKOFF.toNanos());
-        // Reaching the proxy manager (the mock throws on builder()) proves the second attempt connected.
-        assertThatThrownBy(() -> service.tryConsume("k", 1, Duration.ofMinutes(1))).hasMessage("bucket built");
-        assertThatThrownBy(() -> service.tryConsume("k", 1, Duration.ofMinutes(1))).hasMessage("bucket built");
+        // Reaching the proxy manager's commands proves the second attempt connected; it is not rebuilt afterwards.
+        assertThatThrownBy(() -> consume(service)).hasRootCauseMessage("command failed");
+        assertThatThrownBy(() -> consume(service)).hasRootCauseMessage("command failed");
 
         assertThat(connectAttempts).hasValue(2);
     }
