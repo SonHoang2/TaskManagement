@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Index;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -26,7 +27,9 @@ import java.util.UUID;
         name = "project_members",
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_project_members_project_user", columnNames = {"project_id", "user_id"})
-        }
+        },
+        // the unique key leads with project_id, so lookups by user alone (memberships of a user) need their own index
+        indexes = @Index(name = "idx_project_members_user_id", columnList = "user_id")
 )
 @Getter
 @Setter

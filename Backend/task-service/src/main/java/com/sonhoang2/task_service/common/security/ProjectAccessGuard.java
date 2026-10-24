@@ -1,7 +1,6 @@
 package com.sonhoang2.task_service.common.security;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.sonhoang2.common.membership.MembershipCache;
 import com.sonhoang2.task_service.common.dto.ProjectMembership;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.task_service.feign.ProjectServiceClient;
@@ -12,14 +11,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * Project-level authorization for task-service. Membership lives in project-service, so it is
- * fetched per user and cached briefly.
+ * fetched per user and cached in Redis (shared by all replicas; project-service evicts it on change).
  */
 @Component
 @RequiredArgsConstructor
@@ -29,12 +28,7 @@ public class ProjectAccessGuard {
 
     private final ProjectServiceClient projectServiceClient;
     private final TaskRepository taskRepository;
-
-    // userId -> (projectId -> role). The TTL bounds how long a removed member keeps access.
-    private final Cache<UUID, Map<UUID, String>> memberships = Caffeine.newBuilder()
-            .expireAfterWrite(30, TimeUnit.SECONDS)
-            .maximumSize(10_000)
-            .build();
+    private final MembershipCache membershipCache;
 
     /** Returns the caller's role in the project, or throws if they are not a member. */
     public String requireMember(UUID projectId, UUID userId) {
@@ -75,11 +69,17 @@ public class ProjectAccessGuard {
         return role != null ? role : memberships(userId, true).get(projectId);
     }
 
+    // userId -> (projectId -> role)
     private Map<UUID, String> memberships(UUID userId, boolean refresh) {
-        if (refresh) {
-            memberships.invalidate(userId);
+        if (!refresh) {
+            Optional<Map<UUID, String>> cached = membershipCache.get(userId);
+            if (cached.isPresent()) {
+                return cached.get();
+            }
         }
-        return memberships.get(userId, this::fetchMemberships);
+        Map<UUID, String> fresh = fetchMemberships(userId);
+        membershipCache.put(userId, fresh);
+        return fresh;
     }
 
     private Map<UUID, String> fetchMemberships(UUID userId) {

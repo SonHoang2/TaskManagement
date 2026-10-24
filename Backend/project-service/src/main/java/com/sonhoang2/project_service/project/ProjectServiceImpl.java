@@ -29,6 +29,7 @@ import com.sonhoang2.project_service.project.entity.ProjectMember;
 import com.sonhoang2.project_service.project.entity.ProjectMemberRole;
 import com.sonhoang2.project_service.project.feign.TaskServiceClient;
 import com.sonhoang2.project_service.project.feign.UserServiceClient;
+import com.sonhoang2.common.membership.MembershipCache;
 import com.sonhoang2.common.ratelimit.RateLimit;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final UserServiceClient userServiceClient;
     private final TaskServiceClient taskServiceClient;
     private final EventPublisher eventPublisher;
+    private final MembershipCache membershipCache;
 
     private void assertUserExists(UUID userId) {
         try {
@@ -142,6 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .userId(userId)
                 .role(ProjectMemberRole.OWNER)
                 .build());
+        membershipCache.evictAfterCommit(List.of(userId));
 
         return toProjectResponse(project);
     }
@@ -234,6 +237,7 @@ public class ProjectServiceImpl implements ProjectService {
                     .userId(userId)
                     .role(ProjectMemberRole.MEMBER)
                     .build());
+            membershipCache.evictAfterCommit(List.of(userId));
 
             invitation.setStatus(ProjectInvitationStatus.ACCEPTED);
         } else {
@@ -424,7 +428,11 @@ public class ProjectServiceImpl implements ProjectService {
             throw new AccessDeniedException("Only owner or admin can delete the project");
         }
 
+        List<UUID> memberIds = projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(id).stream()
+                .map(ProjectMember::getUserId)
+                .toList();
         projectRepository.delete(project);
+        membershipCache.evictAfterCommit(memberIds);
     }
 
     private String buildSortParam(Sort sort) {
@@ -551,7 +559,7 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             var response = taskServiceClient.getTaskStatsByProjectId(projectId, userId);
             @SuppressWarnings("unchecked")
-            Map<String, Object> statsData = (Map<String, Object>) response.data().get("stats");
+            Map<String, Object> statsData = response.data().get("stats");
 
             int todo = (Integer) statsData.getOrDefault("todo", 0);
             int inProgress = (Integer) statsData.getOrDefault("inProgress", 0);
