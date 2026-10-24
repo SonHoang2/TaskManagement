@@ -7,6 +7,7 @@ import com.sonhoang2.project_service.common.enums.UserRole;
 import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.project_service.events.EventPublisher;
+import com.sonhoang2.project_service.label.dto.LabelRepository;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
@@ -25,6 +26,7 @@ import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,6 +56,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private ProjectInvitationRepository projectInvitationRepository;
+
+    @Mock
+    private LabelRepository labelRepository;
 
     @Mock
     private UserServiceClient userServiceClient;
@@ -485,22 +490,40 @@ class ProjectServiceImplTest {
     }
 
     @Test
-    void delete_ShouldEvictMembershipCacheOfEveryMember() {
+    void delete_ShouldDeleteDependentsBeforeProjectAndEvictMembershipCacheOfEveryMember() {
         ProjectMember invitee = ProjectMember.builder()
                 .project(project)
                 .userId(inviteeId)
                 .role(ProjectMemberRole.MEMBER)
                 .build();
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
-        when(projectMemberRepository.findByProjectIdAndUserId(projectId,
-                userId)).thenReturn(Optional.of(projectMember));
-        when(projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(projectId)).thenReturn(List.of(projectMember,
-                invitee));
+        when(projectMemberRepository.findByProjectIdAndUserId(projectId, userId)).thenReturn(Optional.of(projectMember));
+        when(projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(projectId)).thenReturn(List.of(projectMember, invitee));
 
         projectService.delete(projectId, userId);
 
-        verify(projectRepository).delete(project);
+        // Rows referencing the project must be gone before it is removed, or the flush fails
+        InOrder inOrder = inOrder(labelRepository, projectInvitationRepository, projectMemberRepository, projectRepository);
+        inOrder.verify(labelRepository).deleteAllByProjectIdInBulk(projectId);
+        inOrder.verify(projectInvitationRepository).deleteAllByProjectIdInBulk(projectId);
+        inOrder.verify(projectMemberRepository).deleteAllByProjectIdInBulk(projectId);
+        inOrder.verify(projectRepository).delete(project);
         verify(membershipCache).evictAfterCommit(List.of(userId, inviteeId));
+    }
+
+    @Test
+    void delete_ShouldDeleteNothing_WhenUserIsRegularMember() {
+        projectMember.setRole(ProjectMemberRole.MEMBER);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(projectId, userId)).thenReturn(Optional.of(projectMember));
+
+        assertThrows(AccessDeniedException.class, () -> projectService.delete(projectId, userId));
+
+        verify(labelRepository, never()).deleteAllByProjectIdInBulk(any());
+        verify(projectInvitationRepository, never()).deleteAllByProjectIdInBulk(any());
+        verify(projectMemberRepository, never()).deleteAllByProjectIdInBulk(any());
+        verify(projectRepository, never()).delete(any());
+        verify(membershipCache, never()).evictAfterCommit(any());
     }
 
     private static JSendResponse<Map<String, UserResponse>> userWithRole(UserRole role) {
