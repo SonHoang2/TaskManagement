@@ -2,7 +2,6 @@ package com.sonhoang2.task_service.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.task_service.common.config.SecurityConfig;
-import com.sonhoang2.task_service.common.dto.JSendResponse;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.task.dto.TaskCreateRequest;
 import com.sonhoang2.task_service.task.dto.TaskResponse;
@@ -12,10 +11,7 @@ import com.sonhoang2.task_service.task.entity.TaskStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,16 +19,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
 @Import(SecurityConfig.class)
@@ -46,9 +40,9 @@ class TaskControllerTest {
 
     @MockitoBean   private TaskService taskService;
 
-    private UUID taskId = UUID.randomUUID();
-    private UUID projectId = UUID.randomUUID();
-    private UUID userId = UUID.randomUUID();
+    private final UUID taskId = UUID.randomUUID();
+    private final UUID projectId = UUID.randomUUID();
+    private final UUID userId = UUID.randomUUID();
 
     @Test
     void create_ShouldReturnCreated_WhenValidRequest() throws Exception {

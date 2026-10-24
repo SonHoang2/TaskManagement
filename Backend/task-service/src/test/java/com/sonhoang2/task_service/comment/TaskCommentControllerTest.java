@@ -1,11 +1,11 @@
 package com.sonhoang2.task_service.comment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sonhoang2.task_service.common.config.SecurityConfig;
-import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.comment.dto.TaskCommentCreateRequest;
 import com.sonhoang2.task_service.comment.dto.TaskCommentResponse;
 import com.sonhoang2.task_service.comment.dto.TaskCommentUpdateRequest;
+import com.sonhoang2.task_service.common.config.SecurityConfig;
+import com.sonhoang2.task_service.common.dto.PageResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,11 +20,10 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskCommentController.class)
 @Import(SecurityConfig.class)
@@ -39,9 +38,9 @@ class TaskCommentControllerTest {
     @MockitoBean
     private TaskCommentService taskCommentService;
 
-    private UUID commentId = UUID.randomUUID();
-    private UUID taskId = UUID.randomUUID();
-    private UUID userId = UUID.randomUUID();
+    private final UUID commentId = UUID.randomUUID();
+    private final UUID taskId = UUID.randomUUID();
+    private final UUID userId = UUID.randomUUID();
 
     @Test
     void create_ShouldReturnCreated_WhenValidRequest() throws Exception {

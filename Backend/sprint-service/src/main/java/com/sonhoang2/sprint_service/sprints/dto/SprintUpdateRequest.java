@@ -1,6 +1,5 @@
 package com.sonhoang2.sprint_service.sprints.dto;
 
-import com.sonhoang2.sprint_service.sprints.entity.SprintStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

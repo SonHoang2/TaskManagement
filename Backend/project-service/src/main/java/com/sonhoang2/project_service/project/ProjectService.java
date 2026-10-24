@@ -5,12 +5,12 @@ import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecisionRequest;
 import com.sonhoang2.project_service.project.dto.InviteMemberRequest;
 import com.sonhoang2.project_service.project.dto.ListProjectRequest;
-import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import com.sonhoang2.project_service.project.dto.ProjectDetailResponse;
 import com.sonhoang2.project_service.project.dto.ProjectInvitationResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMemberResponse;
 import com.sonhoang2.project_service.project.dto.ProjectMembershipResponse;
 import com.sonhoang2.project_service.project.dto.ProjectResponse;
+import com.sonhoang2.project_service.project.dto.UpdateProjectRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

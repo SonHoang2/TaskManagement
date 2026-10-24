@@ -1,9 +1,9 @@
 package com.sonhoang2.userservice.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sonhoang2.userservice.common.config.SecurityConfig;
 import com.sonhoang2.common.dto.PageResponse;
 import com.sonhoang2.common.exception.ResourceNotFoundException;
+import com.sonhoang2.userservice.common.config.SecurityConfig;
 import com.sonhoang2.userservice.user.dto.AdminCreateUserRequest;
 import com.sonhoang2.userservice.user.dto.AdminUpdateUserRequest;
 import com.sonhoang2.userservice.user.dto.UserResponse;
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -31,7 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
 @Import(SecurityConfig.class)

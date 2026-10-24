@@ -9,7 +9,6 @@ import com.sonhoang2.task_service.task.dto.TaskStats;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface TaskService {
