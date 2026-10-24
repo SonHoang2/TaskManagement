@@ -171,6 +171,20 @@ public class GlobalExceptionHandler {
                 .body(JSendResponse.error(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS.value(), data));
     }
 
+    @ExceptionHandler(RateLimiterUnavailableException.class)
+    public ResponseEntity<JSendResponse<Map<String, Object>>> handleRateLimiterUnavailable(
+            RateLimiterUnavailableException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("timestamp", Instant.now());
+        data.put("path", request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(JSendResponse.error(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE.value(), data));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JSendResponse<Map<String, Object>>> handleGenericException(
             Exception ignored,

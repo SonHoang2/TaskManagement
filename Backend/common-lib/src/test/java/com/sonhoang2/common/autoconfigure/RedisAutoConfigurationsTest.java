@@ -1,5 +1,6 @@
 package com.sonhoang2.common.autoconfigure;
 
+import com.sonhoang2.common.exception.RateLimiterUnavailableException;
 import com.sonhoang2.common.membership.MembershipCache;
 import com.sonhoang2.common.ratelimit.RateLimitAspect;
 import com.sonhoang2.common.ratelimit.RateLimitService;
@@ -47,7 +48,8 @@ class RedisAutoConfigurationsTest {
                     assertThat(context).hasNotFailed();
                     assertThatThrownBy(() -> context.getBean(RateLimitService.class)
                             .tryConsume("test", 1, Duration.ofMinutes(1)))
-                            .isInstanceOf(RedisConnectionException.class);
+                            .isInstanceOf(RateLimiterUnavailableException.class)
+                            .hasCauseInstanceOf(RedisConnectionException.class);
                 });
     }
 

@@ -2,6 +2,7 @@ package com.sonhoang2.userservice.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sonhoang2.common.exception.GlobalExceptionHandler;
+import com.sonhoang2.common.exception.RateLimiterUnavailableException;
 import com.sonhoang2.common.exception.ResourceConflictException;
 import com.sonhoang2.userservice.auth.dto.LoginRequest;
 import com.sonhoang2.userservice.auth.dto.LoginResponse;
@@ -22,8 +23,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -108,6 +113,21 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_RateLimiterUnavailable_RefusesWith503() throws Exception {
+        when(authRateLimitService.checkRateLimit(anyString()))
+                .thenThrow(new RateLimiterUnavailableException("Service temporarily unavailable, please retry shortly", 5, null));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "5"))
+                .andExpect(jsonPath("$.status").value("error"));
+
+        verify(authService, never()).login(any(LoginRequest.class));
     }
 
     @Test
