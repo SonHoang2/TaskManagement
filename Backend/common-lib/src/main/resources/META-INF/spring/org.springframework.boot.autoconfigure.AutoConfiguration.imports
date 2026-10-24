@@ -1,0 +1,3 @@
+com.sonhoang2.common.autoconfigure.RedisClientAutoConfiguration
+com.sonhoang2.common.autoconfigure.RateLimitAutoConfiguration
+com.sonhoang2.common.autoconfigure.MembershipCacheAutoConfiguration

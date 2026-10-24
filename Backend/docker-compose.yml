@@ -150,6 +150,7 @@ services:
     container_name: api-gateway
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "8765:8765"
     environment:
@@ -171,6 +172,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "api-gateway"
     deploy:
@@ -186,6 +189,7 @@ services:
     container_name: user-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "5001:5001"
     environment:
@@ -204,6 +208,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "user-service"
     deploy:
@@ -219,6 +225,7 @@ services:
     container_name: task-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "5003:5003"
     environment:
@@ -237,6 +244,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "task-service"
     deploy:
@@ -252,6 +261,7 @@ services:
     container_name: project-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "5002:5002"
     environment:
@@ -271,6 +281,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "project-service"
     deploy:
@@ -286,6 +298,7 @@ services:
     container_name: sprint-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "5004:5004"
     environment:
@@ -305,6 +318,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "sprint-service"
     deploy:
@@ -320,6 +335,7 @@ services:
     container_name: notification-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "5005:5005"
     environment:
@@ -338,6 +354,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "notification-service"
     deploy:
@@ -351,6 +369,7 @@ services:
     container_name: dashboard-service
     env_file:
       - ./observability/actuator.env
+      - ./app.env
     ports:
       - "8086:8086"
     environment:
@@ -368,6 +387,8 @@ services:
       driver: "json-file"
       options:
         labels: "service"
+        max-size: "10m"
+        max-file: "3"
     labels:
       service: "dashboard-service"
     deploy:

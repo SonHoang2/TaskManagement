@@ -1,5 +1,6 @@
 package com.sonhoang2.project_service.project;
 
+import com.sonhoang2.common.membership.MembershipCache;
 import com.sonhoang2.project_service.common.dto.JSendResponse;
 import com.sonhoang2.project_service.common.dto.UserResponse;
 import com.sonhoang2.project_service.common.enums.UserRole;
@@ -60,6 +61,9 @@ class ProjectServiceImplTest {
 
     @Mock
     private EventPublisher eventPublisher;
+
+    @Mock
+    private MembershipCache membershipCache;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -143,6 +147,7 @@ class ProjectServiceImplTest {
         assertEquals(userId, result.getOwnerId());
         verify(projectRepository, times(1)).save(any(Project.class));
         verify(projectMemberRepository, times(1)).save(any(ProjectMember.class));
+        verify(membershipCache).evictAfterCommit(List.of(userId));
     }
 
     @Test
@@ -331,6 +336,7 @@ class ProjectServiceImplTest {
         assertNotNull(result.getRespondedAt());
         verify(projectMemberRepository, times(1)).save(any(ProjectMember.class));
         verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class)); // Thêm verify này
+        verify(membershipCache).evictAfterCommit(List.of(inviteeId));
     }
 
     @Test
@@ -351,6 +357,7 @@ class ProjectServiceImplTest {
         assertNotNull(result.getRespondedAt());
         verify(projectMemberRepository, never()).save(any(ProjectMember.class));
         verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class));
+        verify(membershipCache, never()).evictAfterCommit(any());
     }
 
     @Test
@@ -476,6 +483,25 @@ class ProjectServiceImplTest {
         projectService.listAllProject(pageable, userId, request);
 
         verify(projectRepository, never()).searchByNameOrDescription(any(), any());
+    }
+
+    @Test
+    void delete_ShouldEvictMembershipCacheOfEveryMember() {
+        ProjectMember invitee = ProjectMember.builder()
+                .project(project)
+                .userId(inviteeId)
+                .role(ProjectMemberRole.MEMBER)
+                .build();
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(projectId,
+                userId)).thenReturn(Optional.of(projectMember));
+        when(projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(projectId)).thenReturn(List.of(projectMember,
+                invitee));
+
+        projectService.delete(projectId, userId);
+
+        verify(projectRepository).delete(project);
+        verify(membershipCache).evictAfterCommit(List.of(userId, inviteeId));
     }
 
     private static JSendResponse<Map<String, UserResponse>> userWithRole(UserRole role) {

@@ -4,6 +4,7 @@ import com.sonhoang2.task_service.task.entity.Task;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Index;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -21,7 +22,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "task_histories")
+@Table(name = "task_histories", indexes = @Index(name = "idx_task_histories_task_id", columnList = "task_id"))
 @Getter
 @Setter
 @Builder

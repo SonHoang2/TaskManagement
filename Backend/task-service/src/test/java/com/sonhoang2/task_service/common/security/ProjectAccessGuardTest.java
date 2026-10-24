@@ -1,5 +1,6 @@
 package com.sonhoang2.task_service.common.security;
 
+import com.sonhoang2.common.membership.MembershipCache;
 import com.sonhoang2.task_service.common.dto.JSendResponse;
 import com.sonhoang2.task_service.common.dto.ProjectMembership;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
@@ -12,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,12 +33,34 @@ class ProjectAccessGuardTest {
 
     private ProjectAccessGuard guard;
 
+    // in-memory stand-in for the Redis-backed cache
+    private final Map<UUID, Map<UUID, String>> cacheStore = new HashMap<>();
+
     private final UUID userId = UUID.randomUUID();
     private final UUID projectId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        guard = new ProjectAccessGuard(projectServiceClient, taskRepository);
+        guard = new ProjectAccessGuard(projectServiceClient, taskRepository, new MembershipCache(null, null) {
+            @Override
+            public Optional<Map<UUID, String>> get(UUID user) {
+                return Optional.ofNullable(cacheStore.get(user));
+            }
+
+            @Override
+            public void put(UUID user, Map<UUID, String> memberships) {
+                cacheStore.put(user, memberships);
+            }
+        });
+    }
+
+    @Test
+    void requireMember_ShouldUseSharedCache_WithoutCallingProjectService() {
+        cacheStore.put(userId, Map.of(projectId, "ADMIN"));
+
+        assertEquals("ADMIN", guard.requireMember(projectId, userId));
+
+        verifyNoInteractions(projectServiceClient);
     }
 
     @Test
