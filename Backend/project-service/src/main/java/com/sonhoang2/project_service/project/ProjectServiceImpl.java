@@ -9,6 +9,7 @@ import com.sonhoang2.project_service.common.exception.ResourceConflictException;
 import com.sonhoang2.project_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.project_service.events.EventPublisher;
 import com.sonhoang2.project_service.events.ProjectInvitationCreatedEvent;
+import com.sonhoang2.project_service.label.dto.LabelRepository;
 import com.sonhoang2.project_service.project.dto.ActiveSprint;
 import com.sonhoang2.project_service.project.dto.CreateProjectRequest;
 import com.sonhoang2.project_service.project.dto.InvitationDecision;
@@ -54,6 +55,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
+    private final LabelRepository labelRepository;
     private final UserServiceClient userServiceClient;
     private final TaskServiceClient taskServiceClient;
     private final EventPublisher eventPublisher;
@@ -431,6 +433,10 @@ public class ProjectServiceImpl implements ProjectService {
         List<UUID> memberIds = projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(id).stream()
                 .map(ProjectMember::getUserId)
                 .toList();
+        // Project has no cascading collections: remove the rows that reference it first
+        labelRepository.deleteAllByProjectIdInBulk(id);
+        projectInvitationRepository.deleteAllByProjectIdInBulk(id);
+        projectMemberRepository.deleteAllByProjectIdInBulk(id);
         projectRepository.delete(project);
         membershipCache.evictAfterCommit(memberIds);
     }
