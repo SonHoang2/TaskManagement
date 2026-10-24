@@ -1,7 +1,6 @@
 package com.sonhoang2.task_service.task;
 
-import com.sonhoang2.task_service.attachment.entity.TaskAttachment;
-import com.sonhoang2.task_service.comment.entity.TaskComment;
+import com.sonhoang2.common.ratelimit.RateLimit;
 import com.sonhoang2.task_service.common.dto.PageResponse;
 import com.sonhoang2.task_service.common.exception.ResourceNotFoundException;
 import com.sonhoang2.task_service.common.security.ProjectAccessGuard;
@@ -18,17 +17,14 @@ import com.sonhoang2.task_service.task.dto.TaskStats;
 import com.sonhoang2.task_service.task.dto.TaskUpdateRequest;
 import com.sonhoang2.task_service.task.entity.Task;
 import com.sonhoang2.task_service.task.entity.TaskStatus;
-import com.sonhoang2.task_service.tasklabel.entity.TaskLabel;
-import com.sonhoang2.common.ratelimit.RateLimit;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -1,6 +1,5 @@
 package com.sonhoang2.project_service.label.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

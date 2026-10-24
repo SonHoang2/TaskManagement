@@ -3,7 +3,6 @@ package com.sonhoang2.project_service.project.feign;
 import com.sonhoang2.project_service.common.dto.JSendResponse;
 import com.sonhoang2.project_service.common.dto.PageResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;

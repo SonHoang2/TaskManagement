@@ -1,12 +1,12 @@
 package com.sonhoang2.userservice.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sonhoang2.common.exception.GlobalExceptionHandler;
+import com.sonhoang2.common.exception.ResourceConflictException;
 import com.sonhoang2.userservice.auth.dto.LoginRequest;
 import com.sonhoang2.userservice.auth.dto.LoginResponse;
 import com.sonhoang2.userservice.auth.dto.RegisterRequest;
 import com.sonhoang2.userservice.common.config.SecurityConfig;
-import com.sonhoang2.common.exception.GlobalExceptionHandler;
-import com.sonhoang2.common.exception.ResourceConflictException;
 import com.sonhoang2.userservice.user.dto.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,13 +19,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
 @Import({GlobalExceptionHandler.class, SecurityConfig.class})
