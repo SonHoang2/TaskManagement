@@ -2,6 +2,7 @@ package com.sonhoang2.common.exception;
 
 import com.sonhoang2.common.dto.JSendResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -187,8 +189,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<JSendResponse<Map<String, Object>>> handleGenericException(
-            Exception ignored,
+            Exception ex,
             HttpServletRequest request) {
+
+        log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("timestamp", Instant.now());
