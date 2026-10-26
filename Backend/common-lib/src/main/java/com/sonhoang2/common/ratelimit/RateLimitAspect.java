@@ -37,53 +37,14 @@ public class RateLimitAspect {
 
         HttpServletRequest request = attributes.getRequest();
 
-        // Try to get userId from JWT token in Authorization header
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            String userId = extractUserIdFromToken(token);
-            if (userId != null) {
-                return "user:" + userId;
-            }
+        // The gateway sets X-User-Id from the verified JWT (and drops any client-supplied value),
+        // the same header services already trust for authorization.
+        String userId = request.getHeader("X-User-Id");
+        if (userId != null && !userId.isBlank()) {
+            return "user:" + userId;
         }
 
-        // Fallback to IP address
-        String ipAddress = getClientIpAddress(request);
-        return "ip:" + ipAddress;
-    }
-
-    private String extractUserIdFromToken(String token) {
-        try {
-            // Extract userId from JWT token
-            // This is a simplified version - in production, use proper JWT parsing
-            String[] parts = token.split("\\.");
-            if (parts.length >= 2) {
-                String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
-                // Parse JSON to extract userId claim
-                // For now, return null to fallback to IP
-                // In production, use a proper JWT library like jjwt
-            }
-        } catch (Exception e) {
-            // If token parsing fails, fallback to IP
-        }
-        return null;
-    }
-
-    private String getClientIpAddress(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        // For multiple proxies, take the first IP
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip != null ? ip : "unknown";
+        // X-Forwarded-For and similar headers are client-controlled; only the socket address cannot be spoofed.
+        return "ip:" + request.getRemoteAddr();
     }
 }
