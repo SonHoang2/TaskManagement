@@ -7,15 +7,15 @@ const errorRate = new Rate('errors');
 const rateLimitHits = new Counter('rate_limit_hits');
 
 // Test configuration
-// Mục tiêu: gửi vượt replenishRate + burstCapacity để buộc RequestRateLimiter
-// trả 429. Dùng 'constant-arrival-rate' thay vì ramping VU để kiểm soát
-// chính xác số request/giây bất kể response time — quan trọng vì rate
-// limiter tính theo request/giây thực tế đến Gateway, không phải theo VU.
+// Goal: send more than replenishRate + burstCapacity to force RequestRateLimiter
+// to return 429. Uses 'constant-arrival-rate' instead of ramping VUs to control
+// requests/second exactly regardless of response time — this matters because the
+// rate limiter counts actual requests/second reaching the Gateway, not VUs.
 export const options = {
   scenarios: {
     burst_test: {
       executor: 'constant-arrival-rate',
-      rate: 10,              // 10 req/giây — vượt xa replenishRate=2 (nếu đã sửa theo 100 req/phút)
+      rate: 10,              // 10 req/s — far above replenishRate=2 (if set to 100 req/minute)
       timeUnit: '1s',
       duration: '3s',
       preAllocatedVUs: 20,
@@ -23,7 +23,7 @@ export const options = {
     },
   },
   thresholds: {
-    // Không set 'errors < X%' vì 429 CHÍNH LÀ kết quả mong đợi, không phải lỗi thật
+    // No 'errors < X%' threshold because 429 IS the expected result, not a real error
     http_req_duration: ['p(95)<500'],
   },
 };
@@ -31,7 +31,7 @@ export const options = {
 const BASE_URL = __ENV.API_GATEWAY_URL || __ENV.BASE_URL || 'http://localhost:8765';
 const BEARER_TOKEN = __ENV.BEARER_TOKEN || '';
 
-// Chỉ log 1 mẫu lỗi đầu tiên cho mỗi status code để tránh spam log
+// Log only the first error sample per status code to avoid spamming the log
 const loggedStatuses = new Set();
 
 const endpoints = [
@@ -56,7 +56,7 @@ export default function () {
     'request allowed (200)': (r) => r.status === 200,
   });
 
-  // status ngoài 200/429 (404, 500, 503, 0...) mới tính là lỗi thật sự
+  // Only statuses other than 200/429 (404, 500, 503, 0...) count as real errors
   const isRealError = res.status !== 200 && res.status !== 429;
   errorRate.add(isRealError);
 
@@ -69,6 +69,6 @@ export default function () {
     console.error(`Unexpected status=${res.status} endpoint=${endpoint} body=${res.body ? res.body.slice(0, 300) : ''}`);
   }
 
-  // Không sleep hoặc sleep rất ngắn để duy trì áp lực đủ vượt bucket
+  // No sleep, or a very short one, to keep enough pressure to overflow the bucket
   sleep(0.02);
 }

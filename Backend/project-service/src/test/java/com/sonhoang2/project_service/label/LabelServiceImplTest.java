@@ -102,7 +102,7 @@ class LabelServiceImplTest {
     @Test
     void findAll_WithProjectIdAndName_ShouldReturnFilteredPage() {
         // Arrange
-        Page<Label> page = new PageImpl<>(List.of(label), pageable, 1); // Thêm pageable và totalElements
+        Page<Label> page = new PageImpl<>(List.of(label), pageable, 1);
         when(labelRepository.findByProjectIdAndNameContainingIgnoreCase(projectId, "Test", pageable))
                 .thenReturn(page);
 
@@ -114,7 +114,7 @@ class LabelServiceImplTest {
         assertEquals(1, result.content().size());
         assertEquals(labelId, result.content().get(0).getId());
         assertEquals(0, result.page());
-        assertEquals(10, result.size()); // Bây giờ sẽ là 10
+        assertEquals(10, result.size()); // page size comes from pageable
         assertEquals(1, result.totalElements());
         verify(labelRepository, times(1))
                 .findByProjectIdAndNameContainingIgnoreCase(projectId, "Test", pageable);

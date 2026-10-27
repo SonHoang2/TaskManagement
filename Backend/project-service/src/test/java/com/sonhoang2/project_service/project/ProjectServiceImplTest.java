@@ -329,7 +329,7 @@ class ProjectServiceImplTest {
         when(projectInvitationRepository.findById(invitationId)).thenReturn(Optional.of(projectInvitation));
         when(projectMemberRepository.existsByProjectIdAndUserId(projectId, inviteeId)).thenReturn(false);
         when(projectMemberRepository.save(any(ProjectMember.class))).thenReturn(projectMember);
-        when(projectInvitationRepository.save(any(ProjectInvitation.class))).thenReturn(projectInvitation); // Thêm dòng này
+        when(projectInvitationRepository.save(any(ProjectInvitation.class))).thenReturn(projectInvitation);
 
         // Act
         ProjectInvitationResponse result = projectService.decideInvitation(invitationId, request, inviteeId);
@@ -339,7 +339,7 @@ class ProjectServiceImplTest {
         assertEquals(ProjectInvitationStatus.ACCEPTED, result.getStatus());
         assertNotNull(result.getRespondedAt());
         verify(projectMemberRepository, times(1)).save(any(ProjectMember.class));
-        verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class)); // Thêm verify này
+        verify(projectInvitationRepository, times(1)).save(any(ProjectInvitation.class));
         verify(membershipCache).evictAfterCommit(List.of(inviteeId));
     }
 

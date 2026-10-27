@@ -1,0 +1,13 @@
+# Override for load tests run from a single machine: the gateway rate-limits per IP, and every virtual user comes
+# from the same IP, so without relaxing it the results are nothing but 429s.
+#
+#   docker compose -f docker-compose.yml -f load-tests/docker-compose.loadtest.yml up -d --build
+#
+# Run `docker compose up -d` again without this file to restore the gateway's real limits.
+# @RateLimit in the services is per user (X-User-Id), so it stays as is: 150 req/minute per user.
+services:
+  api-gateway:
+    environment:
+      # RedisRateLimiter requires burst-capacity >= replenish-rate
+      - RATE_LIMIT_REPLENISH_RATE=1000
+      - RATE_LIMIT_BURST_CAPACITY=2000

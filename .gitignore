@@ -17,3 +17,4 @@ Backend/fake-data/output/task_labels.csv
 Backend/fake-data/output/task_sprints.csv
 Backend/fake-data/output/tasks.csv
 Backend/fake-data/output/users.csv
+Backend/fake-data/__pycache__/generate_fake_data.cpython-314.pyc

@@ -1,0 +1,3 @@
+# k6 --summary-export output; k6 does not create this directory itself, so it is kept in git, the results are not
+*
+!.gitignore

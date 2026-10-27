@@ -1,35 +1,38 @@
 #!/usr/bin/env python3
 """
-Sinh dữ liệu giả cho toàn bộ schema (users, projects, tasks, ...), liên kết với nhau như dữ liệu thật.
+Generates fake data for the whole schema (users, projects, tasks, ...), linked together like real data.
 
-Mô hình: user được chia thành các team, mỗi team TEAM_SIZE người. Mỗi team có vài project và member của
-project lấy từ chính team đó, nên cùng một nhóm người làm chung nhiều project. Mọi bảng khác bám theo project:
-  - projects: owner là một user trong team, project được tạo sau khi owner đăng ký
-  - project_members: owner (OWNER), 1-2 ADMIN, còn lại MEMBER; joined_at sau khi project được tạo
-  - project_invitations: mỗi member (trừ owner) có một lời mời ACCEPTED do owner/admin gửi, responded_at = joined_at;
-    thêm vài lời mời PENDING/REJECTED cho người trong team chưa vào project
-  - labels: bộ nhãn riêng của từng project (Bug, Feature, Backend, ...)
-  - sprints: sprint 2 tuần nối tiếp nhau trong 6 tháng gần nhất; đã qua = COMPLETED, đang chạy = ACTIVE,
-    sắp tới = PLANNED
-  - tasks: reporter/assignee là member đã vào project khi task được tạo; status khớp với sprint chứa task
-    (sprint đã xong -> phần lớn DONE, sprint sắp tới -> TODO); subtask trỏ tới task cùng project
-  - task_sprints, task_labels: chỉ nối task với sprint/label của cùng project
-  - task_histories: các lần đổi assignee/status dẫn tới trạng thái hiện tại của task
-  - task_comments, task_attachments: do member của project viết/tải lên, sau khi task được tạo
-  - notifications: sinh từ đúng các sự kiện notification-service xử lý (giao task, comment, lời mời)
-Mọi user có role USER và thuộc ít nhất một project.
+Model: users are split into teams of TEAM_SIZE people. Each team has a few projects whose members come from
+that same team, so the same group of people works together on several projects. Every other table follows the
+project:
+  - projects: the owner is a user in the team, the project is created after the owner signed up
+  - project_members: owner (OWNER), 1-2 ADMIN, the rest MEMBER; joined_at is after the project was created
+  - project_invitations: every member (except the owner) has an ACCEPTED invitation sent by the owner/an admin,
+    responded_at = joined_at; plus a few PENDING/REJECTED invitations for team members not in the project
+  - labels: each project's own label set (Bug, Feature, Backend, ...)
+  - sprints: consecutive 2-week sprints over the last 6 months; past = COMPLETED, running = ACTIVE,
+    upcoming = PLANNED
+  - tasks: reporter/assignee are members who had joined the project when the task was created; status matches
+    the task's sprint (finished sprint -> mostly DONE, upcoming sprint -> TODO); subtasks point to a task in the
+    same project
+  - task_sprints, task_labels: only link a task to sprints/labels of the same project
+  - task_histories: the assignee/status changes that lead to the task's current state
+  - task_comments, task_attachments: written/uploaded by project members after the task was created
+  - notifications: generated from exactly the events notification-service handles (task assigned, comment,
+    invitation)
+Every user has role USER and belongs to at least one project.
 
-User thứ i (0 <= i < N_USERS): id = UUID từ md5('fake-user-<i>'), email user_<i>@example.com, mật khẩu
-Password123! (bcrypt). load-tests/project-service/list-projects-load-test.js dựa vào quy ước này để ký JWT.
+User i (0 <= i < N_USERS): id = UUID from md5('fake-user-<i>'), email user_<i>@example.com, password
+Password123! (bcrypt). load-tests/project-service/list-projects-load-test.js relies on this convention to sign JWTs.
 
-Cách chạy:
+How to run:
     pip install bcrypt
     python3 generate_fake_data.py
-    ./output/load_fake_data.sh      # nạp CSV vào 5 database (xem hướng dẫn trong script)
+    ./output/load_fake_data.sh      # load the CSVs into the 5 databases (see the instructions in the script)
 
-Tuỳ chỉnh bằng biến môi trường:
+Customize with environment variables:
     N_USERS=50000 TEAM_SIZE=25 PROJECTS_PER_TEAM=8 OUTPUT_DIR=./output WORKERS=12 SEED=42 python3 generate_fake_data.py
-Mặc định (50.000 user) sinh khoảng 16.000 project và 560.000 task.
+The defaults (50,000 users) generate about 16,000 projects and 560,000 tasks.
 """
 
 import csv
@@ -45,7 +48,7 @@ from datetime import datetime, time as dtime, timedelta, timezone
 import bcrypt
 
 # --------------------------------------------------------------------------
-# Cấu hình
+# Configuration
 # --------------------------------------------------------------------------
 N_USERS = int(os.environ.get("N_USERS", 50_000))
 TEAM_SIZE = int(os.environ.get("TEAM_SIZE", 25))
@@ -55,13 +58,13 @@ TASKS_PER_PROJECT = (10, 60)
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output")
 SEED = int(os.environ.get("SEED", 42))
 WORKERS = int(os.environ.get("WORKERS", os.cpu_count() or 12))
-TEAMS_PER_TASK = int(os.environ.get("TEAMS_PER_TASK", 50))  # số team mỗi task con
+TEAMS_PER_TASK = int(os.environ.get("TEAMS_PER_TASK", 50))  # teams per worker task
 
 FAKE_PASSWORD = "Password123!"
 SPRINT_LENGTH = timedelta(days=14)
-SPRINT_WINDOW = timedelta(days=182)  # chỉ sinh sprint trong ~6 tháng gần nhất
+SPRINT_WINDOW = timedelta(days=182)  # only generate sprints within the last ~6 months
 
-# Thứ tự cột của từng CSV; output/load_fake_data.sh liệt kê lại đúng thứ tự này
+# Column order of each CSV; output/load_fake_data.sh lists the columns in exactly this order
 TABLES = {
     "users": ["id", "full_name", "email", "password", "avatar_url", "role", "created_at", "updated_at"],
     "projects": ["id", "name", "description", "owner_id", "created_at", "updated_at"],
@@ -81,7 +84,7 @@ TABLES = {
 }
 
 # ==========================================================================
-# Từ vựng
+# Vocabulary
 # ==========================================================================
 FAMILY_NAMES = ["Nguyen", "Tran", "Le", "Pham", "Hoang", "Huynh", "Phan", "Vu", "Vo", "Dang", "Bui", "Do",
                 "Ho", "Ngo", "Duong", "Ly"]
@@ -136,7 +139,7 @@ PRIORITY_WEIGHTS = [30, 50, 20]
 # Helpers
 # ==========================================================================
 def user_id(i):
-    """Id cố định của user thứ i; load test tính lại đúng giá trị này."""
+    """Deterministic id of user i; the load test recomputes exactly this value."""
     return str(uuid.UUID(hashlib.md5(f"fake-user-{i}".encode()).hexdigest()))
 
 
@@ -145,7 +148,7 @@ def new_id(rng):
 
 
 def between(rng, start, end):
-    """Thời điểm ngẫu nhiên trong [start, end]; trả về start nếu khoảng rỗng."""
+    """Random point in time within [start, end]; returns start if the range is empty."""
     if end <= start:
         return start
     return start + (end - start) * rng.random()
@@ -160,7 +163,7 @@ def weighted(rng, options, weights):
 
 
 def chunks(n, size):
-    """Chia n thành các đoạn (start, count) kích thước <= size."""
+    """Split n into (start, count) chunks of size <= size."""
     start = 0
     while start < n:
         count = min(size, n - start)
@@ -173,7 +176,7 @@ def part_path(table, batch):
 
 
 def merge_part_files(final_path, header, part_paths):
-    """Gộp các file part (không có header) thành 1 file cuối có header, copy theo khối lớn."""
+    """Merge the part files (no header) into one final file with a header, copying in large blocks."""
     with open(final_path, "wb") as out:
         out.write((",".join(header) + "\r\n").encode("utf-8"))
         for p in part_paths:
@@ -187,7 +190,7 @@ def merge_part_files(final_path, header, part_paths):
 
 
 # ==========================================================================
-# Sinh dữ liệu cho một team
+# Data generation for one team
 # ==========================================================================
 class Member:
     __slots__ = ("user", "role", "joined")
@@ -206,7 +209,7 @@ class TeamGenerator:
         self.user_range = range(first, min(N_USERS, first + TEAM_SIZE))
 
     def notify(self, user, type_, content, entity_id, entity_type, at):
-        # Thông báo cũ hầu hết đã được đọc
+        # Old notifications have mostly been read
         read_chance = 0.9 if self.now - at > timedelta(days=7) else 0.3
         self.out["notifications"].writerow((new_id(self.rng), user, type_, content, entity_id, entity_type,
                                             "true" if self.rng.random() < read_chance else "false", iso(at)))
@@ -256,7 +259,7 @@ class TeamGenerator:
         return between(self.rng, base, min(self.now - timedelta(hours=1), base + timedelta(days=30)))
 
     def cover_everyone(self, users, projects):
-        """Ai chưa thuộc project nào thì được thêm làm MEMBER của một project trong team."""
+        """Anyone not in any project is added as a MEMBER of one of the team's projects."""
         covered = {m.user for p in projects for m in p["members"]}
         for u in users:
             if u not in covered:
@@ -268,7 +271,7 @@ class TeamGenerator:
         rng = self.rng
         pid, created, members = project["id"], project["created"], project["members"]
 
-        # Lần cập nhật cuối của project là khi có member mới vào
+        # A project was last updated when its newest member joined
         self.out["projects"].writerow((pid, project["name"], rng.choice(PROJECT_GOALS).format(area=project["area"]),
                                        project["owner"], iso(created), iso(members[-1].joined)))
         for m in members:
@@ -290,7 +293,7 @@ class TeamGenerator:
         for idx, m in enumerate(members):
             if m.role == "OWNER":
                 continue
-            # Người mời là owner hoặc một admin đã vào trước
+            # The inviter is the owner or an admin who joined earlier
             inviters = [x.user for x in members[:idx] if x.role in ("OWNER", "ADMIN")] or [project["owner"]]
             sent = between(rng, max(project["created"], m.joined - timedelta(days=3)), m.joined)
             self.out["project_invitations"].writerow((new_id(rng), pid, m.user, rng.choice(inviters), "ACCEPTED",
@@ -321,7 +324,7 @@ class TeamGenerator:
         return labels
 
     def gen_sprints(self, pid, project_created):
-        """Sprint 2 tuần liên tiếp; luôn kết thúc bằng đúng một sprint PLANNED bắt đầu sau hôm nay."""
+        """Consecutive 2-week sprints; always ends with exactly one PLANNED sprint starting after today."""
         now = self.now
         day = max(project_created + timedelta(days=3), now - SPRINT_WINDOW).date()
         sprints = []
@@ -357,8 +360,8 @@ class TeamGenerator:
         present = [m.user for m in project["members"] if m.joined <= created]
         reporter = rng.choice(present)
 
-        # Phần lớn task vào sprint gần nhất chưa kết thúc tại thời điểm tạo task; số còn lại nằm ở backlog.
-        # Sprint phải còn ít nhất 1 ngày, vì task được giao trong vòng 1 ngày và phải bắt đầu trước khi sprint kết thúc.
+        # Most tasks go into the nearest sprint not yet finished when the task is created; the rest stay in the backlog.
+        # The sprint must have at least 1 day left, since the task is assigned within 1 day and must start before the sprint ends.
         open_sprints = [s for s in sprints if s["end"] - created >= timedelta(days=1)]
         sprint = None
         if open_sprints and rng.random() < 0.75:
@@ -385,7 +388,7 @@ class TeamGenerator:
         else:
             due_date = None
 
-        # Lịch sử thay đổi dẫn tới trạng thái hiện tại
+        # Change history leading to the current state
         history = []
         if assignee:
             history.append((reporter, "assignee_id", "", assignee, assigned_at))
@@ -399,7 +402,7 @@ class TeamGenerator:
             history.append((reporter, "priority", old, priority, between(rng, created, now)))
         updated = max([created] + [h[4] for h in history])
 
-        # Subtask chỉ trỏ tới task (không phải subtask) đã có trong cùng project
+        # Subtasks only point to existing tasks (not subtasks) in the same project
         parents = [t for t, is_sub in earlier_tasks if not is_sub]
         parent = rng.choice(parents) if parents and rng.random() < 0.15 else None
 
@@ -416,14 +419,14 @@ class TeamGenerator:
             self.notify(assignee, "TASK_ASSIGNED", f"You have been assigned to task: {title}", tid, "TASK",
                         assigned_at)
 
-        # Comment đến từ người liên quan tới task, hoặc một member khác của project
+        # Comments come from people involved in the task, or another project member
         people = [p for p in (assignee, reporter) if p]
         comment_until = done or now
         for _ in range(weighted(rng, [0, 1, 2, 3, 4], [35, 25, 20, 12, 8])):
             author = rng.choice(people) if rng.random() < 0.7 else rng.choice(present)
             at = between(rng, created, comment_until)
             out["task_comments"].writerow((new_id(rng), tid, author, rng.choice(COMMENTS), iso(at)))
-            # Giống EventConsumer: báo cho assignee và reporter, trừ chính người viết comment
+            # Same as EventConsumer: notify the assignee and reporter, except the comment author
             for recipient in {assignee, reporter} - {None, author}:
                 self.notify(recipient, "COMMENT", f"New comment on task: {title}", tid, "TASK", at)
 
@@ -438,7 +441,7 @@ class TeamGenerator:
 
 
 def worker_teams(args):
-    """Sinh trọn dữ liệu cho một dải team và ghi ra các file part riêng của batch này."""
+    """Generate all data for a range of teams and write it to this batch's own part files."""
     batch, first_team, team_count, ctx = args
     files = {t: open(part_path(t, batch), "w", newline="", encoding="utf-8", buffering=1 << 20) for t in TABLES}
     try:
@@ -459,7 +462,7 @@ def main():
     n_teams = math.ceil(N_USERS / TEAM_SIZE)
     print(f"N_USERS={N_USERS:,}  TEAM_SIZE={TEAM_SIZE}  teams={n_teams:,}  WORKERS={WORKERS}  OUTPUT_DIR={OUTPUT_DIR}")
 
-    # Một hash cho mọi user: bcrypt cố ý chậm, hash riêng từng user sẽ mất hàng giờ
+    # One hash for all users: bcrypt is deliberately slow, hashing per user would take hours
     ctx = {
         "seed": SEED,
         "now": datetime.now(timezone.utc),

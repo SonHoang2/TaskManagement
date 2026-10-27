@@ -8,8 +8,8 @@ import java.util.List;
 
 @Component
 public class TaskLeakHolder {
-    // static => sống suốt đời JVM, GC không bao giờ thu hồi được
-    // dù không còn ai "cần" dùng list này nữa
+    // static => lives for the whole JVM lifetime, the GC can never reclaim it
+    // even when nobody "needs" this list anymore
     private static final List<Task> LEAKED_TASKS = new ArrayList<>();
 
     public void hold(Task task) {
