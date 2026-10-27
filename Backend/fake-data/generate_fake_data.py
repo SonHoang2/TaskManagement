@@ -1,185 +1,162 @@
 #!/usr/bin/env python3
 """
-Sinh dữ liệu giả (fake data) cho toàn bộ schema (users, projects, tasks, ...)
-- Phiên bản tối ưu tốc độ: multiprocessing + thuật toán unique_pairs O(n).
+Sinh dữ liệu giả cho toàn bộ schema (users, projects, tasks, ...), liên kết với nhau như dữ liệu thật.
+
+Mô hình: user được chia thành các team, mỗi team TEAM_SIZE người. Mỗi team có vài project và member của
+project lấy từ chính team đó, nên cùng một nhóm người làm chung nhiều project. Mọi bảng khác bám theo project:
+  - projects: owner là một user trong team, project được tạo sau khi owner đăng ký
+  - project_members: owner (OWNER), 1-2 ADMIN, còn lại MEMBER; joined_at sau khi project được tạo
+  - project_invitations: mỗi member (trừ owner) có một lời mời ACCEPTED do owner/admin gửi, responded_at = joined_at;
+    thêm vài lời mời PENDING/REJECTED cho người trong team chưa vào project
+  - labels: bộ nhãn riêng của từng project (Bug, Feature, Backend, ...)
+  - sprints: sprint 2 tuần nối tiếp nhau trong 6 tháng gần nhất; đã qua = COMPLETED, đang chạy = ACTIVE,
+    sắp tới = PLANNED
+  - tasks: reporter/assignee là member đã vào project khi task được tạo; status khớp với sprint chứa task
+    (sprint đã xong -> phần lớn DONE, sprint sắp tới -> TODO); subtask trỏ tới task cùng project
+  - task_sprints, task_labels: chỉ nối task với sprint/label của cùng project
+  - task_histories: các lần đổi assignee/status dẫn tới trạng thái hiện tại của task
+  - task_comments, task_attachments: do member của project viết/tải lên, sau khi task được tạo
+  - notifications: sinh từ đúng các sự kiện notification-service xử lý (giao task, comment, lời mời)
+Mọi user có role USER và thuộc ít nhất một project.
+
+User thứ i (0 <= i < N_USERS): id = UUID từ md5('fake-user-<i>'), email user_<i>@example.com, mật khẩu
+Password123! (bcrypt). load-tests/project-service/list-projects-load-test.js dựa vào quy ước này để ký JWT.
 
 Cách chạy:
-    pip install faker --break-system-packages
-    python3 generate_fake_data_fast.py
+    pip install bcrypt
+    python3 generate_fake_data.py
+    ./output/load_fake_data.sh      # nạp CSV vào 5 database (xem hướng dẫn trong script)
 
-Tuỳ chỉnh:
-    N_ROWS=1000000 OUTPUT_DIR=./output WORKERS=12 python3 generate_fake_data_fast.py
-
-Import vào Postgres (thứ tự để không vỡ FK):
-    \\copy users FROM 'output/users.csv' WITH (FORMAT csv, HEADER true);
-    \\copy projects FROM 'output/projects.csv' WITH (FORMAT csv, HEADER true);
-    \\copy project_members FROM 'output/project_members.csv' WITH (FORMAT csv, HEADER true);
-    \\copy project_invitations FROM 'output/project_invitations.csv' WITH (FORMAT csv, HEADER true);
-    \\copy labels FROM 'output/labels.csv' WITH (FORMAT csv, HEADER true);
-    \\copy tasks FROM 'output/tasks.csv' WITH (FORMAT csv, HEADER true);
-    \\copy task_comments FROM 'output/task_comments.csv' WITH (FORMAT csv, HEADER true);
-    \\copy task_attachments FROM 'output/task_attachments.csv' WITH (FORMAT csv, HEADER true);
-    \\copy task_labels FROM 'output/task_labels.csv' WITH (FORMAT csv, HEADER true);
-    \\copy task_histories FROM 'output/task_histories.csv' WITH (FORMAT csv, HEADER true);
-    \\copy sprints FROM 'output/sprints.csv' WITH (FORMAT csv, HEADER true);
-    \\copy task_sprints FROM 'output/task_sprints.csv' WITH (FORMAT csv, HEADER true);
-    \\copy notifications FROM 'output/notifications.csv' WITH (FORMAT csv, HEADER true);
+Tuỳ chỉnh bằng biến môi trường:
+    N_USERS=50000 TEAM_SIZE=25 PROJECTS_PER_TEAM=8 OUTPUT_DIR=./output WORKERS=12 SEED=42 python3 generate_fake_data.py
+Mặc định (50.000 user) sinh khoảng 16.000 project và 560.000 task.
 """
 
 import csv
-import io
+import hashlib
+import math
 import os
 import random
-import string
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time as dtime, timedelta, timezone
 
-from faker import Faker
+import bcrypt
 
 # --------------------------------------------------------------------------
 # Cấu hình
 # --------------------------------------------------------------------------
-N_ROWS = int(os.environ.get("N_ROWS", 1_000_000))
+N_USERS = int(os.environ.get("N_USERS", 50_000))
+TEAM_SIZE = int(os.environ.get("TEAM_SIZE", 25))
+PROJECTS_PER_TEAM = int(os.environ.get("PROJECTS_PER_TEAM", 8))
+MEMBERS_PER_PROJECT = (5, 15)
+TASKS_PER_PROJECT = (10, 60)
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output")
 SEED = int(os.environ.get("SEED", 42))
 WORKERS = int(os.environ.get("WORKERS", os.cpu_count() or 12))
-CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 50_000))  # số dòng mỗi task con
+TEAMS_PER_TASK = int(os.environ.get("TEAMS_PER_TASK", 50))  # số team mỗi task con
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+FAKE_PASSWORD = "Password123!"
+SPRINT_LENGTH = timedelta(days=14)
+SPRINT_WINDOW = timedelta(days=182)  # chỉ sinh sprint trong ~6 tháng gần nhất
+
+# Thứ tự cột của từng CSV; output/load_fake_data.sh liệt kê lại đúng thứ tự này
+TABLES = {
+    "users": ["id", "full_name", "email", "password", "avatar_url", "role", "created_at", "updated_at"],
+    "projects": ["id", "name", "description", "owner_id", "created_at", "updated_at"],
+    "project_members": ["id", "project_id", "user_id", "role", "joined_at"],
+    "project_invitations": ["id", "project_id", "invitee_id", "invited_by_id", "status", "responded_at",
+                            "created_at", "updated_at"],
+    "labels": ["id", "project_id", "name", "color", "created_at"],
+    "tasks": ["id", "project_id", "title", "description", "status", "priority", "assignee_id", "reporter_id",
+              "parent_task_id", "due_date", "start_date", "created_at", "updated_at"],
+    "task_comments": ["id", "task_id", "user_id", "content", "created_at"],
+    "task_attachments": ["id", "task_id", "file_url", "file_name", "uploaded_by", "created_at"],
+    "task_labels": ["id", "task_id", "label_id"],
+    "task_histories": ["id", "task_id", "changed_by", "field", "old_value", "new_value", "created_at"],
+    "sprints": ["id", "project_id", "name", "status", "start_date", "end_date", "created_at"],
+    "task_sprints": ["task_id", "sprint_id"],
+    "notifications": ["id", "user_id", "type", "content", "entity_id", "entity_type", "is_read", "created_at"],
+}
+
+# ==========================================================================
+# Từ vựng
+# ==========================================================================
+FAMILY_NAMES = ["Nguyen", "Tran", "Le", "Pham", "Hoang", "Huynh", "Phan", "Vu", "Vo", "Dang", "Bui", "Do",
+                "Ho", "Ngo", "Duong", "Ly"]
+MIDDLE_NAMES = ["Van", "Thi", "Minh", "Duc", "Thanh", "Ngoc", "Quoc", "Hoang", "Gia", "Bao"]
+GIVEN_NAMES = ["An", "Binh", "Chi", "Dung", "Giang", "Hoa", "Khanh", "Linh", "Minh", "Ngoc", "Phuong",
+               "Quang", "Son", "Thao", "Uyen", "Trang", "Tuan", "Hieu", "Nam", "Lan", "Huy", "Vy", "Long", "Mai"]
+
+PROJECT_AREAS = ["Customer Portal", "Mobile App", "Payment Gateway", "Admin Dashboard", "Data Pipeline",
+                 "Marketing Website", "Inventory System", "HR Platform", "Booking Engine", "Notification Service",
+                 "Analytics Platform", "Loyalty Program", "Search Service", "Internal Wiki", "CRM Integration",
+                 "Checkout Flow", "Reporting Suite", "Onboarding Experience", "Billing System", "Support Center"]
+PROJECT_QUALIFIERS = ["", "", "v2", "Redesign", "Migration", "MVP", "Revamp", "2.0"]
+PROJECT_GOALS = ["Improve conversion and reduce drop-off for {area}.",
+                 "Rebuild {area} on the new platform and retire the legacy stack.",
+                 "Deliver the first public release of {area}.",
+                 "Stabilize {area} and cut support tickets in half.",
+                 "Add self-service features to {area} requested by customers."]
+
+TASK_VERBS = ["Implement", "Fix", "Refactor", "Design", "Write tests for", "Document", "Optimize", "Review",
+              "Add validation to", "Migrate", "Set up monitoring for", "Investigate"]
+TASK_OBJECTS = ["login flow", "password reset", "user profile page", "search filters", "checkout page",
+                "payment webhook", "email templates", "CSV export", "role permissions", "dashboard charts",
+                "API pagination", "file upload", "notification settings", "audit log", "onboarding wizard",
+                "rate limiting", "cache layer", "database indexes", "error handling", "mobile layout",
+                "dark mode", "invoice PDF", "session timeout", "admin user list", "report scheduler"]
+TASK_DESCRIPTIONS = ["Acceptance criteria are in the linked design. Coordinate with QA before closing.",
+                     "Customers reported this in the last release; reproduce first, then fix.",
+                     "Keep the change backward compatible with the current API clients.",
+                     "Split into smaller PRs if the change touches more than one service.",
+                     "Measure before and after; attach the numbers to this task.",
+                     "Follow the existing patterns in the codebase and update the docs."]
+COMMENTS = ["I'll pick this up after the standup.", "Pushed a first draft, please take a look.",
+            "Blocked on the API change, waiting for backend.", "Can we clarify the acceptance criteria?",
+            "Tested on staging, works as expected.", "Found an edge case with empty input, fixing now.",
+            "Moved to the next sprint, not enough capacity.", "Design looks good to me.",
+            "Added unit tests and updated the README.", "Let's discuss this in the planning meeting.",
+            "Merged, closing once QA confirms.", "This also affects the mobile app."]
+
+LABEL_COLORS = {"Bug": "#d73a4a", "Feature": "#a2eeef", "Enhancement": "#84b6eb", "Frontend": "#fbca04",
+                "Backend": "#0e8a16", "DevOps": "#5319e7", "Documentation": "#0075ca", "Urgent": "#b60205",
+                "Tech Debt": "#c5def5", "UX": "#f9d0c4", "Security": "#e99695", "Performance": "#bfdadc"}
+LABEL_NAMES = list(LABEL_COLORS)
+
+ATTACHMENT_NAMES = ["design-mockup.png", "error-screenshot.png", "requirements.pdf", "test-report.xlsx",
+                    "api-spec.yaml", "meeting-notes.docx", "flow-diagram.png", "sample-data.csv", "logs.txt"]
+
+PRIORITIES = ["LOW", "MEDIUM", "HIGH"]
+PRIORITY_WEIGHTS = [30, 50, 20]
 
 
 # ==========================================================================
-# Helpers dùng chung (nhẹ, không phụ thuộc Faker để tránh overhead khởi tạo
-# lặp lại object Faker() ở mỗi lần gọi hàm nhỏ)
+# Helpers
 # ==========================================================================
-WORDS = [
-    "alpha", "beta", "gamma", "delta", "omega", "sigma", "nova", "orbit",
-    "pixel", "vertex", "quantum", "cipher", "matrix", "vector", "atlas",
-    "falcon", "nimbus", "zenith", "cobalt", "prism", "flux", "ember",
-    "cascade", "beacon", "harbor", "meridian", "aurora", "cinder", "drift",
-    "echo", "forge", "grove", "haven", "ion", "jolt", "karma", "lumen",
-]
-
-FIRST_NAMES = [
-    "Nguyen", "Tran", "Le", "Pham", "Hoang", "Huynh", "Phan", "Vu", "Vo",
-    "Dang", "Bui", "Do", "Ho", "Ngo", "Duong", "Ly", "James", "Mary",
-    "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "David",
-]
-LAST_NAMES = [
-    "An", "Binh", "Chi", "Dung", "Giang", "Hoa", "Khanh", "Linh", "Minh",
-    "Ngoc", "Phuong", "Quang", "Son", "Thao", "Uyen", "Smith", "Johnson",
-    "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez",
-]
-
-FILE_EXTS = ["pdf", "png", "jpg", "docx", "xlsx", "zip", "csv", "txt"]
+def user_id(i):
+    """Id cố định của user thứ i; load test tính lại đúng giá trị này."""
+    return str(uuid.UUID(hashlib.md5(f"fake-user-{i}".encode()).hexdigest()))
 
 
-def fast_name(rng):
-    return f"{rng.choice(FIRST_NAMES)} {rng.choice(LAST_NAMES)}"
+def new_id(rng):
+    return str(uuid.UUID(int=rng.getrandbits(128), version=4))
 
 
-def fast_hex_token(rng, length=64):
-    return "".join(rng.choices(string.hexdigits.lower()[:16], k=length))
-
-
-def fast_sentence(rng, n_words=8):
-    return " ".join(rng.choices(WORDS, k=n_words)).capitalize()
-
-
-def fast_paragraph(rng, n_sentences=3, words_per_sentence=8):
-    return ". ".join(
-        fast_sentence(rng, words_per_sentence) for _ in range(n_sentences)
-    ) + "."
-
-
-def fast_catch_phrase(rng):
-    return f"{rng.choice(WORDS).capitalize()}-{rng.choice(WORDS)} {rng.choice(WORDS)} platform"
-
-
-def fast_hex_color(rng):
-    return "#" + "".join(rng.choices("0123456789abcdef", k=6))
-
-
-def fast_file_name(rng):
-    return f"{rng.choice(WORDS)}_{rng.randint(1000, 9999)}.{rng.choice(FILE_EXTS)}"
-
-
-def new_uuid(rng):
-    # uuid4 dùng os.urandom nội bộ (không phụ thuộc random.seed), vẫn ổn về
-    # tốc độ và duy nhất toàn cục kể cả chạy song song nhiều process.
-    return str(uuid.uuid4())
-
-
-def random_dt(rng, start_days_ago=730, end_days_ago=0, now=None):
-    now = now or datetime.now(timezone.utc)
-    delta_days = rng.uniform(end_days_ago, start_days_ago)
-    return now - timedelta(days=delta_days)
+def between(rng, start, end):
+    """Thời điểm ngẫu nhiên trong [start, end]; trả về start nếu khoảng rỗng."""
+    if end <= start:
+        return start
+    return start + (end - start) * rng.random()
 
 
 def iso(dt):
     return dt.isoformat() if dt else ""
 
 
-# ==========================================================================
-# Sinh cặp duy nhất (project_id, user_id) kiểu O(n), không set, không lặp dò
-# ==========================================================================
-def unique_pairs_fast(pool_a, pool_b, n, seed):
-    """
-    Trả về generator n cặp (a, b) duy nhất từ pool_a x pool_b.
-    Dùng kỹ thuật: random permutation trên không gian chỉ số [0, len_a*len_b)
-    rồi giải mã index -> (i, j) bằng chia/dư. Không cần set kiểm tra trùng,
-    độ phức tạp O(n), an toàn khi n gần bằng len_a*len_b.
-    """
-    len_a, len_b = len(pool_a), len(pool_b)
-    total = len_a * len_b
-    if n > total:
-        raise ValueError("Không đủ tổ hợp để sinh cặp duy nhất")
-
-    rng = random.Random(seed)
-
-    # Nếu n nhỏ hơn nhiều so với total, random.sample trên range là hiệu quả
-    # (Python's random.sample dùng thuật toán tối ưu selection sampling).
-    if n <= total // 2 or total < 5_000_000:
-        indices = rng.sample(range(total), n)
-    else:
-        # n gần lấp đầy total: lấy phần bù (loại trừ) sẽ nhanh hơn
-        exclude_count = total - n
-        excluded = set(rng.sample(range(total), exclude_count))
-        indices = (idx for idx in range(total) if idx not in excluded)
-
-    for idx in indices:
-        i = idx // len_b
-        j = idx % len_b
-        yield pool_a[i], pool_b[j]
-
-
-# ==========================================================================
-# CSV writer đơn giản dùng buffer StringIO để giảm số lần syscall write()
-# ==========================================================================
-class BufferedCsvWriter:
-    def __init__(self, path, header, mode="w"):
-        self.file = open(path, mode, newline="", encoding="utf-8")
-        self.writer = csv.writer(self.file)
-        if mode == "w" and header:
-            self.writer.writerow(header)
-        self.buffer = []
-        self.batch_size = 20_000
-
-    def write_row(self, row):
-        self.buffer.append(row)
-        if len(self.buffer) >= self.batch_size:
-            self.flush()
-
-    def flush(self):
-        if self.buffer:
-            self.writer.writerows(self.buffer)
-            self.buffer = []
-
-    def close(self):
-        self.flush()
-        self.file.close()
+def weighted(rng, options, weights):
+    return rng.choices(options, weights=weights, k=1)[0]
 
 
 def chunks(n, size):
@@ -191,10 +168,12 @@ def chunks(n, size):
         start += count
 
 
+def part_path(table, batch):
+    return os.path.join(OUTPUT_DIR, f"_{table}_part_{batch}.csv")
+
+
 def merge_part_files(final_path, header, part_paths):
-    """Gộp các file part (không có header) thành 1 file cuối có header.
-    Dùng copy nhị phân theo khối lớn để tối đa tốc độ I/O thay vì đọc/ghi
-    từng dòng."""
+    """Gộp các file part (không có header) thành 1 file cuối có header, copy theo khối lớn."""
     with open(final_path, "wb") as out:
         out.write((",".join(header) + "\r\n").encode("utf-8"))
         for p in part_paths:
@@ -208,479 +187,297 @@ def merge_part_files(final_path, header, part_paths):
 
 
 # ==========================================================================
-# Worker functions cho từng bảng (chạy trong process con)
-# Mỗi worker nhận (start_i, count, seed, ...pools cần thiết...) và tự ghi
-# ra 1 file part riêng để tránh tranh chấp ghi file giữa các process.
+# Sinh dữ liệu cho một team
 # ==========================================================================
-ROLES_USER = ["ADMIN", "USER", "SUPER_ADMIN"]
-ROLES_MEMBER = ["OWNER", "ADMIN", "MEMBER"]
-STATUS_INVITE = ["PENDING", "ACCEPTED", "REJECTED"]
-STATUS_TASK = ["TODO", "IN_PROGRESS", "DONE"]
-PRIORITY_TASK = ["LOW", "MEDIUM", "HIGH"]
-STATUS_SPRINT = ["PLANNED", "ACTIVE", "COMPLETED"]
-FIELDS_HISTORY = ["status", "priority", "assignee_id", "due_date", "title"]
-NOTI_TYPES = ["TASK_ASSIGNED", "TASK_COMMENT", "COMMENT",
-              "TASK_UPDATED", "PROJECT_INVITATION", "SYSTEM"]
+class Member:
+    __slots__ = ("user", "role", "joined")
+
+    def __init__(self, user, role, joined):
+        self.user, self.role, self.joined = user, role, joined
 
 
-def worker_users(args):
-    start_i, count, seed, part_path = args
-    rng = random.Random(seed + start_i)
-    w = BufferedCsvWriter(part_path, None)
-    now = datetime.now(timezone.utc)
-    rows = []
-    for i in range(start_i, start_i + count):
-        uid = str(uuid.uuid4())
-        created = random_dt(rng, 730, 30, now)
-        updated = created + timedelta(days=rng.randint(0, 29))
-        email = f"user_{i}_{uuid.uuid4().hex[:8]}@example.com"
-        rows.append((
-            uid,
-            fast_name(rng),
-            email,
-            fast_hex_token(rng, 64),
-            f"https://picsum.photos/seed/{uid[:8]}/200" if rng.random() < 0.6 else "",
-            rng.choice(ROLES_USER),
-            iso(created),
-            iso(updated),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path, [r[0] for r in rows]
+class TeamGenerator:
+    def __init__(self, team, ctx, out):
+        self.rng = random.Random(ctx["seed"] * 1_000_003 + team)
+        self.now = ctx["now"]
+        self.password_hash = ctx["password_hash"]
+        self.out = out
+        first = team * TEAM_SIZE
+        self.user_range = range(first, min(N_USERS, first + TEAM_SIZE))
 
+    def notify(self, user, type_, content, entity_id, entity_type, at):
+        # Thông báo cũ hầu hết đã được đọc
+        read_chance = 0.9 if self.now - at > timedelta(days=7) else 0.3
+        self.out["notifications"].writerow((new_id(self.rng), user, type_, content, entity_id, entity_type,
+                                            "true" if self.rng.random() < read_chance else "false", iso(at)))
 
-def worker_projects(args):
-    start_i, count, seed, part_path, user_ids = args
-    rng = random.Random(seed + start_i + 1)
-    w = BufferedCsvWriter(part_path, None)
-    now = datetime.now(timezone.utc)
-    rows = []
-    for i in range(start_i, start_i + count):
-        pid = str(uuid.uuid4())
-        created = random_dt(rng, 700, 10, now)
-        updated = created + timedelta(days=rng.randint(0, 20))
-        rows.append((
-            pid,
-            fast_catch_phrase(rng),
-            fast_paragraph(rng, 2, 10),
-            rng.choice(user_ids),
-            iso(created),
-            iso(updated),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path, [r[0] for r in rows]
+    def run(self):
+        users = self.gen_users()
+        projects = [self.plan_project(users) for _ in range(self.rng.randint(max(1, PROJECTS_PER_TEAM // 2),
+                                                                             PROJECTS_PER_TEAM * 3 // 2))]
+        self.cover_everyone(users, projects)
+        for project in projects:
+            self.gen_project(project, users)
 
+    def gen_users(self):
+        users = {}
+        for i in self.user_range:
+            created = self.now - timedelta(days=self.rng.uniform(30, 900))
+            uid = user_id(i)
+            name = f"{self.rng.choice(FAMILY_NAMES)} {self.rng.choice(MIDDLE_NAMES)} {self.rng.choice(GIVEN_NAMES)}"
+            avatar = f"https://i.pravatar.cc/200?u={uid}" if self.rng.random() < 0.6 else ""
+            updated = between(self.rng, created, min(self.now, created + timedelta(days=60)))
+            self.out["users"].writerow((uid, name, f"user_{i}@example.com", self.password_hash, avatar, "USER",
+                                        iso(created), iso(updated)))
+            users[uid] = created
+        return users
 
-def worker_pairs_generic(args):
-    """Worker chung cho các bảng dạng cặp (a_id, b_id) không cần thêm field
-    ngẫu nhiên phức tạp, ví dụ task_sprints, task_labels."""
-    (part_path, pair_slice, row_builder_name, extra_seed) = args
-    rng = random.Random(extra_seed)
-    w = BufferedCsvWriter(part_path, None)
-    rows = [ROW_BUILDERS[row_builder_name](rng, a, b) for a, b in pair_slice]
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
+    def plan_project(self, users):
+        rng = self.rng
+        owner = rng.choice(list(users))
+        created = between(rng, users[owner] + timedelta(days=1), self.now - timedelta(days=7))
+        area = rng.choice(PROJECT_AREAS)
+        name = f"{area} {rng.choice(PROJECT_QUALIFIERS)}".strip()
+        members = [Member(owner, "OWNER", created)]
 
+        others = [u for u in users if u != owner]
+        size = min(len(others), rng.randint(*MEMBERS_PER_PROJECT) - 1)
+        for u in rng.sample(others, size):
+            members.append(Member(u, "MEMBER", self.join_time(created, users[u])))
+        members.sort(key=lambda m: m.joined)
+        for m in rng.sample(members[1:], min(len(members) - 1, rng.randint(1, 2))):
+            m.role = "ADMIN"
 
-def _build_project_member(rng, project_id, user_id):
-    return (str(uuid.uuid4()), project_id, user_id, rng.choice(ROLES_MEMBER),
-            iso(random_dt(rng, 600, 0)))
+        return {"id": new_id(rng), "name": name, "area": area, "owner": owner, "created": created,
+                "members": members}
 
+    def join_time(self, project_created, user_created):
+        base = max(project_created, user_created)
+        return between(self.rng, base, min(self.now - timedelta(hours=1), base + timedelta(days=30)))
 
-def _build_task_label(rng, task_id, label_id):
-    return (str(uuid.uuid4()), task_id, label_id)
+    def cover_everyone(self, users, projects):
+        """Ai chưa thuộc project nào thì được thêm làm MEMBER của một project trong team."""
+        covered = {m.user for p in projects for m in p["members"]}
+        for u in users:
+            if u not in covered:
+                project = self.rng.choice(projects)
+                project["members"].append(Member(u, "MEMBER", self.join_time(project["created"], users[u])))
+                project["members"].sort(key=lambda m: m.joined)
 
+    def gen_project(self, project, users):
+        rng = self.rng
+        pid, created, members = project["id"], project["created"], project["members"]
 
-def _build_task_sprint(rng, task_id, sprint_id):
-    return (task_id, sprint_id)
+        # Lần cập nhật cuối của project là khi có member mới vào
+        self.out["projects"].writerow((pid, project["name"], rng.choice(PROJECT_GOALS).format(area=project["area"]),
+                                       project["owner"], iso(created), iso(members[-1].joined)))
+        for m in members:
+            self.out["project_members"].writerow((new_id(rng), pid, m.user, m.role, iso(m.joined)))
 
+        self.gen_invitations(project, users)
+        labels = self.gen_labels(pid, created)
+        sprints = self.gen_sprints(pid, created)
 
-ROW_BUILDERS = {
-    "project_member": _build_project_member,
-    "task_label": _build_task_label,
-    "task_sprint": _build_task_sprint,
-}
+        tasks = []
+        for _ in range(rng.randint(*TASKS_PER_PROJECT)):
+            tasks.append(self.gen_task(project, labels, sprints, tasks))
 
+    def gen_invitations(self, project, users):
+        rng, now = self.rng, self.now
+        pid, members = project["id"], project["members"]
+        invite_text = f"You have been invited to join project: {project['name']}"
 
-def worker_invitations(args):
-    start_i, count, seed, part_path, project_ids, user_ids = args
-    rng = random.Random(seed + start_i + 2)
-    w = BufferedCsvWriter(part_path, None)
-    now = datetime.now(timezone.utc)
-    rows = []
-    for _ in range(count):
-        created = random_dt(rng, 365, 0, now)
-        status = rng.choice(STATUS_INVITE)
-        responded = created + timedelta(days=rng.randint(0, 5)) if status != "PENDING" else None
-        rows.append((
-            str(uuid.uuid4()),
-            rng.choice(project_ids),
-            rng.choice(user_ids),
-            rng.choice(user_ids),
-            status,
-            iso(responded),
-            iso(created),
-            iso(responded or created),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
+        for idx, m in enumerate(members):
+            if m.role == "OWNER":
+                continue
+            # Người mời là owner hoặc một admin đã vào trước
+            inviters = [x.user for x in members[:idx] if x.role in ("OWNER", "ADMIN")] or [project["owner"]]
+            sent = between(rng, max(project["created"], m.joined - timedelta(days=3)), m.joined)
+            self.out["project_invitations"].writerow((new_id(rng), pid, m.user, rng.choice(inviters), "ACCEPTED",
+                                                      iso(m.joined), iso(sent), iso(m.joined)))
+            self.notify(m.user, "PROJECT_INVITATION", invite_text, pid, "PROJECT", sent)
 
+        member_ids = {m.user for m in members}
+        outsiders = [u for u in users if u not in member_ids]
+        managers = [m for m in members if m.role in ("OWNER", "ADMIN")]
+        for u in rng.sample(outsiders, min(len(outsiders), rng.randint(0, 2))):
+            inviter = rng.choice(managers)
+            sent = between(rng, max(inviter.joined, users[u]), now - timedelta(hours=1))
+            if rng.random() < 0.5:
+                status, responded = "PENDING", None
+            else:
+                status, responded = "REJECTED", between(rng, sent, min(now, sent + timedelta(days=3)))
+            self.out["project_invitations"].writerow((new_id(rng), pid, u, inviter.user, status, iso(responded),
+                                                      iso(sent), iso(responded or sent)))
+            self.notify(u, "PROJECT_INVITATION", invite_text, pid, "PROJECT", sent)
 
-def worker_labels(args):
-    start_i, count, seed, part_path, project_ids = args
-    rng = random.Random(seed + start_i + 3)
-    w = BufferedCsvWriter(part_path, None)
-    rows = []
-    for _ in range(count):
-        lid = str(uuid.uuid4())
-        rows.append((
-            lid,
-            rng.choice(project_ids),
-            rng.choice(WORDS).capitalize(),
-            fast_hex_color(rng),
-            iso(random_dt(rng, 600, 0)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path, [r[0] for r in rows]
+    def gen_labels(self, pid, project_created):
+        labels = []
+        for name in self.rng.sample(LABEL_NAMES, self.rng.randint(4, 7)):
+            lid = new_id(self.rng)
+            at = between(self.rng, project_created, min(self.now, project_created + timedelta(days=2)))
+            self.out["labels"].writerow((lid, pid, name, LABEL_COLORS[name], iso(at)))
+            labels.append(lid)
+        return labels
 
+    def gen_sprints(self, pid, project_created):
+        """Sprint 2 tuần liên tiếp; luôn kết thúc bằng đúng một sprint PLANNED bắt đầu sau hôm nay."""
+        now = self.now
+        day = max(project_created + timedelta(days=3), now - SPRINT_WINDOW).date()
+        sprints = []
+        while True:
+            start = datetime.combine(day, dtime(9), tzinfo=timezone.utc)
+            end = datetime.combine(day + SPRINT_LENGTH - timedelta(days=1), dtime(18), tzinfo=timezone.utc)
+            status = "COMPLETED" if end < now else "ACTIVE" if start <= now else "PLANNED"
+            sid = new_id(self.rng)
+            planned_at = between(self.rng, max(project_created, start - timedelta(days=3)), min(now, start))
+            self.out["sprints"].writerow((sid, pid, f"Sprint {len(sprints) + 1}", status, start.date().isoformat(),
+                                          end.date().isoformat(), iso(planned_at)))
+            sprints.append({"id": sid, "status": status, "start": start, "end": end})
+            if status == "PLANNED":
+                return sprints
+            day = end.date() + timedelta(days=1)
 
-def worker_tasks(args):
-    """
-    Mỗi worker sinh 1 chunk task độc lập. parent_task_id chỉ được phép trỏ
-    tới task khác đã sinh TRONG CÙNG chunk trước đó (đơn giản hoá so với bản
-    gốc để cho phép chạy song song mà không cần đồng bộ toàn cục -- vẫn giữ
-    đúng ngữ nghĩa "some tasks have subtasks" mà không vi phạm FK).
-    """
-    start_i, count, seed, part_path, project_ids, user_ids = args
-    rng = random.Random(seed + start_i + 4)
-    w = BufferedCsvWriter(part_path, None)
-    now = datetime.now(timezone.utc)
-    local_ids = []
-    rows = []
-    for _ in range(count):
-        tid = str(uuid.uuid4())
-        created = random_dt(rng, 500, 0, now)
-        updated = created + timedelta(days=rng.randint(0, 15))
-        start = random_dt(rng, 400, 100, now) if rng.random() < 0.7 else None
-        due = (start or created) + timedelta(days=rng.randint(1, 30)) if rng.random() < 0.7 else None
-        parent = rng.choice(local_ids) if (local_ids and rng.random() < 0.2) else None
-        rows.append((
-            tid,
-            rng.choice(project_ids),
-            fast_sentence(rng, 6),
-            fast_paragraph(rng, 3, 12),
-            rng.choice(STATUS_TASK),
-            rng.choice(PRIORITY_TASK),
-            rng.choice(user_ids) if rng.random() < 0.85 else "",
-            rng.choice(user_ids),
-            parent or "",
-            iso(due),
-            iso(start),
-            iso(created),
-            iso(updated),
-        ))
-        local_ids.append(tid)
-    w.writer.writerows(rows)
-    w.close()
-    return part_path, local_ids
-
-
-def worker_comments(args):
-    start_i, count, seed, part_path, task_ids, user_ids = args
-    rng = random.Random(seed + start_i + 5)
-    w = BufferedCsvWriter(part_path, None)
-    rows = []
-    for _ in range(count):
-        rows.append((
-            str(uuid.uuid4()),
-            rng.choice(task_ids),
-            rng.choice(user_ids),
-            fast_paragraph(rng, 3, 10),
-            iso(random_dt(rng, 400, 0)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
-
-
-def worker_attachments(args):
-    start_i, count, seed, part_path, task_ids, user_ids = args
-    rng = random.Random(seed + start_i + 6)
-    w = BufferedCsvWriter(part_path, None)
-    rows = []
-    for _ in range(count):
-        fname = fast_file_name(rng)
-        rows.append((
-            str(uuid.uuid4()),
-            rng.choice(task_ids),
-            f"https://cdn.example.com/{uuid.uuid4()}/{fname}",
-            fname,
-            rng.choice(user_ids),
-            iso(random_dt(rng, 400, 0)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
-
-
-def worker_histories(args):
-    start_i, count, seed, part_path, task_ids, user_ids = args
-    rng = random.Random(seed + start_i + 7)
-    w = BufferedCsvWriter(part_path, None)
-    rows = []
-    for _ in range(count):
-        field = rng.choice(FIELDS_HISTORY)
-        if field == "status":
-            old, new = rng.sample(STATUS_TASK, 2)
-        elif field == "priority":
-            old, new = rng.sample(PRIORITY_TASK, 2)
+    def pick_status(self, sprint, created):
+        rng = self.rng
+        statuses = ["TODO", "IN_PROGRESS", "DONE"]
+        if sprint is None:
+            weights = [35, 15, 50] if self.now - created > timedelta(days=30) else [60, 25, 15]
         else:
-            old, new = rng.choice(WORDS), rng.choice(WORDS)
-        rows.append((
-            str(uuid.uuid4()),
-            rng.choice(task_ids),
-            rng.choice(user_ids),
-            field,
-            old,
-            new,
-            iso(random_dt(rng, 400, 0)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
+            weights = {"COMPLETED": [5, 10, 85], "ACTIVE": [30, 40, 30], "PLANNED": [100, 0, 0]}[sprint["status"]]
+        return weighted(rng, statuses, weights)
+
+    def gen_task(self, project, labels, sprints, earlier_tasks):
+        rng, now = self.rng, self.now
+        out = self.out
+        pid = project["id"]
+        tid = new_id(rng)
+
+        created = between(rng, project["created"], now - timedelta(hours=1))
+        present = [m.user for m in project["members"] if m.joined <= created]
+        reporter = rng.choice(present)
+
+        # Phần lớn task vào sprint gần nhất chưa kết thúc tại thời điểm tạo task; số còn lại nằm ở backlog.
+        # Sprint phải còn ít nhất 1 ngày, vì task được giao trong vòng 1 ngày và phải bắt đầu trước khi sprint kết thúc.
+        open_sprints = [s for s in sprints if s["end"] - created >= timedelta(days=1)]
+        sprint = None
+        if open_sprints and rng.random() < 0.75:
+            sprint = open_sprints[0] if rng.random() < 0.6 else rng.choice(open_sprints)
+        status = self.pick_status(sprint, created)
+
+        assignee = rng.choice(present) if status != "TODO" or rng.random() < 0.7 else None
+        title = f"{rng.choice(TASK_VERBS)} {rng.choice(TASK_OBJECTS)}"
+
+        assigned_at = between(rng, created, min(now, created + timedelta(days=1))) if assignee else None
+        started = done = None
+        if status != "TODO":
+            window_start = max(assigned_at, sprint["start"]) if sprint else assigned_at
+            window_end = min(now, sprint["end"]) if sprint else now
+            started = between(rng, window_start, window_end)
+            if status == "DONE":
+                done = between(rng, started, window_end)
+
+        start_date = started or (sprint["start"] if sprint else None)
+        if sprint:
+            due_date = sprint["end"]
+        elif rng.random() < 0.6:
+            due_date = (start_date or created) + timedelta(days=rng.randint(3, 21))
+        else:
+            due_date = None
+
+        # Lịch sử thay đổi dẫn tới trạng thái hiện tại
+        history = []
+        if assignee:
+            history.append((reporter, "assignee_id", "", assignee, assigned_at))
+        if started:
+            history.append((assignee, "status", "TODO", "IN_PROGRESS", started))
+        if done:
+            history.append((assignee, "status", "IN_PROGRESS", "DONE", done))
+        priority = weighted(rng, PRIORITIES, PRIORITY_WEIGHTS)
+        if rng.random() < 0.15:
+            old = rng.choice([p for p in PRIORITIES if p != priority])
+            history.append((reporter, "priority", old, priority, between(rng, created, now)))
+        updated = max([created] + [h[4] for h in history])
+
+        # Subtask chỉ trỏ tới task (không phải subtask) đã có trong cùng project
+        parents = [t for t, is_sub in earlier_tasks if not is_sub]
+        parent = rng.choice(parents) if parents and rng.random() < 0.15 else None
+
+        out["tasks"].writerow((tid, pid, title, rng.choice(TASK_DESCRIPTIONS), status, priority, assignee or "",
+                               reporter, parent or "", iso(due_date), iso(start_date), iso(created), iso(updated)))
+        for changed_by, field, old, new, at in history:
+            out["task_histories"].writerow((new_id(rng), tid, changed_by, field, old, new, iso(at)))
+        if sprint:
+            out["task_sprints"].writerow((tid, sprint["id"]))
+        for lid in rng.sample(labels, weighted(rng, [0, 1, 2, 3], [25, 40, 25, 10])):
+            out["task_labels"].writerow((new_id(rng), tid, lid))
+
+        if assignee and assignee != reporter:
+            self.notify(assignee, "TASK_ASSIGNED", f"You have been assigned to task: {title}", tid, "TASK",
+                        assigned_at)
+
+        # Comment đến từ người liên quan tới task, hoặc một member khác của project
+        people = [p for p in (assignee, reporter) if p]
+        comment_until = done or now
+        for _ in range(weighted(rng, [0, 1, 2, 3, 4], [35, 25, 20, 12, 8])):
+            author = rng.choice(people) if rng.random() < 0.7 else rng.choice(present)
+            at = between(rng, created, comment_until)
+            out["task_comments"].writerow((new_id(rng), tid, author, rng.choice(COMMENTS), iso(at)))
+            # Giống EventConsumer: báo cho assignee và reporter, trừ chính người viết comment
+            for recipient in {assignee, reporter} - {None, author}:
+                self.notify(recipient, "COMMENT", f"New comment on task: {title}", tid, "TASK", at)
+
+        if rng.random() < 0.25:
+            for name in rng.sample(ATTACHMENT_NAMES, rng.randint(1, 2)):
+                file_id = new_id(rng)
+                out["task_attachments"].writerow((new_id(rng), tid,
+                                                  f"https://cdn.example.com/attachments/{file_id}/{name}", name,
+                                                  rng.choice(people), iso(between(rng, created, comment_until))))
+
+        return tid, parent is not None
 
 
-def worker_sprints(args):
-    start_i, count, seed, part_path, project_ids = args
-    rng = random.Random(seed + start_i + 8)
-    w = BufferedCsvWriter(part_path, None)
-    rows = []
-    for i in range(start_i, start_i + count):
-        start = random_dt(rng, 400, 30).date()
-        end = start + timedelta(days=rng.randint(7, 21))
-        sid = str(uuid.uuid4())
-        rows.append((
-            sid,
-            rng.choice(project_ids),
-            f"Sprint {i + 1}",
-            rng.choice(STATUS_SPRINT),
-            start.isoformat(),
-            end.isoformat(),
-            iso(random_dt(rng, 400, 30)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path, [r[0] for r in rows]
-
-
-def worker_notifications(args):
-    start_i, count, seed, part_path, task_ids, project_ids, sprint_ids, user_ids = args
-    rng = random.Random(seed + start_i + 9)
-    w = BufferedCsvWriter(part_path, None)
-    entity_map = {"TASK": task_ids, "PROJECT": project_ids, "SPRINT": sprint_ids}
-    entity_types = list(entity_map.keys())
-    rows = []
-    for _ in range(count):
-        etype = rng.choice(entity_types)
-        eid = rng.choice(entity_map[etype])
-        rows.append((
-            str(uuid.uuid4()),
-            rng.choice(user_ids),
-            rng.choice(NOTI_TYPES),
-            fast_sentence(rng, 10),
-            eid,
-            etype,
-            "true" if rng.random() < 0.4 else "false",
-            iso(random_dt(rng, 200, 0)),
-        ))
-    w.writer.writerows(rows)
-    w.close()
-    return part_path
+def worker_teams(args):
+    """Sinh trọn dữ liệu cho một dải team và ghi ra các file part riêng của batch này."""
+    batch, first_team, team_count, ctx = args
+    files = {t: open(part_path(t, batch), "w", newline="", encoding="utf-8", buffering=1 << 20) for t in TABLES}
+    try:
+        writers = {t: csv.writer(f) for t, f in files.items()}
+        for team in range(first_team, first_team + team_count):
+            TeamGenerator(team, ctx, writers).run()
+    finally:
+        for f in files.values():
+            f.close()
 
 
 # ==========================================================================
 # Orchestration
 # ==========================================================================
-def run_table(executor, table_name, header, worker_fn, arglist, out_path):
-    """Chạy song song worker_fn trên arglist, gộp file part -> file cuối."""
-    print(f"[+] Sinh bảng '{table_name}' ({N_ROWS:,} dòng, {len(arglist)} tasks song song)...")
-    t0 = time.time()
-    results = list(executor.map(worker_fn, arglist))
-    part_paths = [r[0] if isinstance(r, tuple) else r for r in results]
-    merge_part_files(out_path, header, part_paths)
-    ids = []
-    if results and isinstance(results[0], tuple):
-        for r in results:
-            ids.extend(r[1])
-    print(f"  -> {out_path}  ({time.time() - t0:.1f}s)")
-    return ids
-
-
 def main():
     t_start = time.time()
-    print(f"N_ROWS={N_ROWS:,}  WORKERS={WORKERS}  OUTPUT_DIR={OUTPUT_DIR}")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    n_teams = math.ceil(N_USERS / TEAM_SIZE)
+    print(f"N_USERS={N_USERS:,}  TEAM_SIZE={TEAM_SIZE}  teams={n_teams:,}  WORKERS={WORKERS}  OUTPUT_DIR={OUTPUT_DIR}")
 
+    # Một hash cho mọi user: bcrypt cố ý chậm, hash riêng từng user sẽ mất hàng giờ
+    ctx = {
+        "seed": SEED,
+        "now": datetime.now(timezone.utc),
+        "password_hash": bcrypt.hashpw(FAKE_PASSWORD.encode(), bcrypt.gensalt(10)).decode(),
+    }
+    batches = list(chunks(n_teams, TEAMS_PER_TASK))
+    arglist = [(batch, start, count, ctx) for batch, (start, count) in enumerate(batches)]
+
+    print(f"[+] Sinh dữ liệu ({len(batches)} tasks song song)...")
     with ProcessPoolExecutor(max_workers=WORKERS) as executor:
+        list(executor.map(worker_teams, arglist))
 
-        # 1. users
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_users_part_{start}.csv"))
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        user_ids = run_table(
-            executor, "users",
-            ["id", "full_name", "email", "password", "avatar_url", "role", "created_at", "updated_at"],
-            worker_users, arglist, os.path.join(OUTPUT_DIR, "users.csv"),
-        )
-
-        # 2. projects
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_projects_part_{start}.csv"), user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        project_ids = run_table(
-            executor, "projects",
-            ["id", "name", "description", "owner_id", "created_at", "updated_at"],
-            worker_projects, arglist, os.path.join(OUTPUT_DIR, "projects.csv"),
-        )
-
-        # 3. project_members (unique pairs project x user)
-        print(f"[+] Sinh bảng 'project_members' ({N_ROWS:,} dòng)...")
-        t0 = time.time()
-        pairs = list(unique_pairs_fast(project_ids, user_ids, N_ROWS, SEED + 100))
-        pair_chunks = list(chunks(len(pairs), CHUNK_SIZE))
-        arglist = [
-            (os.path.join(OUTPUT_DIR, f"_pm_part_{start}.csv"), pairs[start:start + count], "project_member", SEED + 100 + start)
-            for start, count in pair_chunks
-        ]
-        part_paths = list(executor.map(worker_pairs_generic, arglist))
-        merge_part_files(os.path.join(OUTPUT_DIR, "project_members.csv"),
-                          ["id", "project_id", "user_id", "role", "joined_at"], part_paths)
-        print(f"  -> project_members.csv ({time.time() - t0:.1f}s)")
-        del pairs
-
-        # 4. project_invitations
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_inv_part_{start}.csv"), project_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        run_table(
-            executor, "project_invitations",
-            ["id", "project_id", "invitee_id", "invited_by_id", "status", "responded_at", "created_at", "updated_at"],
-            worker_invitations, arglist, os.path.join(OUTPUT_DIR, "project_invitations.csv"),
-        )
-
-        # 5. labels
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_labels_part_{start}.csv"), project_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        label_ids = run_table(
-            executor, "labels",
-            ["id", "project_id", "name", "color", "created_at"],
-            worker_labels, arglist, os.path.join(OUTPUT_DIR, "labels.csv"),
-        )
-
-        # 6. tasks (parent_task_id chỉ trỏ trong cùng chunk, xem docstring worker_tasks)
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_tasks_part_{start}.csv"), project_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        task_ids = run_table(
-            executor, "tasks",
-            ["id", "project_id", "title", "description", "status", "priority",
-             "assignee_id", "reporter_id", "parent_task_id", "due_date", "start_date", "created_at", "updated_at"],
-            worker_tasks, arglist, os.path.join(OUTPUT_DIR, "tasks.csv"),
-        )
-
-        # 7. task_comments
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_comments_part_{start}.csv"), task_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        run_table(
-            executor, "task_comments",
-            ["id", "task_id", "user_id", "content", "created_at"],
-            worker_comments, arglist, os.path.join(OUTPUT_DIR, "task_comments.csv"),
-        )
-
-        # 8. task_attachments
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_attach_part_{start}.csv"), task_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        run_table(
-            executor, "task_attachments",
-            ["id", "task_id", "file_url", "file_name", "uploaded_by", "created_at"],
-            worker_attachments, arglist, os.path.join(OUTPUT_DIR, "task_attachments.csv"),
-        )
-
-        # 9. task_labels (unique pairs task x label)
-        print(f"[+] Sinh bảng 'task_labels' ({N_ROWS:,} dòng)...")
-        t0 = time.time()
-        pairs = list(unique_pairs_fast(task_ids, label_ids, N_ROWS, SEED + 200))
-        pair_chunks = list(chunks(len(pairs), CHUNK_SIZE))
-        arglist = [
-            (os.path.join(OUTPUT_DIR, f"_tl_part_{start}.csv"), pairs[start:start + count], "task_label", SEED + 200 + start)
-            for start, count in pair_chunks
-        ]
-        part_paths = list(executor.map(worker_pairs_generic, arglist))
-        merge_part_files(os.path.join(OUTPUT_DIR, "task_labels.csv"),
-                          ["id", "task_id", "label_id"], part_paths)
-        print(f"  -> task_labels.csv ({time.time() - t0:.1f}s)")
-        del pairs
-
-        # 10. task_histories
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_hist_part_{start}.csv"), task_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        run_table(
-            executor, "task_histories",
-            ["id", "task_id", "changed_by", "field", "old_value", "new_value", "created_at"],
-            worker_histories, arglist, os.path.join(OUTPUT_DIR, "task_histories.csv"),
-        )
-
-        # 11. sprints
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_sprints_part_{start}.csv"), project_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        sprint_ids = run_table(
-            executor, "sprints",
-            ["id", "project_id", "name", "status", "start_date", "end_date", "created_at"],
-            worker_sprints, arglist, os.path.join(OUTPUT_DIR, "sprints.csv"),
-        )
-
-        # 12. task_sprints (unique pairs task x sprint)
-        print(f"[+] Sinh bảng 'task_sprints' ({N_ROWS:,} dòng)...")
-        t0 = time.time()
-        pairs = list(unique_pairs_fast(task_ids, sprint_ids, N_ROWS, SEED + 300))
-        pair_chunks = list(chunks(len(pairs), CHUNK_SIZE))
-        arglist = [
-            (os.path.join(OUTPUT_DIR, f"_ts_part_{start}.csv"), pairs[start:start + count], "task_sprint", SEED + 300 + start)
-            for start, count in pair_chunks
-        ]
-        part_paths = list(executor.map(worker_pairs_generic, arglist))
-        merge_part_files(os.path.join(OUTPUT_DIR, "task_sprints.csv"),
-                          ["task_id", "sprint_id"], part_paths)
-        print(f"  -> task_sprints.csv ({time.time() - t0:.1f}s)")
-        del pairs
-
-        # 13. notifications
-        arglist = [
-            (start, count, SEED, os.path.join(OUTPUT_DIR, f"_noti_part_{start}.csv"), task_ids, project_ids, sprint_ids, user_ids)
-            for start, count in chunks(N_ROWS, CHUNK_SIZE)
-        ]
-        run_table(
-            executor, "notifications",
-            ["id", "user_id", "type", "content", "entity_id", "entity_type", "is_read", "created_at"],
-            worker_notifications, arglist, os.path.join(OUTPUT_DIR, "notifications.csv"),
-        )
+    for table, header in TABLES.items():
+        final_path = os.path.join(OUTPUT_DIR, f"{table}.csv")
+        merge_part_files(final_path, header, [part_path(table, b) for b in range(len(batches))])
+        with open(final_path, "rb") as f:
+            rows = sum(1 for _ in f) - 1
+        print(f"  -> {final_path:<40} {rows:>10,} dòng")
 
     print(f"\nHoàn tất! ({time.time() - t_start:.1f}s) Toàn bộ CSV nằm trong thư mục:", os.path.abspath(OUTPUT_DIR))
 
