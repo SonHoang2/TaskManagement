@@ -26,7 +26,9 @@ User i (0 <= i < N_USERS): id = UUID from md5('fake-user-<i>'), email user_<i>@e
 Password123! (bcrypt). load-tests/project-service/list-projects-load-test.js relies on this convention to sign JWTs.
 
 How to run:
-    pip install bcrypt
+    python3 -m venv .venv
+    source .venv/bin/activate        # Windows PowerShell: .venv/Scripts/Activate.ps1
+    pip install -r requirements.txt
     python3 generate_fake_data.py
     ./output/load_fake_data.sh      # load the CSVs into the 5 databases (see the instructions in the script)
 

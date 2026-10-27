@@ -34,8 +34,9 @@
 # ==========================================================================
 set -euo pipefail
 
-# Directory containing the CSV files (default = the script's directory)
-DATA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directory containing the CSV files (default = the script's directory).
+# On Git Bash/MSYS, `pwd -W` gives C:/... instead of /c/..., which a native Windows psql can open.
+DATA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && { pwd -W 2>/dev/null || pwd; })"
 
 # --------------------------------------------------------------------------
 # Connection settings - resolved at runtime, NOT hardcoded in the script.
