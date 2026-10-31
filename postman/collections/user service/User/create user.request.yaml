@@ -6,8 +6,8 @@ body:
   content: |-
     {
       "fullName": "Nguyễn Văn A",
-      "email": "sonhoang3@gmail.com",
-      "password": "12345678",
+      "email": "{{$randomEmail}}",
+      "password": "{{$randomPassword}}",
       "avatarUrl": "https://example.com/images/avatar-son.jpg"
     }
 order: 4000

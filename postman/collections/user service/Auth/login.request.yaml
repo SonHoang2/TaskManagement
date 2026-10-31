@@ -1,5 +1,4 @@
 $kind: http-request
-name: login
 url: "{{url}}/user-service/api/v1/auth/login"
 method: POST
 queryParams:
@@ -19,9 +18,9 @@ body:
   type: json
   content: "{\r
 
-    \  \"email\": \"son@example.com\",\r
+    \  \"email\": \"{{email}}\",\r
 
-    \  \"password\": \"secret123\"\r
+    \  \"password\": \"{{password}}\"\r
 
     }"
 auth:
@@ -32,26 +31,23 @@ scripts:
       // Parse response JSON
       const res = pm.response.json();
 
-      // Lấy các thông tin từ response
       const token = res?.data?.accessToken;
       const tokenType = res?.data?.tokenType || "Bearer";
       const userId = res?.data?.user?.id;
 
       if (token) {
-          // Lưu accessToken và tokenType vào environment variable
           pm.environment.set("accessToken", token);
           pm.environment.set("tokenType", tokenType);
-          console.log("Token saved:", token);
+          console.log("Token saved");
 
-          // Lưu userId vào environment variable
           if (userId) {
               pm.environment.set("userId", userId);
               console.log("User ID saved:", userId);
           } else {
-              console.warn("Không tìm thấy userId trong data.user object");
+              console.warn("userId not found in data.user");
           }
       } else {
-          console.error("Không tìm thấy accessToken trong response");
+          console.error("accessToken not found in response");
       }
     language: text/javascript
 order: 1000

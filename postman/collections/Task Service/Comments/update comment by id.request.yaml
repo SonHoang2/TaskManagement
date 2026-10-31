@@ -2,12 +2,11 @@ $kind: http-request
 url: "{{url}}/task-service/api/v1/task-comments/:id"
 method: PATCH
 pathVariables:
-  id: 1d9260c7-492f-49f2-a9e1-4cc9884762b2
+  id: "{{commentId}}"
 body:
   type: json
   content: |-
     {
-        "content": "This is a sample comment for the task.",
-        "userId": "b7f3c91b-213d-47d4-b3e3-ac6c678f4914"
+        "content": "This is a sample comment for the task."
     }
 order: 2000

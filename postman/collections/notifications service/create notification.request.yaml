@@ -5,7 +5,7 @@ body:
   type: json
   content: |-
     {
-      "userId": "2dff47a9-57b3-42b8-baaa-35832889660e",
+      "userId": "{{userId}}",
       "type": "SYSTEM",
       "content": "This is a sample notification content.",
       "isRead": false

@@ -1,6 +1,6 @@
 $kind: http-request
 url: "{{url}}/user-service/api/v1/users/:id"
-method: PUT
+method: PATCH
 pathVariables:
   id: "{{userId}}"
 body:
@@ -8,9 +8,6 @@ body:
   content: |-
     {
       "fullName": "Nguyễn Văn A",
-      "email": "sonhoang2@gmail.com",
-      "password": "123456789",
-      "avatarUrl": "https://example.com/images/avatar-son.jpg",
-      "role": "ADMIN"
+      "avatarUrl": "https://example.com/images/avatar-son.jpg"
     }
 order: 3000

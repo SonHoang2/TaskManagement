@@ -2,5 +2,5 @@ $kind: http-request
 url: "{{url}}/task-service/api/v1/task-histories/:id"
 method: GET
 pathVariables:
-  id: 1d9260c7-492f-49f2-a9e1-4cc9884762b2
+  id: "{{historyId}}"
 order: 3000

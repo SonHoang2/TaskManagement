@@ -5,8 +5,8 @@ body:
   type: json
   content: |-
     {
-        "email": "son@example.com",
-        "password": "secret123",
+        "email": "{{$randomEmail}}",
+        "password": "{{$randomPassword}}",
         "fullName": "Son Hoang"
     }
 order: 2000

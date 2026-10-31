@@ -20,4 +20,16 @@ values:
     value: ''
   - key: sprintId
     value: ''
+  - key: email
+    value: ''
+  - key: password
+    value: ''
+  - key: labelId
+    value: ''
+  - key: commentId
+    value: ''
+  - key: historyId
+    value: ''
+  - key: taskLabelId
+    value: ''
 color: 0
